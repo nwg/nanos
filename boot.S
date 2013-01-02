@@ -6,10 +6,39 @@
 MOV SI, HelloString
 CALL PrintString  ;Call print string procedure
 call ReadDisk
-jmp 0x500
-CALL PrintString  ;Call print string procedure
-MOV SI, HelloString
 
+MOV SI, HelloString
+CALL PrintString  ;Call print string procedure
+
+;jmp 0x700
+
+
+cli
+lgdt [0x500]        ; Load the GDT from 512-byte block
+mov ax, 0x10      ; 0x10 is the offset in the GDT to our data segment
+mov ds, ax
+mov es, ax
+mov fs, ax
+mov gs, ax
+mov ss, ax
+
+
+MOV EAX, CR0
+OR AL, 1
+MOV CR0, EAX
+
+jmp 0x08:(0x700)   ; 0x08 is the offset to our code segment: Far jump!
+jmp 0x08:stop
+
+jmp 0x08:stop
+jmp $
+;jmp 0x10:$
+jmp 0x08:(0x700)   ; 0x08 is the offset to our code segment: Far jump!
+
+stop:
+  MOV SI, HelloString
+  CALL PrintString  ;Call print string procedure
+  jmp $
 
 ;mov esi, HelloString
 ;mov edi, 0x500
@@ -26,8 +55,8 @@ ReadDisk:
 ; This is a disk read
 mov ah, 0x02
 
-; Read 1 sector (512 bytes)
-mov al, 1
+; Read 2 sectors (1024 bytes)
+mov al, 2
 
 ; First track
 mov ch, 0

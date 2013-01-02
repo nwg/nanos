@@ -22,11 +22,22 @@ def gdt(base, limit, access, flags):
 
   return struct.pack('<HHBBBB', limit_low, base_low, base_mid, access, limit_and_flags, base_high)
 
+def gdt_ptr(offset, size):
+  '''
+  64-bit aligned
+  '''
+  data = struct.pack('<HI', size, offset)
+  return data + '\0' * 2
+
 if __name__ == '__main__':
   # nil, code, data
   gdt_data = \
-      gdt(0, 0, 0, 0) \
+      gdt_ptr(0x500+8, 8*3-1) \
+      + gdt(0, 0, 0, 0) \
       + gdt(0, 0xFFFFF, 0b10011010, 0b1100) \
       + gdt(0, 0xFFFFF, 0b10010010, 0b1100)
 
+  gdt_len = 512 - len(gdt_data)
+
   sys.stdout.write(gdt_data)
+  sys.stdout.write('\0' * gdt_len)

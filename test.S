@@ -1,5 +1,5 @@
-[BITS 16] ;Tells the assembler that its a 16 bit code
-[ORG 0x500]  ;Origin, tell the assembler that where the code will
+[BITS 32] ;Tells the assembler that its a 16 bit code
+[ORG 0x700]  ;Origin, tell the assembler that where the code will
         ;be in memory after it is been loaded
 
 ;mov esi, HelloString
