@@ -34,7 +34,7 @@ if __name__ == '__main__':
   gdt_data = \
       gdt_ptr(0x500+8, 8*3-1) \
       + gdt(0, 0, 0, 0) \
-      + gdt(0, 0xFFFFF, 0b10011010, 0b1100) \
+      + gdt(0, 0xFFFFF, 0b10011010, 0b1000) \
       + gdt(0, 0xFFFFF, 0b10010010, 0b1100)
 
   gdt_len = 512 - len(gdt_data)

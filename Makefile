@@ -3,7 +3,7 @@ run: bigboot
 	qemu-system-x86_64 ./bigboot
 
 bigboot: boot test gdt
-	cat boot gdt test >bigboot
+	cat boot gdt test test >bigboot
 
 gdt: gdt.py
 	python gdt.py >gdt
