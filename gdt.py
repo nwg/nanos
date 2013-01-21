@@ -37,7 +37,9 @@ if __name__ == '__main__':
       + gdt(0, 0xFFFFF, 0b10011010, 0b1100) \
       + gdt(0, 0xFFFFF, 0b10010010, 0b1100) \
       + gdt(0, 0xFFFFF, 0b11111010, 0b1100) \
-      + gdt(0, 0xFFFFF, 0b11110010, 0b1100)
+      + gdt(0, 0xFFFFF, 0b11110010, 0b1100) \
+      + gdt(0xaabbccdd, 0xeeeef, 0b11101001, 0b0000) \
+      + gdt(0xaabbccdd, 0x11223, 0b11111111, 0b1111) \
 
   def grouper(n, iterable, fillvalue=None):
     "Collect data into fixed-length chunks or blocks"
