@@ -2,6 +2,7 @@
 
 import struct
 import sys
+from itertools import izip_longest
 
 def gdt(base, limit, access, flags):
   '''
@@ -32,12 +33,24 @@ def gdt_ptr(offset, size):
 if __name__ == '__main__':
   # nil, code, data
   gdt_data = \
-      gdt_ptr(0x500+8, 8*3-1) \
-      + gdt(0, 0, 0, 0) \
-      + gdt(0, 0xFFFFF, 0b10011010, 0b1000) \
-      + gdt(0, 0xFFFFF, 0b10010010, 0b1100)
+      gdt(0, 0, 0, 0) \
+      + gdt(0, 0xFFFFF, 0b10011010, 0b1100) \
+      + gdt(0, 0xFFFFF, 0b10010010, 0b1100) \
+      + gdt(0, 0xFFFFF, 0b11111010, 0b1100) \
+      + gdt(0, 0xFFFFF, 0b11110010, 0b1100)
 
-  gdt_len = 512 - len(gdt_data)
+  def grouper(n, iterable, fillvalue=None):
+    "Collect data into fixed-length chunks or blocks"
+    # grouper(3, 'ABCDEFG', 'x') --> ABC DEF Gxx
+    args = [iter(iterable)] * n
+    return izip_longest(fillvalue=fillvalue, *args)
 
-  sys.stdout.write(gdt_data)
-  sys.stdout.write('\0' * gdt_len)
+  for group in grouper(8, gdt_data):
+    bytes = [ '0x%02x' % ord(c) for c in group ]
+    print ', '.join(bytes)
+
+
+
+  #gdt_len = 512 - len(gdt_data)
+  #sys.stdout.write(gdt_data)
+  #sys.stdout.write('\0' * gdt_len)
