@@ -151,13 +151,10 @@ int_handler:
 
 pit_handler:
   pusha
-  mov dword [0xb8160], 0x01690148
-
   cmp dword [curprg], 0
   jnz schedule
   popa
   jmp pit_done
-
 
 schedule:
   cmp dword [curprg], 1
