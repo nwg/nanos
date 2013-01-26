@@ -10,6 +10,32 @@
   db (%2 >> 16) & 0x0F | (%4 << 4)
   db %1 >> 24
 %endmacro
+  
+%define PIC1   0x20
+%define PIC2   0xA0
+%define PIC1_COMMAND PIC1
+%define PIC1_DATA  (PIC1+1)
+%define PIC2_COMMAND PIC2
+%define PIC2_DATA  (PIC2+1)
+
+%define ICW1_ICW4  0x01 ;    /* ICW4 (not) needed */
+%define ICW1_SINGLE 0x02 ;   /* Single (cascade) mode */
+%define ICW1_INTERVAL4  0x04 ;   /* Call address interval 4 (8) */
+%define ICW1_LEVEL  0x08 ;   /* Level triggered (edge) mode */
+%define ICW1_INIT 0x10 ;   /* Initialization - required! */
+
+%define ICW4_8086 0x01 ;   /* 8086/88 (MCS-80/85) mode */
+%define ICW4_AUTO 0x02 ;   /* Auto (normal) EOI */
+%define ICW4_BUF_SLAVE ; 0x08    /* Buffered mode/slave */
+%define ICW4_BUF_MASTER ; 0x0C    /* Buffered mode/master */
+%define ICW4_SFNM 0x10 ;   /* Special fully nested (not) */
+
+%macro IOWAIT 0
+push ax
+mov al, 0
+out 0x80, al
+pop ax
+%endmacro
 
 ; prog1 is 16k total (0xbe00 - 0xfe00)
 ; user stack grows down from end (0xfdfc)
@@ -47,34 +73,8 @@ cont:
   ltr ax
 
   ; remap the PIC
-  %define PIC1   0x20
-  %define PIC2   0xA0
-  %define PIC1_COMMAND PIC1
-  %define PIC1_DATA  (PIC1+1)
-  %define PIC2_COMMAND PIC2
-  %define PIC2_DATA  (PIC2+1)
-
-  %define ICW1_ICW4  0x01 ;    /* ICW4 (not) needed */
-  %define ICW1_SINGLE 0x02 ;   /* Single (cascade) mode */
-  %define ICW1_INTERVAL4  0x04 ;   /* Call address interval 4 (8) */
-  %define ICW1_LEVEL  0x08 ;   /* Level triggered (edge) mode */
-  %define ICW1_INIT 0x10 ;   /* Initialization - required! */
-
-  %define ICW4_8086 0x01 ;   /* 8086/88 (MCS-80/85) mode */
-  %define ICW4_AUTO 0x02 ;   /* Auto (normal) EOI */
-  %define ICW4_BUF_SLAVE ; 0x08    /* Buffered mode/slave */
-  %define ICW4_BUF_MASTER ; 0x0C    /* Buffered mode/master */
-  %define ICW4_SFNM 0x10 ;   /* Special fully nested (not) */
-
-  %define IOWAIT out 0x80, al
-
-  %macro IOWAIT 0
-  push ax
-  mov al, 0
-  out 0x80, al
-  pop ax
-  %endmacro
-
+  ; Master is irq0 to irq7 and starts at 32 (0x20)
+  ; Slave is irq8 to irq15 and starts at handler 40 (0x28)
   in al, PIC1_DATA
   push ax
   in al, PIC2_DATA
@@ -111,23 +111,25 @@ cont:
   out PIC2_DATA, al
   IOWAIT
 
+  ; Set up stack for second program
   mov esp, PROG2_BASE_STACK_K
   push  dword 0x20 | 3
-  ; put stack at end of our user program's 16k (0xbe00 - 0xfe00)
+  ; put stack at end of our second user program's 16k (0xfe00 - 0x13e00)
   push  dword PROG2_BASE_STACK_U
   pushfd
-  or    dword [esp], 0x200 ; Set IF in EFLAGS (the dw we just pushed to top of stack) so that interrupts will be reenabled in user mode
+  or    dword [esp], 0x200 ; Set IF in EFLAGS (the dd we just pushed to top of stack) so that interrupts will be reenabled in user mode
   push  dword 0x18 | 3
   push  dword PROG2_TEXT
-  pusha
+  pusha ; pusha as if the second program has already been scheduled once (for the below shit scheduling algorithm)
   mov dword [prog2_esp], esp
 
+  ; Set up stack for first program
   mov esp, PROG1_BASE_STACK_K
   push  dword 0x20 | 3
   ; put stack at end of our user program's 16k (0xbe00 - 0xfe00)
   push  dword PROG1_BASE_STACK_U
   pushfd
-  or    dword [esp], 0x200 ; Set IF in EFLAGS (the dw we just pushed to top of stack) so that interrupts will be reenabled in user mode
+  or    dword [esp], 0x200 ; Set IF in EFLAGS (the dd we just pushed to top of stack) so that interrupts will be reenabled in user mode
   push  dword 0x18 | 3
   push  dword PROG1_TEXT
   mov dword [prog1_esp], esp
@@ -153,6 +155,8 @@ pit_handler:
   pusha
   cmp dword [curprg], 0
   jnz schedule
+
+not_initialized:
   popa
   jmp pit_done
 
@@ -186,7 +190,7 @@ pit_done:
 
   iret
 
-curprg: dd 0xddccbbaa
+curprg: dd 0
 prog1_esp: dd 0
 prog2_esp: dd 0
 
@@ -196,11 +200,11 @@ gdt_d:
 
 gdt:
   GDT 0, 0, 0, 0
-  GDT 0, 0xfffff, 10011010b, 1100b
-  GDT 0, 0xfffff, 10010010b, 1100b
-  GDT 0, 0xfffff, 11111010b, 1100b
-  GDT 0, 0xfffff, 11110010b, 1100b
-  GDT OFFS(tss), (end_tss - tss), 11101001b, 0000b
+  GDT 0, 0xfffff, 10011010b, 1100b ; ring0 cs (all mem)
+  GDT 0, 0xfffff, 10010010b, 1100b ; ring0 ds (all mem)
+  GDT 0, 0xfffff, 11111010b, 1100b ; ring3 cs (all mem)
+  GDT 0, 0xfffff, 11110010b, 1100b ; ring3 ds (all mem)
+  GDT OFFS(tss), (end_tss - tss), 11101001b, 0000b ; pointer to ts, byte granularity
 end_gdt:
 
 tss:
@@ -209,20 +213,20 @@ tss_sp:
   dd 0xbdfc ; kernel stack address
   dd 0x10 ; kernel stack segment (second gdt member)
   TIMES 15 dd 0
-  dd 0x10
-  dd 0x08
-  dd 0x10
-  dd 0x10
-  dd 0x10
-  dd 0x10
+  dd 0x10 ; es
+  dd 0x08 ; cs
+  dd 0x10 ; ss
+  dd 0x10 ; ds
+  dd 0x10 ; fs
+  dd 0x10 ; gs
   TIMES 8 db 0
 end_tss:
-
 
 idt_hdr:
 dw 0x108
 dd id_data
 
+; CPU Exceptions http://wiki.osdev.org/Exceptions
 id_data:
 %rep 32
 dw int_handler
@@ -232,6 +236,7 @@ db 10001110b
 dw (OFFS(int_handler)  >> 16) & 0xFFFF
 %endrep
 
+; Handle IRQ0 (Programmable Interrupt Timer, Enabled by default)
 dw pit_handler
 dw 0x08
 db 0
