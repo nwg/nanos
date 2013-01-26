@@ -63,7 +63,7 @@ ReadDisk:
   mov ah, 0x02
 
   ; Read 64 512-byte sectors (32KiB)
-  mov al, 64
+  mov al, 96
 
   ; First track
   mov ch, 0
