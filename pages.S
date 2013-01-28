@@ -1,0 +1,49 @@
+%define TOP PAGES_START
+%define OFFS(a) (TOP + a - $$)
+%include "common.mac"
+
+prog1_page_directory:
+TIMES 1024 dd OFFS(prog1_page_table) | 00000111b
+
+prog1_page_table:
+dd 0 | 00000001b
+dd 0x1000 | 00000001b
+dd 0x2000 | 00000001b
+dd 0x3000 | 00000001b
+dd 0x4000 | 00000001b
+dd 0x5000 | 00000001b
+dd 0x6000 | 00000001b
+dd 0x7000 | 00000001b
+dd 0x8000 | 00000001b
+dd 0x9000 | 00000001b
+dd 0xa000 | 00000001b
+dd 0xb000 | 00000001b
+dd PROG1_TEXT | 00000111b
+dd PROG1_TEXT + 0x1000 | 00000111b
+dd PROG1_TEXT + 0x2000 | 00000111b
+dd PROG1_TEXT + 0x3000 | 00000111b
+dd 0xb8000 | 00000111b
+TIMES 1007 dd 0
+
+prog2_page_directory:
+TIMES 1024 dd OFFS(prog2_page_table) | 00000111b
+
+prog2_page_table:
+dd 0 | 00000001b
+dd 0x1000 | 00000001b
+dd 0x2000 | 00000001b
+dd 0x3000 | 00000001b
+dd 0x4000 | 00000001b
+dd 0x5000 | 00000001b
+dd 0x6000 | 00000001b
+dd 0x7000 | 00000001b
+dd 0x8000 | 00000001b
+dd 0x9000 | 00000001b
+dd 0xa000 | 00000001b
+dd 0xb000 | 00000001b
+dd PROG2_TEXT | 00000111b
+dd PROG2_TEXT + 0x1000 | 00000111b
+dd PROG2_TEXT + 0x2000 | 00000111b
+dd PROG2_TEXT + 0x3000 | 00000111b
+dd 0xb8000 | 00000111b
+TIMES 1007 dd 0

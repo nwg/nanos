@@ -1,15 +1,6 @@
 %define TOP 0x7C00
 %define OFFS(a) (TOP + a - $$)
-
-; GDT base limit access flags
-%macro GDT 4
-  dw %2
-  dw %1
-  db %1 >> 16
-  db %3
-  db (%2 >> 16) & 0x0F | (%4 << 4)
-  db %1 >> 24
-%endmacro
+%include "common.mac"
 
 [BITS 16] ;Tells the assembler that its a 16 bit code
 [ORG TOP]  ;Origin, tell the assembler that where the code w
@@ -41,11 +32,11 @@ donea20:
   mov gs, ax
   mov ss, ax
 
-  ; put stack at end of our kernel's 16k (0x7e00 - 0xbe00)
-  mov esp, 0xbdfc
+  ; put stack at end of our kernel's 16k (0x8000 - 0xc000)
+  mov esp, 0xbffc
 
   ; jump to kernel
-  jmp 0x08:0x00007E00
+  jmp 0x08:0x00008000
 
 gdt_d:
   dw end_gdt - gdt - 1
@@ -62,8 +53,8 @@ ReadDisk:
   ; This is a disk read
   mov ah, 0x02
 
-  ; Read 64 512-byte sectors (32KiB)
-  mov al, 96
+  ; Read 16k*4 (512B sectors)
+  mov al, 128
 
   ; First track
   mov ch, 0
@@ -81,7 +72,7 @@ ReadDisk:
   ;xor es, es
   ;mov ax, 0
   ;mov es, ax
-  mov bx, 0x00007e00
+  mov bx, 0x00008000
   ;mov ah, 0x02
   ;mov al, 1
 

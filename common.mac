@@ -1,0 +1,62 @@
+; GDT base limit access flags
+%macro GDT 4
+  dw %2
+  dw %1
+  db %1 >> 16
+  db %3
+  db (%2 >> 16) & 0x0F | (%4 << 4)
+  db %1 >> 24
+%endmacro
+
+%define PIC1   0x20
+%define PIC2   0xA0
+%define PIC1_COMMAND PIC1
+%define PIC1_DATA  (PIC1+1)
+%define PIC2_COMMAND PIC2
+%define PIC2_DATA  (PIC2+1)
+
+%define ICW1_ICW4  0x01 ;    /* ICW4 (not) needed */
+%define ICW1_SINGLE 0x02 ;   /* Single (cascade) mode */
+%define ICW1_INTERVAL4  0x04 ;   /* Call address interval 4 (8) */
+%define ICW1_LEVEL  0x08 ;   /* Level triggered (edge) mode */
+%define ICW1_INIT 0x10 ;   /* Initialization - required! */
+
+%define ICW4_8086 0x01 ;   /* 8086/88 (MCS-80/85) mode */
+%define ICW4_AUTO 0x02 ;   /* Auto (normal) EOI */
+%define ICW4_BUF_SLAVE ; 0x08    /* Buffered mode/slave */
+%define ICW4_BUF_MASTER ; 0x0C    /* Buffered mode/master */
+%define ICW4_SFNM 0x10 ;   /* Special fully nested (not) */
+
+%macro IOWAIT 0
+push ax
+mov al, 0
+out 0x80, al
+pop ax
+%endmacro
+
+%define KERNEL_START 0x8000
+%define PAGES_START (KERNEL_START + 0x4000)
+%define PROG1_START (KERNEL_START + 0x8000)
+%define PROG2_START (KERNEL_START + 0xc000)
+
+; prog1 is 16k total (0xbe00 - 0xfe00)
+; user stack grows down from end (0xfdfc)
+; kernel stack is last "1K" of kernel @ 0xbdfc
+%define PROG1_TEXT PROG1_START
+%define PROG1_BASE_STACK_U (PROG1_START + 0x4000 - 4)
+%define PROG1_BASE_STACK_K (KERNEL_START + 0x4000 - 4)
+
+; prog2 is 16k total (0xfe00 - 0x13e00)
+; user stack grows down from end (0x13dfc)
+; kernel stack is second-from-last "1K" of kernel @ 0xb9fc
+%define PROG2_TEXT PROG2_START
+%define PROG2_BASE_STACK_U (PROG2_START + 0x4000 - 4)
+%define PROG2_BASE_STACK_K (KERNEL_START + 0x4000 - 0x400 - 4)
+
+; Virtual address defs for usermode programs
+%define USER_TEXT 0xc000
+%define USER_STACK (0xc000 + 0x4000 - 4)
+%define USER_VIDEO 0x10000
+
+%define PROG1_PAGE_DIRECTORY PAGES_START
+%define PROG2_PAGE_DIRECTORY (PAGES_START + 0x2000)

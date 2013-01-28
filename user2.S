@@ -1,21 +1,22 @@
+%include "common.mac"
+%define START (USER_VIDEO + 0x780)
 %define DELAY 26843545
-%define START 0xb8780
 
 [BITS 32]
-[ORG 0xfe00]
+[ORG USER_TEXT]
 
-  mov ecx, START
+  mov edx, START
 
 draw_char:
-  mov dword [ecx], 0x01070107
+  mov dword [edx], 0x01070107
 
   mov ebx, DELAY
 sleep:
   sub ebx, 1
   jnz sleep
 
-  add ecx, 4
-  cmp ecx, START + 80*2
+  add edx, 4
+  cmp edx, START + 80*2
   jl draw_char
 
   jmp $

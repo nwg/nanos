@@ -1,8 +1,9 @@
-%define START 0xb86e0
+%include "common.mac"
+%define START (USER_VIDEO + 0x6e0)
 %define DELAY 26843545
 
 [BITS 32]
-[ORG 0xbe00]
+[ORG USER_TEXT]
 
   mov edx, START
 

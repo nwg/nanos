@@ -1,4 +1,4 @@
-OBJECTS = boot.bin kernel.bin user1.bin user2.bin
+OBJECTS = boot.bin kernel.bin pages.bin user1.bin user2.bin
 
 %.bin: %.S
 	nasm -o $@ $<

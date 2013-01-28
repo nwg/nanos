@@ -1,59 +1,10 @@
-%define TOP 0x7E00
+%define TOP KERNEL_START
 %define OFFS(a) (TOP + a - $$)
-
-; GDT base limit access flags
-%macro GDT 4
-  dw %2
-  dw %1
-  db %1 >> 16
-  db %3
-  db (%2 >> 16) & 0x0F | (%4 << 4)
-  db %1 >> 24
-%endmacro
-  
-%define PIC1   0x20
-%define PIC2   0xA0
-%define PIC1_COMMAND PIC1
-%define PIC1_DATA  (PIC1+1)
-%define PIC2_COMMAND PIC2
-%define PIC2_DATA  (PIC2+1)
-
-%define ICW1_ICW4  0x01 ;    /* ICW4 (not) needed */
-%define ICW1_SINGLE 0x02 ;   /* Single (cascade) mode */
-%define ICW1_INTERVAL4  0x04 ;   /* Call address interval 4 (8) */
-%define ICW1_LEVEL  0x08 ;   /* Level triggered (edge) mode */
-%define ICW1_INIT 0x10 ;   /* Initialization - required! */
-
-%define ICW4_8086 0x01 ;   /* 8086/88 (MCS-80/85) mode */
-%define ICW4_AUTO 0x02 ;   /* Auto (normal) EOI */
-%define ICW4_BUF_SLAVE ; 0x08    /* Buffered mode/slave */
-%define ICW4_BUF_MASTER ; 0x0C    /* Buffered mode/master */
-%define ICW4_SFNM 0x10 ;   /* Special fully nested (not) */
-
-%macro IOWAIT 0
-push ax
-mov al, 0
-out 0x80, al
-pop ax
-%endmacro
-
-; prog1 is 16k total (0xbe00 - 0xfe00)
-; user stack grows down from end (0xfdfc)
-; kernel stack is last "1K" of kernel @ 0xbdfc
-%define PROG1_TEXT 0xbe00
-%define PROG1_BASE_STACK_U 0xfdfc
-%define PROG1_BASE_STACK_K 0xbdfc
-
-; prog2 is 16k total (0xfe00 - 0x13e00)
-; user stack grows down from end (0x13dfc)
-; kernel stack is second-from-last "1K" of kernel @ 0xb9fc
-%define PROG2_TEXT 0xfe00
-%define PROG2_BASE_STACK_U 0x13dfc
-%define PROG2_BASE_STACK_K 0xb9fc
+%include "common.mac"
 
 [bits 32]
 [org TOP]; start of second block of conventional memory
-  
+
   ; Reset gdt
   lgdt [gdt_d]        
   jmp 0x08:cont
@@ -115,28 +66,36 @@ cont:
   mov esp, PROG2_BASE_STACK_K
   push  dword 0x20 | 3
   ; put stack at end of our second user program's 16k (0xfe00 - 0x13e00)
-  push  dword PROG2_BASE_STACK_U
+  push  dword USER_STACK
   pushfd
   or    dword [esp], 0x200 ; Set IF in EFLAGS (the dd we just pushed to top of stack) so that interrupts will be reenabled in user mode
   push  dword 0x18 | 3
-  push  dword PROG2_TEXT
+  push  dword USER_TEXT
   pusha ; pusha as if the second program has already been scheduled once (for the below shit scheduling algorithm)
   mov dword [prog2_esp], esp
 
   ; Set up stack for first program
   mov esp, PROG1_BASE_STACK_K
   push  dword 0x20 | 3
-  ; put stack at end of our user program's 16k (0xbe00 - 0xfe00)
-  push  dword PROG1_BASE_STACK_U
+  ; put stack at end of our user stack
+  push  dword USER_STACK
   pushfd
   or    dword [esp], 0x200 ; Set IF in EFLAGS (the dd we just pushed to top of stack) so that interrupts will be reenabled in user mode
   push  dword 0x18 | 3
-  push  dword PROG1_TEXT
+  push  dword USER_TEXT
   mov dword [prog1_esp], esp
 
   mov dword [tss_sp], PROG1_BASE_STACK_K
 
   mov dword [curprg], 1
+
+  ; enable paging
+  mov eax, PROG1_PAGE_DIRECTORY
+  mov cr3, eax
+
+  mov eax, cr0
+  or eax, 0x80000000
+  mov cr0, eax
 
   ; Enter user mode
   mov   ax, 0x20 | 3
@@ -169,6 +128,10 @@ prog1:
   mov [prog1_esp], esp
   mov esp, [prog2_esp]
   popa
+
+  mov eax, PROG2_PAGE_DIRECTORY
+  mov cr3, eax
+
   mov dword [tss_sp], PROG2_BASE_STACK_K
   mov dword [curprg], 2
   jmp pit_done
@@ -178,6 +141,10 @@ prog2:
   mov [prog2_esp], esp
   mov esp, [prog1_esp]
   popa
+
+  mov eax, PROG1_PAGE_DIRECTORY
+  mov cr3, eax
+
   mov dword [tss_sp], PROG1_BASE_STACK_K
   mov dword [curprg], 1
   jmp pit_done
@@ -244,3 +211,4 @@ db 11101111b
 dw (OFFS(pit_handler)  >> 16) & 0xFFFF
 
 TIMES 0x4000 - ($ - $$) db 0
+
