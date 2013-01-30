@@ -106,9 +106,70 @@ cont:
 
   iret
 
-int_handler:
+cpu0:
+cpu1:
+cpu2:
+cpu3:
+cpu4:
+cpu5:
+cpu6:
+cpu7:
+cpu8:
+cpu9:
+cpu10:
+cpu11:
+cpu12:
+cpu13:
+cpu14:
+cpu15:
+cpu16:
+cpu17:
+cpu18:
+cpu19:
+cpu20:
+cpu21:
+cpu22:
+cpu23:
+cpu24:
+cpu25:
+cpu26:
+cpu27:
+cpu28:
+cpu29:
+cpu30:
+cpu31:
+
+  ; disable paging
+  mov eax, cr0
+  and eax, 0x7fffffff
+  mov cr0, eax
+
   mov dword [0xb8010], 0x04690448
   jmp $
+
+irq0:
+  jmp pit_handler
+
+irq1:
+irq2:
+irq3:
+irq4:
+irq5:
+irq6:
+irq7:
+irq8:
+irq9:
+irq10:
+irq11:
+irq12:
+irq13:
+irq14:
+irq15:
+  iret
+
+software_interrupt:
+  mov dword [USER_VIDEO + 80*2*14], 0x01690148
+  iret
 
 pit_handler:
   pusha
@@ -190,25 +251,41 @@ tss_sp:
 end_tss:
 
 idt_hdr:
-dw 0x108
-dd id_data
+dw end_idt_data - idt_data
+dd idt_data
 
-; CPU Exceptions http://wiki.osdev.org/Exceptions
-id_data:
+idt_data:
+%assign i 0
 %rep 32
-dw int_handler
+
+dw cpu %+ i
 dw 0x08
 db 0
 db 10001110b
-dw (OFFS(int_handler)  >> 16) & 0xFFFF
+dw (OFFS(cpu %+ i)  >> 16) & 0xFFFF
+
+%assign i i+1
 %endrep
 
-; Handle IRQ0 (Programmable Interrupt Timer, Enabled by default)
-dw pit_handler
+; Handle irqs
+%assign i 0
+%rep    16
+
+dw irq %+ i
+dw 0x08
+db 0
+db 11101110b
+dw (OFFS(irq %+ i)  >> 16) & 0xFFFF
+
+%assign i i+1
+%endrep
+
+dw software_interrupt
 dw 0x08
 db 0
 db 11101111b
-dw (OFFS(pit_handler)  >> 16) & 0xFFFF
+dw (OFFS(software_interrupt)  >> 16) & 0xFFFF
+
+end_idt_data:
 
 TIMES 0x4000 - ($ - $$) db 0
-

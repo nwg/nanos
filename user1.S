@@ -5,6 +5,8 @@
 [BITS 32]
 [ORG USER_TEXT]
 
+  int 48
+
   mov edx, START
 
 draw_char:
