@@ -2,9 +2,8 @@
 %define START (USER_VIDEO + 0x6e0)
 %define DELAY 26843545
 
-[BITS 32]
+[BITS 64]
 [ORG USER_TEXT]
-
   int 48
 
   mov edx, START

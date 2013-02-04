@@ -8,6 +8,50 @@
   db %1 >> 24
 %endmacro
 
+; GDT64 base(64-bit) limit access flags
+%macro GDT64 4
+  dw %2
+  dw %1
+  db %1 >> 16
+  db %3
+  db (%2 >> 16) & 0x0F | (%4 << 4)
+  db %1 >> 24
+  dd (%1 >> 32)
+  dd 0
+%endmacro
+
+%macro IDT64 3
+dw %2
+dw %1
+db 0
+db %3
+dw (%2  >> 16)
+dd (%2  >> 32)
+dd 0
+%endmacro
+
+%macro PUSHA 0
+push rax
+push rbx
+push rcx
+push rdx
+
+push rbp
+push rsi
+push rdi
+%endmacro
+
+%macro POPA 0
+pop rdi
+pop rsi
+pop rbp
+
+pop rdx
+pop rcx
+pop rbx
+pop rax
+%endmacro
+
 %define PIC1   0x20
 %define PIC2   0xA0
 %define PIC1_COMMAND PIC1
@@ -36,8 +80,8 @@ pop ax
 
 %define KERNEL_START 0x8000
 %define PAGES_START (KERNEL_START + 0x4000)
-%define PROG1_START (KERNEL_START + 0x8000)
-%define PROG2_START (KERNEL_START + 0xc000)
+%define PROG1_START (PAGES_START + 0x8000)
+%define PROG2_START (PROG1_START + 0x4000)
 
 ; prog1 is 16k total (0xbe00 - 0xfe00)
 ; user stack grows down from end (0xfdfc)
@@ -58,5 +102,5 @@ pop ax
 %define USER_STACK (0xc000 + 0x4000 - 4)
 %define USER_VIDEO 0x10000
 
-%define PROG1_PAGE_DIRECTORY PAGES_START
-%define PROG2_PAGE_DIRECTORY (PAGES_START + 0x2000)
+%define PROG1_PML4 PAGES_START
+%define PROG2_PML4 (PAGES_START + 0x4000)

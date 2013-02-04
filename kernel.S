@@ -2,15 +2,35 @@
 %define OFFS(a) (TOP + a - $$)
 %include "common.mac"
 
-[bits 32]
+[BITS 32]
 [org TOP]; start of second block of conventional memory
+
+  ; Enable pae
+  mov eax, cr4
+  or eax, 1 << 5
+  mov cr4, eax
+
+  ; Point to long-mode paging root
+  mov eax, PROG1_PML4
+  mov cr3, eax
+
+  ; Set lm bit in the EFER MSR (0xC0000080)
+  mov ecx, 0xC0000080
+  rdmsr
+  or eax, 1 << 8
+  wrmsr
+
+  ; Enable paging
+  mov eax, cr0
+  or eax, 0x80000000
+  mov cr0, eax
 
   ; Reset gdt
   lgdt [gdt_d]        
   jmp 0x08:cont
 
+[BITS 64]
 cont:
-
   ; Disable PIC
   ;mov al, 0xff
   ;out 0xa1, al
@@ -19,8 +39,8 @@ cont:
   ; Load interrupt descriptor table
   lidt [idt_hdr]
 
-  ; set up tss (task register)
-  mov ax, 0x28 | 3
+  ; set up tss (task register, 16-byte descriptor in GDT)
+  mov ax, 0x28
   ltr ax
 
   ; remap the PIC
@@ -63,39 +83,31 @@ cont:
   IOWAIT
 
   ; Set up stack for second program
-  mov esp, PROG2_BASE_STACK_K
-  push  dword 0x20 | 3
+  mov rsp, PROG2_BASE_STACK_K
+  push  qword 0x20 | 3
   ; put stack at end of our second user program's 16k (0xfe00 - 0x13e00)
-  push  dword USER_STACK
-  pushfd
-  or    dword [esp], 0x200 ; Set IF in EFLAGS (the dd we just pushed to top of stack) so that interrupts will be reenabled in user mode
-  push  dword 0x18 | 3
+  push  qword USER_STACK
+  pushfq
+  or    qword [rsp], 0x200 ; Set IF in EFLAGS (the quad we just pushed to top of stack) so that interrupts will be reenabled in user mode
+  push  qword 0x18 | 3
   push  dword USER_TEXT
-  pusha ; pusha as if the second program has already been scheduled once (for the below shit scheduling algorithm)
-  mov dword [prog2_esp], esp
+  PUSHA ; pusha as if the second program has already been scheduled once
+  mov qword [prog2_rsp], rsp
 
   ; Set up stack for first program
-  mov esp, PROG1_BASE_STACK_K
-  push  dword 0x20 | 3
+  mov rsp, PROG1_BASE_STACK_K
+  push  qword 0x20 | 3
   ; put stack at end of our user stack
-  push  dword USER_STACK
-  pushfd
-  or    dword [esp], 0x200 ; Set IF in EFLAGS (the dd we just pushed to top of stack) so that interrupts will be reenabled in user mode
-  push  dword 0x18 | 3
-  push  dword USER_TEXT
-  mov dword [prog1_esp], esp
+  push  qword USER_STACK
+  pushfq
+  or    qword [rsp], 0x200 ; Set IF in EFLAGS (the dd we just pushed to top of stack) so that interrupts will be reenabled in user mode
+  push  qword 0x18 | 3
+  push  qword USER_TEXT
+  mov qword [prog1_rsp], rsp
 
-  mov dword [tss_sp], PROG1_BASE_STACK_K
+  mov qword [tss64_sp], PROG1_BASE_STACK_K
 
   mov dword [curprg], 1
-
-  ; enable paging
-  mov eax, PROG1_PAGE_DIRECTORY
-  mov cr3, eax
-
-  mov eax, cr0
-  or eax, 0x80000000
-  mov cr0, eax
 
   ; Enter user mode
   mov   ax, 0x20 | 3
@@ -104,7 +116,7 @@ cont:
   mov fs,ax 
   mov gs,ax ;we don't need to worry about SS. it's handled by iret
 
-  iret
+  iretq
 
 cpu0:
 cpu1:
@@ -140,9 +152,9 @@ cpu30:
 cpu31:
 
   ; disable paging
-  mov eax, cr0
-  and eax, 0x7fffffff
-  mov cr0, eax
+  mov rax, cr0
+  and rax, 0x7fffffff
+  mov cr0, rax
 
   mov dword [0xb8010], 0x04690448
   jmp $
@@ -165,19 +177,19 @@ irq12:
 irq13:
 irq14:
 irq15:
-  iret
+  iretq
 
 software_interrupt:
   mov dword [USER_VIDEO + 80*2*14], 0x01690148
-  iret
+  iretq
 
 pit_handler:
-  pusha
+  PUSHA
   cmp dword [curprg], 0
   jnz schedule
 
 not_initialized:
-  popa
+  POPA
   jmp pit_done
 
 schedule:
@@ -186,27 +198,27 @@ schedule:
 
 prog1:
   ; Just ran prog1 -- switch back to prog2
-  mov [prog1_esp], esp
-  mov esp, [prog2_esp]
-  popa
+  mov [prog1_rsp], rsp
+  mov rsp, [prog2_rsp]
+  POPA
 
-  mov eax, PROG2_PAGE_DIRECTORY
-  mov cr3, eax
+  mov rax, PROG2_PML4
+  mov cr3, rax
 
-  mov dword [tss_sp], PROG2_BASE_STACK_K
+  mov qword [tss64_sp], PROG2_BASE_STACK_K
   mov dword [curprg], 2
   jmp pit_done
 
 prog2:
   ; Just ran prog2 -- switch back to prog1
-  mov [prog2_esp], esp
-  mov esp, [prog1_esp]
-  popa
+  mov [prog2_rsp], rsp
+  mov rsp, [prog1_rsp]
+  POPA
 
-  mov eax, PROG1_PAGE_DIRECTORY
-  mov cr3, eax
+  mov rax, PROG1_PML4
+  mov cr3, rax
 
-  mov dword [tss_sp], PROG1_BASE_STACK_K
+  mov qword [tss64_sp], PROG1_BASE_STACK_K
   mov dword [curprg], 1
   jmp pit_done
 
@@ -216,11 +228,12 @@ pit_done:
   mov al, 0x20
   out 0x20, al
 
-  iret
+  iretq
 
 curprg: dd 0
-prog1_esp: dd 0
-prog2_esp: dd 0
+prog1_rsp: dq 0
+prog2_rsp: dq 0
+
 
 gdt_d:
   dw end_gdt - gdt - 1
@@ -228,63 +241,43 @@ gdt_d:
 
 gdt:
   GDT 0, 0, 0, 0
-  GDT 0, 0xfffff, 10011010b, 1100b ; ring0 cs (all mem)
-  GDT 0, 0xfffff, 10010010b, 1100b ; ring0 ds (all mem)
-  GDT 0, 0xfffff, 11111010b, 1100b ; ring3 cs (all mem)
-  GDT 0, 0xfffff, 11110010b, 1100b ; ring3 ds (all mem)
-  GDT OFFS(tss), (end_tss - tss), 11101001b, 0000b ; pointer to ts, byte granularity
+  GDT 0, 0xfffff, 10011010b, 1010b ; ring0 cs (all mem)
+  GDT 0, 0xfffff, 10010010b, 1010b ; ring0 ds (all mem)
+  GDT 0, 0xfffff, 11111010b, 1010b ; ring3 cs (all mem), sz=0, L=1 for 64-bit
+  GDT 0, 0xfffff, 11110010b, 1010b ; ring3 ds (all mem), sz=0, L=1 for 64-bit
+  GDT64 OFFS(tss64), (end_tss64 - tss64), 11101001b, 0001b ; 64-bit pointer to ts, byte granularity
 end_gdt:
 
-tss:
+; See "TASK MANAGEMENT IN 64-BIT MODE" of http://download.intel.com/products/processor/manual/325384.pdf
+tss64:
   dd 0
-tss_sp:
-  dd 0xbdfc ; kernel stack address
-  dd 0x10 ; kernel stack segment (second gdt member)
-  TIMES 15 dd 0
-  dd 0x10 ; es
-  dd 0x08 ; cs
-  dd 0x10 ; ss
-  dd 0x10 ; ds
-  dd 0x10 ; fs
-  dd 0x10 ; gs
-  TIMES 8 db 0
-end_tss:
+tss64_sp:
+  dq PROG1_BASE_STACK_K
+  TIMES 23 dd 0
+end_tss64:
 
 idt_hdr:
 dw end_idt_data - idt_data
-dd idt_data
+dq idt_data
 
 idt_data:
+
+; CPU Exception Handlers
 %assign i 0
 %rep 32
-
-dw cpu %+ i
-dw 0x08
-db 0
-db 10001110b
-dw (OFFS(cpu %+ i)  >> 16) & 0xFFFF
-
+IDT64 0x08, OFFS(cpu %+ i), 10001110b
 %assign i i+1
 %endrep
 
-; Handle irqs
+; IRQ Handlers
 %assign i 0
 %rep    16
-
-dw irq %+ i
-dw 0x08
-db 0
-db 11101110b
-dw (OFFS(irq %+ i)  >> 16) & 0xFFFF
-
+IDT64 0x08, OFFS(irq %+ i), 11101110b
 %assign i i+1
 %endrep
 
-dw software_interrupt
-dw 0x08
-db 0
-db 11101111b
-dw (OFFS(software_interrupt)  >> 16) & 0xFFFF
+; Software Interrupt at 48 (30h)
+IDT64 0x08, OFFS(software_interrupt), 11101111b
 
 end_idt_data:
 

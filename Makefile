@@ -1,6 +1,6 @@
 OBJECTS = boot.bin kernel.bin pages.bin user1.bin user2.bin
 
-%.bin: %.S
+%.bin: %.S common.mac
 	nasm -o $@ $<
 
 run: bigboot
