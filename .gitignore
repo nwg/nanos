@@ -2,7 +2,7 @@
 bigboot
 *.o
 *.hidden
-tags
+.tags*
 *.img
 a.out
 *.gch
