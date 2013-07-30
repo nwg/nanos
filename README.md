@@ -12,9 +12,11 @@ the screen.
 Instructions (Mac OS X):
 
 1) Download the latest nasm from http://www.nasm.us/pub/nasm/releasebuilds/
-  Note that the nasm included with the Xcode command-line tools is quite old and will not
-  build this project properly.
+Note that the nasm included with the Xcode command-line tools is extremely
+outdated and will not build this project properly.
 
-2) sudo port install qemu
+2) sudo port install qemu x86_64-elf-gcc
 
-3) make
+3) make (the kernel is a flat binary called bigboot)
+
+4) make run (to test in qemu)
