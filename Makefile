@@ -8,6 +8,7 @@ CC = x86_64-elf-gcc
 CFLAGS = -fno-builtin-memchr -Wall -Werror -std=c99
 LD = x86_64-elf-ld
 PAD = ./util/pad.sh
+ELF = kernel.elf
 
 .PHONY: kernel
 
@@ -39,4 +40,4 @@ bigboot: $(FLAT_BINS)
 	cat $(FLAT_BINS) >bigboot
 
 clean:
-	rm -f $(OBJ) $(FLAT_BINS)
+	rm -f $(OBJ) $(FLAT_BINS) $(ELF)
