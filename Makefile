@@ -1,4 +1,5 @@
 KERNEL_C = kmem.o ll.o process.o schedule.o pages.o memory.o
+SRC = src/
 KERNEL_HEADERS = $(wildcard src/*.h)
 KERNEL_ASM = kernel.o
 KERNEL_OBJ = $(KERNEL_ASM) $(KERNEL_C)
@@ -25,14 +26,14 @@ kernel.elf: $(KERNEL_ASM) $(KERNEL_C) custom.lnk
 	$(LD) -o $@ $(KERNEL_OBJ)
 	$(PAD) 32768 $@
 
-%.bin: src/%.asm common.mac
-	nasm -o $@ $<
+%.bin: $(SRC)/%.asm $(SRC)/common.mac
+	nasm -I$(SRC) -o $@ $<
 
-%.o: src/%.c $(KERNEL_HEADERS)
-	$(CC) $(CFLAGS) -c $<
+%.o: $(SRC)/%.c $(KERNEL_HEADERS)
+	$(CC) -I$(SRC) $(CFLAGS) -c $<
 
-%.o: src/%.asm common.mac
-	nasm -f elf64 -o $@ $<
+%.o: $(SRC)/%.asm $(SRC)/common.mac
+	nasm -I$(SRC) -f elf64 -o $@ $<
 
 run: bigboot
 	qemu-system-x86_64 ./bigboot
