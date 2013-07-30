@@ -22,13 +22,13 @@ kernel.elf: $(KERNEL_ASM) $(KERNEL_C) custom.lnk
 	$(LD) -o $@ $(KERNEL_OBJ)
 	$(PAD) 32768 $@
 
-%.bin: %.S common.mac
+%.bin: %.asm common.mac
 	nasm -o $@ $<
 
 %.o: %.c $(KERNEL_HEADERS)
 	$(CC) $(CFLAGS) -c $<
 
-%.o: %.S common.mac
+%.o: %.asm common.mac
 	nasm -f elf64 -o $@ $<
 
 run: bigboot
