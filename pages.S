@@ -4,6 +4,8 @@
 
 ;[bits 64]
 
+; repeat all the top-level page structures to just point to the same (16MB) map
+
 prog1_pml4:
 TIMES 512 dq OFFS(prog1_pdpt) | 00000111b
 
@@ -13,25 +15,20 @@ TIMES 512 dq OFFS(prog1_pdt) | 00000111b
 prog1_pdt:
 TIMES 512 dq OFFS(prog1_pt) | 00000111b
 
+; first and only 2MB map
 prog1_pt:
-dq 0 | 00000001b
-dq 0x1000 | 00000001b
-dq 0x2000 | 00000001b
-dq 0x3000 | 00000001b
-dq 0x4000 | 00000001b
-dq 0x5000 | 00000001b
-dq 0x6000 | 00000001b
-dq 0x7000 | 00000001b
-dq 0x8000 | 00000001b
-dq 0x9000 | 00000001b
-dq 0xa000 | 00000001b
-dq 0xb000 | 00000001b
-dq PROG1_TEXT | 00000111b
-dq PROG1_TEXT + 0x1000 | 00000111b
-dq PROG1_TEXT + 0x2000 | 00000111b
-dq PROG1_TEXT + 0x3000 | 00000111b
+%assign i 0
+%rep    510
+dq (i*0x1000) | 000000011b
+%assign i i+1
+%endrep
+
+; video at 1fe000
 dq 0xb8000 | 00000111b
-TIMES 495 dq 0
+dq 0xb9000 | 00000111b
+
+
+;---
 
 prog2_pml4:
 TIMES 512 dq OFFS(prog2_pdpt) | 00000111b
@@ -43,21 +40,12 @@ prog2_pdt:
 TIMES 512 dq OFFS(prog2_pt) | 00000111b
 
 prog2_pt:
-dq 0 | 00000001b
-dq 0x1000 | 00000001b
-dq 0x2000 | 00000001b
-dq 0x3000 | 00000001b
-dq 0x4000 | 00000001b
-dq 0x5000 | 00000001b
-dq 0x6000 | 00000001b
-dq 0x7000 | 00000001b
-dq 0x8000 | 00000001b
-dq 0x9000 | 00000001b
-dq 0xa000 | 00000001b
-dq 0xb000 | 00000001b
-dq PROG2_TEXT | 00000111b
-dq PROG2_TEXT + 0x1000 | 00000111b
-dq PROG2_TEXT + 0x2000 | 00000111b
-dq PROG2_TEXT + 0x3000 | 00000111b
+%assign i 0
+%rep    510
+dq (i*0x1000) | 000000011b
+%assign i i+1
+%endrep
+
+; video at 1fe000
 dq 0xb8000 | 00000111b
-TIMES 495 dq 0
+dq 0xb9000 | 00000111b

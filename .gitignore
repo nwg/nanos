@@ -1,2 +1,11 @@
 *.bin
 bigboot
+*.o
+*.hidden
+tags
+*.img
+a.out
+*.gch
+*.elf
+*.sym
+.gdbinit

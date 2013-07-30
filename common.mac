@@ -78,10 +78,19 @@ out 0x80, al
 pop ax
 %endmacro
 
+%define PROGRAM_SIZE (0x4000)
+
 %define KERNEL_START 0x8000
-%define PAGES_START (KERNEL_START + 0x4000)
-%define PROG1_START (PAGES_START + 0x8000)
-%define PROG2_START (PROG1_START + 0x4000)
+%define KERNEL_SIZE 0x8000
+%define PAGES_START (KERNEL_START + KERNEL_SIZE)
+%define PAGES_SIZE 0x8000
+%define PROG1_START (PAGES_START + PAGES_SIZE)
+%define PROG2_START (PROG1_START + PROGRAM_SIZE)
+
+%define NATIVE_WORD_SIZE 8
+
+%define KERNEL_STACK (0x8000 - NATIVE_WORD_SIZE)
+%define KERNEL_STACK_32 (0x8000 - 4)
 
 ; prog1 is 16k total (0xbe00 - 0xfe00)
 ; user stack grows down from end (0xfdfc)
@@ -100,7 +109,7 @@ pop ax
 ; Virtual address defs for usermode programs
 %define USER_TEXT 0xc000
 %define USER_STACK (0xc000 + 0x4000 - 4)
-%define USER_VIDEO 0x10000
+%define USER_VIDEO 0x1fe000
 
 %define PROG1_PML4 PAGES_START
 %define PROG2_PML4 (PAGES_START + 0x4000)

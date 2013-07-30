@@ -5,7 +5,6 @@
 [BITS 16] ;Tells the assembler that its a 16 bit code
 [ORG TOP]  ;Origin, tell the assembler that where the code w
         ;be in memory after it is been loaded
-
   mov ax, 0x800
   mov es, ax
 
@@ -46,6 +45,7 @@
 
   call ReadDisk
 
+
   mov ax, 0
   mov es, ax
 
@@ -74,7 +74,7 @@ donea20:
   mov ss, ax
 
   ; put stack at end of our kernel's 16k (0x8000 - 0xc000)
-  mov esp, 0xbffc
+  mov esp, KERNEL_STACK_32
 
   ; jump to kernel
   jmp 0x08:0x00008000

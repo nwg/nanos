@@ -2,17 +2,31 @@
 %define OFFS(a) (TOP + a - $$)
 %include "common.mac"
 
-[BITS 32]
-[org TOP]; start of second block of conventional memory
+global _start
+global tss64_sp
+global return_to_process
 
+extern schedule, return_from_schedule
+extern spawn
+extern schedule_init
+
+[BITS 32]
+;[org TOP]; start of second block of conventional memory
+
+_start:
   ; Enable pae
-  mov eax, cr4
-  or eax, 1 << 5
+  mov eax, 10100000b                ; Set the PAE and PGE bit.
   mov cr4, eax
+
+  ;mov eax, cr4
+  ;or eax, 1 << 5
+  ;mov cr4, eax
 
   ; Point to long-mode paging root
   mov eax, PROG1_PML4
   mov cr3, eax
+
+
 
   ; Set lm bit in the EFER MSR (0xC0000080)
   mov ecx, 0xC0000080
@@ -22,15 +36,19 @@
 
   ; Enable paging
   mov eax, cr0
-  or eax, 0x80000000
+  ;or eax, 0x80000000
+  or eax, 0x80000001
   mov cr0, eax
 
   ; Reset gdt
   lgdt [gdt_d]        
   jmp 0x08:cont
 
+align 8 ; just for disassembly purposes
 [BITS 64]
 cont:
+  mov rsp, KERNEL_STACK
+
   ; Disable PIC
   ;mov al, 0xff
   ;out 0xa1, al
@@ -38,6 +56,7 @@ cont:
 
   ; Load interrupt descriptor table
   lidt [idt_hdr]
+
 
   ; set up tss (task register, 16-byte descriptor in GDT)
   mov ax, 0x28
@@ -82,41 +101,14 @@ cont:
   out PIC2_DATA, al
   IOWAIT
 
-  ; Set up stack for second program
-  mov rsp, PROG2_BASE_STACK_K
-  push  qword 0x20 | 3
-  ; put stack at end of our second user program's 16k (0xfe00 - 0x13e00)
-  push  qword USER_STACK
-  pushfq
-  or    qword [rsp], 0x200 ; Set IF in EFLAGS (the quad we just pushed to top of stack) so that interrupts will be reenabled in user mode
-  push  qword 0x18 | 3
-  push  dword USER_TEXT
-  PUSHA ; pusha as if the second program has already been scheduled once
-  mov qword [prog2_rsp], rsp
+  ;mov dword [USER_VIDEO + 80*2*14], 0x01690148
 
-  ; Set up stack for first program
-  mov rsp, PROG1_BASE_STACK_K
-  push  qword 0x20 | 3
-  ; put stack at end of our user stack
-  push  qword USER_STACK
-  pushfq
-  or    qword [rsp], 0x200 ; Set IF in EFLAGS (the dd we just pushed to top of stack) so that interrupts will be reenabled in user mode
-  push  qword 0x18 | 3
-  push  qword USER_TEXT
-  mov qword [prog1_rsp], rsp
-
-  mov qword [tss64_sp], PROG1_BASE_STACK_K
-
-  mov dword [curprg], 1
-
-  ; Enter user mode
-  mov   ax, 0x20 | 3
-  mov   ds, ax
-  mov es,ax 
-  mov fs,ax 
-  mov gs,ax ;we don't need to worry about SS. it's handled by iret
-
-  iretq
+  call schedule_init
+  mov rdi, PROG1_TEXT
+  call spawn
+  mov rdi, PROG2_TEXT
+  call spawn
+  jmp schedule
 
 cpu0:
 cpu1:
@@ -184,56 +176,26 @@ software_interrupt:
   iretq
 
 pit_handler:
+
+  ; Immediately save state
   PUSHA
-  cmp dword [curprg], 0
-  jnz schedule
+  ; Let scheduler know we are done with this process
+  mov rdi, rsp
+  call return_from_schedule
 
-not_initialized:
-  POPA
-  jmp pit_done
+  mov al, 20h
+  out 20h, al
+  
+  ; schedule next process
+  jmp schedule
 
-schedule:
-  cmp dword [curprg], 1
-  jne prog2
-
-prog1:
-  ; Just ran prog1 -- switch back to prog2
-  mov [prog1_rsp], rsp
-  mov rsp, [prog2_rsp]
-  POPA
-
-  mov rax, PROG2_PML4
-  mov cr3, rax
-
-  mov qword [tss64_sp], PROG2_BASE_STACK_K
-  mov dword [curprg], 2
-  jmp pit_done
-
-prog2:
-  ; Just ran prog2 -- switch back to prog1
-  mov [prog2_rsp], rsp
-  mov rsp, [prog1_rsp]
-  POPA
-
-  mov rax, PROG1_PML4
-  mov cr3, rax
-
-  mov qword [tss64_sp], PROG1_BASE_STACK_K
-  mov dword [curprg], 1
-  jmp pit_done
-
-pit_done:
-
-  ; End-of-interrupt
-  mov al, 0x20
-  out 0x20, al
-
-  iretq
-
-curprg: dd 0
 prog1_rsp: dq 0
 prog2_rsp: dq 0
 
+; Called by scheduler to return to user mode
+return_to_process:
+  POPA
+  iretq
 
 gdt_d:
   dw end_gdt - gdt - 1
