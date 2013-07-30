@@ -10,7 +10,7 @@ LD = x86_64-elf-ld
 PAD = ./util/pad.sh
 ELF = kernel.elf
 
-.PHONY: kernel
+.PHONY: all run clean
 
 .SUFFIXES:
 
