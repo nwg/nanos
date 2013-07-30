@@ -1,5 +1,5 @@
 KERNEL_C = kmem.o ll.o process.o schedule.o pages.o memory.o
-KERNEL_HEADERS = kmem.h ll.h process.h schedule.h types.h memory.h asm.h
+KERNEL_HEADERS = $(wildcard src/*.h)
 KERNEL_ASM = kernel.o
 KERNEL_OBJ = $(KERNEL_ASM) $(KERNEL_C)
 OBJ = $(KERNEL_OBJ)
@@ -12,6 +12,8 @@ ELF = kernel.elf
 
 .PHONY: kernel
 
+.SUFFIXES:
+
 all: bigboot
 
 # kernel.o must be the first object passed to the linker
@@ -23,13 +25,13 @@ kernel.elf: $(KERNEL_ASM) $(KERNEL_C) custom.lnk
 	$(LD) -o $@ $(KERNEL_OBJ)
 	$(PAD) 32768 $@
 
-%.bin: %.asm common.mac
+%.bin: src/%.asm common.mac
 	nasm -o $@ $<
 
-%.o: %.c $(KERNEL_HEADERS)
+%.o: src/%.c $(KERNEL_HEADERS)
 	$(CC) $(CFLAGS) -c $<
 
-%.o: %.asm common.mac
+%.o: src/%.asm common.mac
 	nasm -f elf64 -o $@ $<
 
 run: bigboot
