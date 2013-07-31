@@ -13,16 +13,16 @@ u64_t *process_page_dirent_alloc(void *text) {
     memset(pt, 0, PAGE_DIRENT_SIZE);
     
     // Id map to 0x1c0000
-    for (int i = 0; i < 0x1c0000 / PAGE_SIZEQ; i++) {
-        pt[i] = i*PAGE_SIZEQ | 7;
+    for (int i = 0; i < 0x1c0000 / PAGE_SIZE; i++) {
+        pt[i] = i*PAGE_SIZE | 7;
     }
 
     // Map 16k program 0x1c0000 -> 0x1c4000
-    for (int i = 0; i < USER_TEXT_SIZE/PAGE_SIZEQ; i++) {
-        uintptr_t paddr = (uintptr_t)text + i*PAGE_SIZEQ;
-        uintptr_t vaddr = (USER_TEXT_VMA + i*PAGE_SIZEQ);
+    for (int i = 0; i < USER_TEXT_SIZE/PAGE_SIZE; i++) {
+        uintptr_t paddr = (uintptr_t)text + i*PAGE_SIZE;
+        uintptr_t vaddr = (USER_TEXT_VMA + i*PAGE_SIZE);
 
-        pt[vaddr / PAGE_SIZEQ] = paddr | PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
+        pt[vaddr / PAGE_SIZE] = paddr | PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
     }
 
     // Map user video to 0x1fe000
