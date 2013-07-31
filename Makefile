@@ -1,4 +1,4 @@
-KERNEL_C = kmem.o ll.o process.o schedule.o pages.o memory.o
+KERNEL_C = kmem.o ll.o process.o schedule.o pages.o memory.o kernel_init.o
 SRC = src/
 KERNEL_HEADERS = $(wildcard src/*.h)
 KERNEL_ASM = kernel.o
@@ -6,7 +6,7 @@ KERNEL_OBJ = $(KERNEL_ASM) $(KERNEL_C)
 OBJ = $(KERNEL_OBJ)
 FLAT_BINS = boot.bin kernel.bin pages.bin user1.bin user2.bin
 CC = x86_64-elf-gcc
-CFLAGS = -fno-builtin-memchr -Wall -Werror -std=c99
+CFLAGS = -fno-builtin -Wall -Werror -std=c99
 LD = x86_64-elf-ld
 PAD = ./util/pad.sh
 ELF = kernel.elf

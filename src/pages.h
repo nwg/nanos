@@ -2,7 +2,8 @@
 #define __PAGES_H__
 
 #define PAGE_DIRENT_SIZE 4096
-#define PAGES_BASE_SIZE (4096*3)
+#define PAGE_DIRENT_COUNT (PAGE_DIRENT_SIZE / sizeof(uintptr_t))
+
 #define PAGE_SIZE 0x1000
 
 typedef enum {

@@ -8,7 +8,7 @@ global return_to_process
 
 extern schedule, return_from_schedule
 extern spawn
-extern schedule_init
+extern kernel_init
 
 [BITS 32]
 ;[org TOP]; start of second block of conventional memory
@@ -103,7 +103,7 @@ cont:
 
   ;mov dword [USER_VIDEO + 80*2*14], 0x01690148
 
-  call schedule_init
+  call kernel_init
   mov rdi, PROG1_TEXT
   call spawn
   mov rdi, PROG2_TEXT
