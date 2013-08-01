@@ -4,6 +4,7 @@
 
 [BITS 64]
 [ORG USER_TEXT]
+  mov rax, 0
   int 48
 
   mov edx, START

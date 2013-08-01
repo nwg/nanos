@@ -9,6 +9,7 @@ global return_to_process
 extern schedule, return_from_schedule
 extern spawn
 extern kernel_init
+extern handle_syscall
 
 [BITS 32]
 ;[org TOP]; start of second block of conventional memory
@@ -172,7 +173,10 @@ irq15:
   iretq
 
 software_interrupt:
-  mov dword [USER_VIDEO + 80*2*14], 0x01690148
+  PUSHA
+  mov rdi, rsp
+  call handle_syscall
+  POPA
   iretq
 
 pit_handler:

@@ -10,4 +10,14 @@ extern uintptr_t *kernel_pdpt;
 extern uintptr_t *kernel_pdt;
 extern uintptr_t *kernel_pt;
 
+typedef struct {
+	u64_t rax;
+	u64_t rbx;
+	u64_t rcx;
+	u64_t rdx;
+	u64_t rbp;
+	u64_t rsi;
+	u64_t rdi;
+} system_state_t;
+
 #endif

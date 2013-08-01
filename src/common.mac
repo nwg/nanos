@@ -30,26 +30,31 @@ dd (%2  >> 32)
 dd 0
 %endmacro
 
-%macro PUSHA 0
-push rax
-push rbx
-push rcx
-push rdx
+%define PUSHA_SIZE (7*8)
 
-push rbp
-push rsi
+%macro PUSHA 0
 push rdi
+push rsi
+push rbp
+
+push rdx
+push rcx
+push rbx
+push rax
+
 %endmacro
 
 %macro POPA 0
-pop rdi
-pop rsi
-pop rbp
 
-pop rdx
-pop rcx
-pop rbx
 pop rax
+pop rbx
+pop rcx
+pop rdx
+
+pop rbp
+pop rsi
+pop rdi
+
 %endmacro
 
 %define PIC1   0x20

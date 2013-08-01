@@ -1,4 +1,4 @@
-KERNEL_C = kmem.o ll.o process.o schedule.o pages.o memory.o kernel_init.o
+KERNEL_C = kmem.o ll.o process.o schedule.o pages.o memory.o kernel_init.o syscall.o
 SRC = src/
 KERNEL_HEADERS = $(wildcard src/*.h)
 KERNEL_ASM = kernel.o
