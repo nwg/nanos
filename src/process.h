@@ -16,10 +16,11 @@ typedef struct process_s {
   void *text;
 } process_t;
 
-#define STACK_K_START(process) STACK_START(process->stack_k, K_STACK_SIZE)
-#define STACK_U_START(process) STACK_START(process->stack_u, U_STACK_SIZE)
-#define USER_TEXT_VMA 0x1c0000
+#define USER_STACK_VMA 0x200000
+#define USER_STACK_START ((uintptr_t)STACK(USER_STACK_VMA, U_STACK_SIZE))
+#define USER_TEXT_VMA 0x210000
 #define USER_TEXT_SIZE (16*KB)
+#define USER_HEAP 0x300000
 
 process_t *process_alloc(void *text);
 

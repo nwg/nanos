@@ -25,6 +25,7 @@ void init_kernel_pages() {
 		kernel_pdt[i] = (uintptr_t)kernel_pt | PAGE_PRESENT;
 	}
 
+	// Just an identity map of first 2MB of memory
 	for (int i = 0; i < 512; i++) {
 		kernel_pt[i] = i*4096 | PAGE_PRESENT | PAGE_WRITEABLE;
 	}

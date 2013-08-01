@@ -10,7 +10,6 @@
 
 draw_char:
   mov dword [edx], 0x04070407
-
   mov ebx, DELAY
 sleep:
   sub ebx, 1

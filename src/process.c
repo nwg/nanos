@@ -4,57 +4,65 @@
 #include "pages.h"
 #include "asm.h"
 #include "stack.h"
-
+#include "video.h"
+#include "kernel.h"
 
 /* Our basic pagetable entry with identity from 0 to 0xc, 16k text + data, and video memory */
-u64_t *process_page_dirent_alloc(void *text) {
+uintptr_t *process_page_dirent_alloc(uintptr_t stack_u, uintptr_t text) {
 
-    u64_t *pt = kalloc_aligned(PAGE_DIRENT_SIZE, 4096);
+    uintptr_t *pt = kalloc_aligned(PAGE_DIRENT_SIZE, 4096);
     memset(pt, 0, PAGE_DIRENT_SIZE);
-    
-    // Id map to 0x1c0000
-    for (int i = 0; i < 0x1c0000 / PAGE_SIZE; i++) {
-        pt[i] = i*PAGE_SIZE | 7;
-    }
 
-    // Map 16k program 0x1c0000 -> 0x1c4000
+    // 64K stack
+    for (int i = 0; i < (64*KB) / PAGE_DIRENT_SIZE; i++) {
+        pt[i] = (USER_TEXT_VMA + 8*KB) | PAGE_USER | PAGE_PRESENT | PAGE_WRITEABLE;
+    }
+    
+    // Map 16k program
     for (int i = 0; i < USER_TEXT_SIZE/PAGE_SIZE; i++) {
         uintptr_t paddr = (uintptr_t)text + i*PAGE_SIZE;
         uintptr_t vaddr = (USER_TEXT_VMA + i*PAGE_SIZE);
+        int offset = (vaddr & PAGE_DIRENT_MASK) / PAGE_SIZE;
 
-        pt[vaddr / PAGE_SIZE] = paddr | PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
+        pt[offset] = paddr | PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
     }
 
     // Map user video to 0x1fe000
-    pt[0x1fe] = 0xb8000 | PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
-    pt[0x1ff] = 0xb9000 | PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
+    int voffset = (USER_VIDEO & PAGE_DIRENT_MASK) / PAGE_DIRENT_SIZE;
+    pt[voffset] = 0xb8000 | PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
+    pt[voffset + 1] = 0xb9000 | PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
 
     return pt;
 }
 
-void *process_page_table_alloc(void *text) {
+void *process_page_table_alloc(uintptr_t stack_u, uintptr_t text) {
 
-    u64_t *descriptor = process_page_dirent_alloc(text);
+    uintptr_t *descriptor = process_page_dirent_alloc(stack_u, text);
 
-    u64_t *pdt = kalloc_aligned(4096, 4096);
-    memsetqw(pdt, (u64_t)descriptor | 7, 512);
+    uintptr_t *pdt = kalloc_aligned(4096, 4096);
+    memset(pdt, 0, 4096);
 
-    u64_t *pdpt = kalloc_aligned(4096, 4096);
-    memsetqw(pdpt, (u64_t)pdt | 7, 512);
+    // First 2MB is protected kernel pages
+    pdt[0] = (uintptr_t)kernel_pt | PAGE_PRESENT | PAGE_WRITEABLE;
 
-    u64_t *pml4 = kalloc_aligned(4096, 4096);
-    memsetqw(pml4, (u64_t)pdpt | 7, 512);
+    // Next 2MB is user pages
+    pdt[1] = (uintptr_t)descriptor | PAGE_USER | PAGE_PRESENT | PAGE_WRITEABLE;
+
+    // Upper 2 levels just points at our single pdt
+    uintptr_t *pdpt = kalloc_aligned(4096, 4096);
+    memsetqw(pdpt, (uintptr_t)pdt | PAGE_USER | PAGE_PRESENT | PAGE_WRITEABLE, 512);
+    uintptr_t *pml4 = kalloc_aligned(4096, 4096);
+    memsetqw(pml4, (uintptr_t)pdpt | PAGE_USER | PAGE_PRESENT | PAGE_WRITEABLE, 512);
 
     return pml4;
 }
 
 void configure_initial_stack(process_t *process) {
-    stackptr_t u = STACK(process->stack_u, U_STACK_SIZE);
     stackptr_t k = STACK(process->stack_k, K_STACK_SIZE);
     u64_t flags;
 
     STACK_PUSH(k, 0x20 | 3);
-    STACK_PUSH(k, (uintptr_t)u);
+    STACK_PUSH(k, USER_STACK_START);
     GET_FLAGS(flags);
     flags |= 0x200; // Force reallow interrupts for the initial iret
     STACK_PUSH(k, flags);
@@ -69,11 +77,10 @@ void configure_initial_stack(process_t *process) {
 
 process_t *process_alloc(void *text) {
     process_t *process = (process_t*)kalloc(sizeof(process_t));
+    process->text = text;
     process->stack_k = kalloc(K_STACK_SIZE);
     process->stack_u = kalloc(U_STACK_SIZE);
-    process->pages = process_page_table_alloc(text);
-
-    process->text = text;
+    process->pages = process_page_table_alloc((uintptr_t)process->stack_u, (uintptr_t)text);
 
     configure_initial_stack(process);
 
