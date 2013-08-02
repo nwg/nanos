@@ -21,7 +21,7 @@ typedef struct process_s {
 #define USER_STACK_VMA 0x200000
 #define USER_STACK_START ((uintptr_t)STACK(USER_STACK_VMA, U_STACK_SIZE))
 #define USER_TEXT_VMA 0x210000
-#define USER_TEXT_SIZE (16*KB)
+#define USER_TEXT_SIZE (16*K)
 #define USER_HEAP 0x300000
 
 process_t *process_alloc(void *text);

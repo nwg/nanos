@@ -27,8 +27,8 @@ uintptr_t *process_page_dirent_alloc(uintptr_t stack_u, uintptr_t text) {
     memset(pt, 0, PAGE_DIRENT_SIZE);
 
     // 64K stack
-    for (int i = 0; i < (64*KB) / PAGE_DIRENT_SIZE; i++) {
-        pt[i] = (USER_TEXT_VMA + 8*KB) | PAGE_USER | PAGE_PRESENT | PAGE_WRITEABLE;
+    for (int i = 0; i < (64*K) / PAGE_DIRENT_SIZE; i++) {
+        pt[i] = (USER_TEXT_VMA + 8*K) | PAGE_USER | PAGE_PRESENT | PAGE_WRITEABLE;
     }
     
     // Map 16k program
