@@ -44,7 +44,3 @@ void spawn(void *text) {
     process_t *process = process_alloc(text);
     add_process(process);
 }
-
-void somefunc() {
-
-}
