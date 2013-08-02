@@ -21,7 +21,6 @@ void process_add_pages(process_t *process, u64_t num) {
     process->num_pages += num;
 }
 
-/* Our basic pagetable entry with identity from 0 to 0xc, 16k text + data, and video memory */
 uintptr_t *process_page_dirent_alloc(uintptr_t stack_u, uintptr_t text) {
 
     uintptr_t *pt = kalloc_aligned(PAGE_DIRENT_SIZE, 4096);
