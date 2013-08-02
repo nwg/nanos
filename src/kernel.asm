@@ -24,7 +24,7 @@ _start:
   ;mov cr4, eax
 
   ; Point to long-mode paging root
-  mov eax, PROG1_PML4
+  mov eax, INIT_PML4
   mov cr3, eax
 
 
@@ -218,7 +218,7 @@ end_gdt:
 tss64:
   dd 0
 tss64_sp:
-  dq PROG1_BASE_STACK_K
+  dq 0 ; rsp will be set to this value when switching back to kernel
   TIMES 23 dd 0
 end_tss64:
 
