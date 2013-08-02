@@ -7,6 +7,20 @@
 #include "video.h"
 #include "kernel.h"
 
+void process_add_pages(process_t *process, u64_t num) {
+    uintptr_t *pt = get_pagedir(process->pages, 0, 0, 1);
+
+    uintptr_t added_pages = (uintptr_t)kalloc_aligned(num * PAGE_SIZE, PAGE_SIZE);
+
+    int heap_start = (USER_HEAP & PAGE_DIRENT_MASK) / PAGE_SIZE;
+
+    for (int i = 0; i < num; i++) {
+        int poffset = heap_start + process->num_pages + i;
+        pt[poffset] = (added_pages + i*PAGE_SIZE) | PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
+    }
+    process->num_pages += num;
+}
+
 /* Our basic pagetable entry with identity from 0 to 0xc, 16k text + data, and video memory */
 uintptr_t *process_page_dirent_alloc(uintptr_t stack_u, uintptr_t text) {
 
@@ -81,6 +95,7 @@ process_t *process_alloc(void *text) {
     process->stack_k = kalloc(K_STACK_SIZE);
     process->stack_u = kalloc(U_STACK_SIZE);
     process->pages = process_page_table_alloc((uintptr_t)process->stack_u, (uintptr_t)text);
+    process->num_pages = 0;
 
     configure_initial_stack(process);
 

@@ -11,6 +11,10 @@ static node_t *current = NULL;
 #define ll_append_data(ll, data) ll_append_data_a(kalloc, ll, data)
 #define P(node) ((process_t*)node->data)
 
+process_t *current_process() {
+    return P(current);
+}
+
 void schedule_init() {
     processes = ll_alloc();
 }

@@ -1,5 +1,7 @@
 #include "syscall.h"
 #include "kernel.h"
+#include "process.h"
+#include "schedule.h"
 
 int64_t handle_syscall(system_state_t *state) {
 	switch (state->rax) {
@@ -11,6 +13,7 @@ int64_t handle_syscall(system_state_t *state) {
 
 			break;
 		case INTERRUPT_ADD_PAGES:
+			process_add_pages(current_process(), state->rbx);
 			break;
 	}
 

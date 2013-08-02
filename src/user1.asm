@@ -4,8 +4,19 @@
 
 [BITS 64]
 [ORG USER_TEXT]
+
+  ; This is the test interrupt (prints "Hi")
   mov rax, 0
   int 48
+
+  ; This is a heap extend, which gives us a page at 0x300000
+  mov rax, 1
+  mov rbx, 1
+  int 48
+
+  ; Test that we can write to our new page
+  mov rax, 0x300000
+  mov [rax], dword 10
 
   mov edx, START
 
