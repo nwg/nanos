@@ -5,7 +5,7 @@
 
 typedef uintnative_t *stackptr_t;
 
-#define STACK(addr, size) (stackptr_t)(((uintptr_t)addr + size - sizeof(uintnative_t)))
+#define STACK(addr, size) (stackptr_t)(((uintptr_t)addr + size))
 #define STACK_PUSH(ptr, val) (*--ptr = val)
 #define STACK_INC(ptr, val) (ptr -= val)
 
