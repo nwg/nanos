@@ -74,7 +74,7 @@ donea20:
   mov ss, ax
 
   ; put stack at end of our kernel's 16k (0x8000 - 0xc000)
-  mov esp, KERNEL_STACK_32
+  mov esp, KERNEL_STACK
 
   ; jump to kernel
   jmp 0x08:0x00008000

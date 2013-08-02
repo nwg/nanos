@@ -94,8 +94,7 @@ pop ax
 
 %define NATIVE_WORD_SIZE 8
 
-%define KERNEL_STACK (0x8000 - NATIVE_WORD_SIZE)
-%define KERNEL_STACK_32 (0x8000 - 4)
+%define KERNEL_STACK (0x8000)
 
 ; prog1 is 16k total (0xbe00 - 0xfe00)
 ; user stack grows down from end (0xfdfc)
