@@ -112,8 +112,7 @@ pop ax
 %define PROG2_BASE_STACK_K (KERNEL_START + 0x4000 - 0x400 - 4)
 
 ; Virtual address defs for usermode programs
-%define USER_TEXT 0xc000
-%define USER_STACK (0xc000 + 0x4000 - 4)
+%define USER_TEXT 0x200000
 %define USER_VIDEO 0x3fe000
 
 %define PROG1_PML4 PAGES_START
