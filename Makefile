@@ -1,4 +1,5 @@
 KERNEL_C = kmem.o ll.o process.o schedule.o pages.o memory.o kernel_init.o syscall.o video.o
+USER1_OBJ = user1.o video.o
 SRC = src/
 KERNEL_HEADERS = $(wildcard src/*.h)
 KERNEL_ASM = kernel.o
@@ -26,6 +27,10 @@ kernel.elf: $(KERNEL_ASM) $(KERNEL_C) custom.lnk
 	$(LD) -o $@ $(KERNEL_OBJ)
 	$(PAD) 32768 $@
 
+user1.bin: $(USER1_OBJ) user.lnk
+	$(LD) -T user.lnk -o $@ $(USER1_OBJ)
+	$(PAD) 16384 $@
+
 %.bin: $(SRC)/%.asm $(SRC)/common.mac
 	nasm -I$(SRC) -o $@ $<
 
@@ -43,4 +48,4 @@ bigboot: $(FLAT_BINS)
 	cat $(FLAT_BINS) >bigboot
 
 clean:
-	rm -f $(OBJ) $(FLAT_BINS) $(ELF)
+	rm -f $(OBJ) $(FLAT_BINS) $(ELF) $(USER1_OBJ)
