@@ -1,7 +1,8 @@
 #ifndef __TYPES_H__
 #define __TYPES_H__
 
-typedef unsigned long long int size_t;
+#include <stdio.h>
+
 typedef unsigned long long int u64_t;
 typedef unsigned char u8_t;
 typedef unsigned short u16_t;
