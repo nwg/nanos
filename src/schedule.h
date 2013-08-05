@@ -11,7 +11,7 @@ void switch_to_process(process_t *process);
 void schedule();
 void return_from_schedule(void *sp);
 void add_process(process_t *process);
-void spawn(void *text);
 process_t *current_process();
+void spawn(void *text, int argc, char **argv);
 
 #endif

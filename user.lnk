@@ -1,5 +1,5 @@
 OUTPUT_FORMAT("binary")
-ENTRY(_start)
+ENTRY(main)
 phys = 0x210000;
 SECTIONS
 {

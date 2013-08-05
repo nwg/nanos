@@ -30,6 +30,7 @@ void schedule() {
 
     current = next;
     switch_to_process(P(next));
+
 }
 
 void return_from_schedule(void *sp) {
@@ -40,7 +41,7 @@ void add_process(process_t *process) {
     ll_append_data(processes, process);
 }
 
-void spawn(void *text) {
-    process_t *process = process_alloc(text);
+void spawn(void *text, int argc, char **argv) {
+    process_t *process = process_alloc(text, argc, argv);
     add_process(process);
 }

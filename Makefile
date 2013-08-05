@@ -1,5 +1,7 @@
-KERNEL_C = kmem.o ll.o process.o schedule.o pages.o memory.o kernel_init.o syscall.o video.o
-USER1_OBJ = user1.o video.o
+KERNEL_C = kmem.o ll.o process.o schedule.o pages.o memory.o kernel_init.o \
+		   syscall.o video.o stack.o ptr.o string.o
+
+USER1_OBJ = user1.o video.o string.o
 SRC = src/
 KERNEL_HEADERS = $(wildcard src/*.h)
 KERNEL_ASM = kernel.o

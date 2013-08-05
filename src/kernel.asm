@@ -10,6 +10,7 @@ extern schedule, return_from_schedule
 extern spawn
 extern kernel_init
 extern handle_syscall
+extern spawn_test_programs
 
 [BITS 32]
 ;[org TOP]; start of second block of conventional memory
@@ -105,10 +106,7 @@ cont:
   ;mov dword [USER_VIDEO + 80*2*14], 0x01690148
 
   call kernel_init
-  mov rdi, PROG1_TEXT
-  call spawn
-  mov rdi, PROG2_TEXT
-  call spawn
+  call spawn_test_programs
   jmp schedule
 
 cpu0:

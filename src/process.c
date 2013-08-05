@@ -18,6 +18,7 @@ void process_add_pages(process_t *process, u64_t num) {
         int poffset = heap_start + process->num_pages + i;
         pt[poffset] = (added_pages + i*PAGE_SIZE) | PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
     }
+
     process->num_pages += num;
 }
 
@@ -27,10 +28,10 @@ uintptr_t *process_page_dirent_alloc(uintptr_t stack_u, uintptr_t text) {
     memset(pt, 0, PAGE_DIRENT_SIZE);
 
     // 64K stack
-    for (int i = 0; i < (64*K) / PAGE_DIRENT_SIZE; i++) {
-        pt[i] = (USER_TEXT_VMA + 8*K) | PAGE_USER | PAGE_PRESENT | PAGE_WRITEABLE;
+    for (int i = 0; i < U_STACK_SIZE / PAGE_DIRENT_SIZE; i++) {
+        pt[i] = (stack_u + i*PAGE_DIRENT_SIZE) | PAGE_USER | PAGE_PRESENT | PAGE_WRITEABLE;
     }
-    
+
     // Map 16k program
     for (int i = 0; i < USER_TEXT_SIZE/PAGE_SIZE; i++) {
         uintptr_t paddr = (uintptr_t)text + i*PAGE_SIZE;
@@ -70,33 +71,64 @@ void *process_page_table_alloc(uintptr_t stack_u, uintptr_t text) {
     return pml4;
 }
 
-void configure_initial_stack(process_t *process) {
-    stackptr_t k = STACK(process->stack_k, K_STACK_SIZE);
+stackptr_t configure_initial_stack(void *stack_k, void *stack_u, int argc, char **argv) {
+    stackptr_t k = STACK(stack_k, K_STACK_SIZE);
     u64_t flags;
 
+    uintptr_t u_and_argv = GET_USER_STACK_VMA(stack_u, argv);
+
     STACK_PUSH(k, 0x20 | 3);
-    STACK_PUSH(k, USER_STACK_START);
+    STACK_PUSH(k, u_and_argv);
     GET_FLAGS(flags);
     flags |= 0x200; // Force reallow interrupts for the initial iret
     STACK_PUSH(k, flags);
     STACK_PUSH(k, 0x18 | 3);
     STACK_PUSH(k, (uintptr_t)USER_TEXT_VMA);
 
-    STACK_INC(k, PUSHA_NUM);
+    STACK_INC(k, PUSHA_SIZE);
     memset(k, 0, PUSHA_SIZE);
+    system_state_t *state = (system_state_t*)k;
+    state->rdi = argc;
+    state->rsi = u_and_argv;
 
-    process->saved_sp = k;
+    return k;
 }
 
-process_t *process_alloc(void *text) {
+/*
+ * Copy argv contents to stack at s
+ * Returns new pointer to argv (also on stack)
+ */
+stackptr_t push_argv(void *vstart, void *pstart, stackptr_t s, int argc, char **argv) {
+
+    uintptr_t tmp_argv[argc];
+
+    for (int i = 0; i < argc; i++) {
+        s = push_string(s, argv[i]);
+        tmp_argv[i] = (uintptr_t)s - (uintptr_t)pstart + (uintptr_t)vstart;
+    }
+    STACK_ALIGN(s, NATIVE_WORD_SIZE);
+
+    for (int i = argc - 1; i >= 0; i--) {
+        STACK_PUSH(s, (uintptr_t)tmp_argv[i]);
+    }
+
+    return s;
+}
+
+process_t *process_alloc(void *text, int argc, char **argv) {
     process_t *process = (process_t*)kalloc(sizeof(process_t));
     process->text = text;
     process->stack_k = kalloc(K_STACK_SIZE);
-    process->stack_u = kalloc(U_STACK_SIZE);
+    process->stack_u = kalloc_aligned(U_STACK_SIZE, 4096);
     process->pages = process_page_table_alloc((uintptr_t)process->stack_u, (uintptr_t)text);
     process->num_pages = 0;
+    process->argc = argc;
 
-    configure_initial_stack(process);
+    stackptr_t u = STACK(process->stack_u, U_STACK_SIZE);
+    u = push_argv((void*)USER_STACK_VMA, process->stack_u, u, argc, argv);
+    process->argv = (char**)u;
+
+    process->saved_sp = configure_initial_stack(process->stack_k, process->stack_u, process->argc, process->argv);
 
     return process;
 }

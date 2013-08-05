@@ -4,6 +4,7 @@
 #include "kmem.h"
 #include "pages.h"
 #include "asm.h"
+#include "video.h"
 
 uintptr_t *kernel_pml4;
 uintptr_t *kernel_pdpt;
@@ -30,7 +31,28 @@ void init_kernel_pages() {
 		kernel_pt[i] = i*4096 | PAGE_PRESENT | PAGE_WRITEABLE;
 	}
 
+    int voffset = (USER_VIDEO & PAGE_DIRENT_MASK) / PAGE_DIRENT_SIZE;
+    kernel_pt[voffset] = 0xb8000 | PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
+    kernel_pt[voffset + 1] = 0xb9000 | PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
+
 	SET_CR3(kernel_pml4);
+}
+
+void spawn_test_programs() {
+	static char *argv1[] = {
+		"user1", "4", "11",
+	};
+	static int argc1 = sizeof(argv1) / sizeof(char*);
+
+	spawn((void*)0x18000, argc1, argv1);
+
+	static char *argv2[] = {
+	"user1", "1", "12",
+	};
+	static int argc2 = sizeof(argv2) / sizeof(char*);
+
+	spawn((void*)0x18000, argc2, argv2);
+
 }
 
 void kernel_init() {
