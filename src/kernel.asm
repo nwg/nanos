@@ -16,6 +16,8 @@ extern spawn_test_programs
 ;[org TOP]; start of second block of conventional memory
 
 _start:
+
+
   ; Enable pae
   mov eax, 10100000b                ; Set the PAE and PGE bit.
   mov cr4, eax
@@ -43,7 +45,7 @@ _start:
   mov cr0, eax
 
   ; Reset gdt
-  lgdt [gdt_d]        
+  lgdt [gdt_d]
   jmp 0x08:cont
 
 align 8 ; just for disassembly purposes
@@ -187,7 +189,7 @@ pit_handler:
 
   mov al, 20h
   out 20h, al
-  
+
   ; schedule next process
   jmp schedule
 

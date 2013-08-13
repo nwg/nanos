@@ -145,6 +145,7 @@ void switch_to_process(process_t *process) {
     SET_ALL_SEGMENTS(0x20 | 3);
 
     SET_RSP(process->saved_sp);
+
     RETURN_TO_PROCESS();
 
     while (1) {}

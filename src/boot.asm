@@ -5,11 +5,11 @@
 [BITS 16] ;Tells the assembler that its a 16 bit code
 [ORG TOP]  ;Origin, tell the assembler that where the code w
         ;be in memory after it is been loaded
-  mov ax, 0x800
+  mov ax, 0x1000
   mov es, ax
 
   ; read #sectors
-  mov al, 128
+  mov al, 63
 
   ; start sector
   mov cl, 2
@@ -25,14 +25,35 @@
 
   call ReadDisk
 
-  mov ax, 0x1800
+  mov ax, 0x17e0
   mov es, ax
 
   ; read #sectors
-  mov al, 128
+  mov al, 63
 
   ; start sector
-  mov cl, 4
+  mov cl, 2
+
+  ; start track
+  mov ch, 0
+
+  ; start head
+  mov dh, 1
+
+  ; memory dest
+  mov bx, 0
+
+  call ReadDisk
+
+
+  mov ax, 0x1fc0
+  mov es, ax
+
+  ; read #sectors
+  mov al, 63
+
+  ; start sector
+  mov cl, 2
 
   ; start track
   mov ch, 0
@@ -45,11 +66,30 @@
 
   call ReadDisk
 
+  mov ax, 0x27a0
+  mov es, ax
+
+  ; read #sectors
+  mov al, 63
+
+  ; start sector
+  mov cl, 2
+
+  ; start track
+  mov ch, 0
+
+  ; start head
+  mov dh, 3
+
+  ; memory dest
+  mov bx, 0
+
+  call ReadDisk
 
   mov ax, 0
   mov es, ax
 
-  lgdt [gdt_d]        
+  lgdt [gdt_d]
   cli
 
   ; Set protected mode flag
@@ -77,7 +117,8 @@ donea20:
   mov esp, KERNEL_STACK
 
   ; jump to kernel
-  jmp 0x08:0x00008000
+  jmp 0x08:protmode
+
 
 gdt_d:
   dw end_gdt - gdt - 1
@@ -105,6 +146,13 @@ ReadDisk:
   ; Disk interrupt
   int 13h
   ret
+
+[BITS 32]
+
+protmode:
+  mov dword [0xb8000], 0x02690248
+
+  jmp 0x10000
 
 TIMES 510 - ($ - $$) db 0 ;Fill the rest of sector with 0
 DW 0xAA55     ;Add boot signature at the end of bootloader

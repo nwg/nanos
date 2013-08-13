@@ -44,14 +44,14 @@ void spawn_test_programs() {
 	};
 	static int argc1 = sizeof(argv1) / sizeof(char*);
 
-	spawn((void*)0x18000, argc1, argv1);
+	spawn((void*)TEST_PROG_PMA, argc1, argv1);
 
 	static char *argv2[] = {
 	"user1", "1", "12",
 	};
 	static int argc2 = sizeof(argv2) / sizeof(char*);
 
-	spawn((void*)0x18000, argc2, argv2);
+	spawn((void*)TEST_PROG_PMA, argc2, argv2);
 
 }
 
