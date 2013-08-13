@@ -7,6 +7,8 @@ extern void *tss64_sp;
 #define pushqi(val) __asm__ ( "pushq %0\n\t" :: "i" (val) );
 #define pushfq() __asm__ ( "pushfq" );
 
+#define BOCHS_BRK() __asm__("xchg %bx, %bx\n\t")
+
 #define GET_FLAGS(dst) \
     __asm__ __volatile__ ( \
         "pushfq\n\t" \
@@ -71,7 +73,7 @@ extern void *tss64_sp;
 
 #define RETURN_TO_PROCESS() \
     __asm__ ("jmp return_to_process\n\t");
-    
+
 #define PUSHA_NUM (7)
 #define PUSHA_SIZE (PUSHA_NUM*8)
 

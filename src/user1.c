@@ -2,6 +2,7 @@
 #include "syscall.h"
 #include "process.h"
 #include <string.h>
+#include "asm.h"
 
 void wait();
 void print_hex(int row, int col, int color, u64_t v);
@@ -54,5 +55,5 @@ void print_hex(int row, int col, int color, u64_t v) {
 }
 
 void wait() {
-	for (int i = 0; i < 10000000; i++) {}
+	for (int i = 0; i < 1000000; i++) {}
 }

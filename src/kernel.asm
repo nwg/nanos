@@ -40,8 +40,7 @@ _start:
 
   ; Enable paging
   mov eax, cr0
-  ;or eax, 0x80000000
-  or eax, 0x80000001
+  or eax, 0x80000000
   mov cr0, eax
 
   ; Reset gdt
@@ -51,12 +50,19 @@ _start:
 align 8 ; just for disassembly purposes
 [BITS 64]
 cont:
+
   mov rsp, KERNEL_STACK
 
+  ; Enable IRQ0 (PIT)
+  mov al, 0xfe
+  out 0xa1, al
+  mov al, 0xff
+  out 0x21, al
+
   ; Disable PIC
-  ;mov al, 0xff
-  ;out 0xa1, al
-  ;out 0x21, al
+  ; mov al, 0xff
+  ; out 0xa1, al
+  ; out 0x21, al
 
   ; Load interrupt descriptor table
   lidt [idt_hdr]
@@ -70,9 +76,9 @@ cont:
   ; Master is irq0 to irq7 and starts at 32 (0x20)
   ; Slave is irq8 to irq15 and starts at handler 40 (0x28)
   in al, PIC1_DATA
-  push ax
+  push rax
   in al, PIC2_DATA
-  push ax
+  push rax
 
   mov al, ICW1_INIT+ICW1_ICW4
   out PIC1_COMMAND, al
@@ -83,7 +89,7 @@ cont:
   out PIC1_DATA, al
   IOWAIT
   mov al, 0x28
-  out PIC1_DATA, al
+  out PIC2_DATA, al
   IOWAIT
   mov al, 4
   out PIC1_DATA, al
@@ -98,10 +104,10 @@ cont:
   out PIC2_DATA, al
   IOWAIT
 
-  pop ax
+  pop rax
   out PIC1_DATA, al
   IOWAIT
-  pop ax
+  pop rax
   out PIC2_DATA, al
   IOWAIT
 

@@ -13,8 +13,9 @@ CFLAGS = -fno-builtin -Wall -Werror -std=c99
 LD = x86_64-elf-ld
 PAD = ./util/pad.sh
 ELF = kernel.elf
+BOCHS = /usr/local/bin/bochs
 
-.PHONY: all run clean
+.PHONY: all run run-qemu clean
 
 .SUFFIXES:
 
@@ -33,6 +34,13 @@ user1.bin: $(USER1_OBJ) user.lnk
 	$(LD) -T user.lnk -o $@ $(USER1_OBJ)
 	$(PAD) 16384 $@
 
+bochs.img: bigboot
+	cp $< $@
+	$(PAD) 129024 $@
+
+run: bochs.img
+	$(BOCHS) -q
+
 %.bin: $(SRC)/%.asm $(SRC)/common.mac
 	nasm -I$(SRC) -o $@ $<
 
@@ -42,9 +50,8 @@ user1.bin: $(USER1_OBJ) user.lnk
 %.o: $(SRC)/%.asm $(SRC)/common.mac
 	nasm -I$(SRC) -f elf64 -o $@ $<
 
-run: bigboot
+run-qemu: bigboot
 	qemu-system-x86_64 ./bigboot
-	#qemu-system-x86_64 -s -S ./bigboot
 
 bigboot: $(FLAT_BINS)
 	cat $(FLAT_BINS) >bigboot

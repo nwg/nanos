@@ -150,8 +150,6 @@ ReadDisk:
 [BITS 32]
 
 protmode:
-  mov dword [0xb8000], 0x02690248
-
   jmp 0x10000
 
 TIMES 510 - ($ - $$) db 0 ;Fill the rest of sector with 0

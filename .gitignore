@@ -10,3 +10,4 @@ a.out
 *.sym
 .gdbinit
 *.sublime-workspace
+bochs.log
