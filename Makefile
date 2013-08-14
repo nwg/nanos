@@ -38,8 +38,11 @@ bochs.img: bigboot
 	cp $< $@
 	$(PAD) 129024 $@
 
-run: bochs.img
+run-bochs: bochs.img
 	$(BOCHS) -q
+
+debug: bochs.img
+	$(BOCHS) -q -f bochsrc.debug
 
 %.bin: $(SRC)/%.asm $(SRC)/common.mac
 	nasm -I$(SRC) -o $@ $<
@@ -50,7 +53,7 @@ run: bochs.img
 %.o: $(SRC)/%.asm $(SRC)/common.mac
 	nasm -I$(SRC) -f elf64 -o $@ $<
 
-run-qemu: bigboot
+run: bigboot
 	qemu-system-x86_64 ./bigboot
 
 bigboot: $(FLAT_BINS)
