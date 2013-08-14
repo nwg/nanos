@@ -14,6 +14,7 @@ LD = x86_64-elf-ld
 PAD = ./util/pad.sh
 ELF = kernel.elf
 BOCHS = /usr/local/bin/bochs
+BOCHS_IMG = bochs.img
 
 .PHONY: all run run-qemu clean
 
@@ -34,14 +35,14 @@ user1.bin: $(USER1_OBJ) user.lnk
 	$(LD) -T user.lnk -o $@ $(USER1_OBJ)
 	$(PAD) 16384 $@
 
-bochs.img: bigboot
+$(BOCHS_IMG): bigboot
 	cp $< $@
 	$(PAD) 129024 $@
 
-run-bochs: bochs.img
+run-bochs: $(BOCHS_IMG)
 	$(BOCHS) -q
 
-debug: bochs.img
+debug: $(BOCHS_IMG)
 	$(BOCHS) -q -f bochsrc.debug
 
 %.bin: $(SRC)/%.asm $(SRC)/common.mac
@@ -60,4 +61,4 @@ bigboot: $(FLAT_BINS)
 	cat $(FLAT_BINS) >bigboot
 
 clean:
-	rm -f $(OBJ) $(FLAT_BINS) $(ELF) $(USER1_OBJ)
+	rm -f $(OBJ) $(FLAT_BINS) $(ELF) $(USER1_OBJ) $(BOCHS_IMG)
