@@ -5,7 +5,13 @@
 [BITS 16] ;Tells the assembler that its a 16 bit code
 [ORG TOP]  ;Origin, tell the assembler that where the code w
         ;be in memory after it is been loaded
+
   mov ax, 0x1000
+  mov bx, 0
+  mov ch, 0 ; start track
+  mov dh, 0 ; start head
+
+read:
   mov es, ax
 
   ; read #sectors
@@ -14,77 +20,20 @@
   ; start sector
   mov cl, 2
 
-  ; start track
-  mov ch, 0
+  call ReadDisk
 
-  ; start head
+  add dh, 1 ; next cylinder
+
+  cmp dh, 4
+  jl next_read
   mov dh, 0
+  add ch, 1
 
-  ; memory dest
-  mov bx, 0
-
-  call ReadDisk
-
-  mov ax, 0x17e0
-  mov es, ax
-
-  ; read #sectors
-  mov al, 63
-
-  ; start sector
-  mov cl, 2
-
-  ; start track
-  mov ch, 0
-
-  ; start head
-  mov dh, 1
-
-  ; memory dest
-  mov bx, 0
-
-  call ReadDisk
-
-
-  mov ax, 0x1fc0
-  mov es, ax
-
-  ; read #sectors
-  mov al, 63
-
-  ; start sector
-  mov cl, 2
-
-  ; start track
-  mov ch, 0
-
-  ; start head
-  mov dh, 2
-
-  ; memory dest
-  mov bx, 0
-
-  call ReadDisk
-
-  mov ax, 0x27a0
-  mov es, ax
-
-  ; read #sectors
-  mov al, 63
-
-  ; start sector
-  mov cl, 2
-
-  ; start track
-  mov ch, 0
-
-  ; start head
-  mov dh, 3
-
-  ; memory dest
-  mov bx, 0
-
-  call ReadDisk
+next_read:
+  mov ax, es
+  add ax, (512*63) >> 4
+  cmp ax, 0x3020
+  jl read
 
   mov ax, 0
   mov es, ax
@@ -150,6 +99,7 @@ ReadDisk:
 [BITS 32]
 
 protmode:
+
   jmp 0x10000
 
 TIMES 510 - ($ - $$) db 0 ;Fill the rest of sector with 0
