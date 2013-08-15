@@ -1,28 +1,31 @@
-#ifndef __INTERUPT_H__
-#define __INTERUPT_H__
+#ifndef __SYSCALL_H__
+#define __SYSCALL_H__
 
 typedef enum {
-	INTERRUPT_TEST,
-	INTERRUPT_ADD_PAGES,
-} interrupt_code_t;
+	SYSCALL_TEST,
+    SYSCALL_ADD_PAGES,
+} syscall_code_t;
 
-#define sys_test() \
+#define syscall0(code) \
     __asm__ __volatile__ ( \
         "movq %0, %%rax\n\t" \
         "int $48\n\t" \
         :  \
-        : "i" (INTERRUPT_TEST) \
+        : "i" (code) \
         : "rax" \
     )
 
-#define sys_add_pages(count) \
+#define syscall1i(code, arg1) \
     __asm__ __volatile__ ( \
         "movq %0, %%rax\n\t" \
         "movq %1, %%rbx\n\t" \
         "int $48\n\t" \
         :  \
-        : "i" (INTERRUPT_ADD_PAGES), "i" (count) \
+        : "i" (code), "i" (arg1) \
         : "rax", "rbx" \
     )
+
+#define sys_test() syscall0(SYSCALL_TEST)
+#define sys_add_pages(count) syscall1i(SYSCALL_ADD_PAGES, count)
 
 #endif
