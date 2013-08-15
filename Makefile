@@ -27,7 +27,7 @@ all: bigboot
 # kernel.o must be the first object passed to the linker
 kernel.bin: $(KERNEL_ASM) $(KERNEL_C) kernel.elf custom.lnk
 	$(OBJCOPY) -O binary --set-section-flags .bss=alloc,load,contents kernel.elf kernel.bin
-	$(PAD) 32768 $@
+	$(PAD) 65536 $@
 
 kernel.elf: $(KERNEL_ASM) $(KERNEL_C) custom.lnk
 	$(LD) -o $@ -T custom.lnk --oformat elf64-x86-64 $(KERNEL_OBJ)
@@ -41,7 +41,7 @@ user1.bin: $(USER1_OBJ) user.lnk
 
 $(BOCHS_IMG): bigboot
 	cp $< $@
-	$(PAD) 129024 $@
+	$(PAD) 258048 $@
 
 run-bochs: $(BOCHS_IMG) kernel.ldsym
 	$(BOCHS) -q
