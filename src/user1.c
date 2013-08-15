@@ -3,6 +3,7 @@
 #include "process.h"
 #include <string.h>
 #include "asm.h"
+#include <stdio.h>
 
 void wait();
 void print_hex(int row, int col, int color, u64_t v);
@@ -10,8 +11,13 @@ int atoi(const char *a);
 
 int main(int argc, char **argv) {
 
+	char blah[256];
+
 	int color = atoi(argv[1]) << 8;
 	int row = atoi(argv[2]);
+
+	snprintf(blah, 256, "snprintf test: %s %d.", "something", 12345);
+	print(row+5, 0, color, blah);
 
 	sys_test();
 
