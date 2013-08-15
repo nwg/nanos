@@ -7,7 +7,7 @@ KERNEL_HEADERS = $(wildcard src/*.h)
 KERNEL_ASM = kernel.o
 KERNEL_OBJ = $(KERNEL_ASM) $(KERNEL_C)
 OBJ = $(KERNEL_OBJ)
-FLAT_BINS = boot.bin kernel.bin pages.bin user1.bin user2.bin
+FLAT_BINS = boot.bin kernel.bin pages.bin user1.bin
 CC = x86_64-elf-gcc
 CFLAGS = -fno-builtin -Wall -Werror -std=c99
 LD = x86_64-elf-ld
