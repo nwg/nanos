@@ -16,6 +16,7 @@ ELF = kernel.elf
 BOCHS = /usr/local/bin/bochs
 BOCHS_IMG = bochs.img
 MKLDSYM = ./util/mkldsym
+OBJCOPY = x86_64-elf-objcopy
 
 .PHONY: all run run-qemu clean
 
@@ -24,8 +25,8 @@ MKLDSYM = ./util/mkldsym
 all: bigboot
 
 # kernel.o must be the first object passed to the linker
-kernel.bin: $(KERNEL_ASM) $(KERNEL_C) custom.lnk
-	$(LD) -T custom.lnk -o $@ $(KERNEL_OBJ)
+kernel.bin: $(KERNEL_ASM) $(KERNEL_C) kernel.elf custom.lnk
+	$(OBJCOPY) -O binary --set-section-flags .bss=alloc,load,contents kernel.elf kernel.bin
 	$(PAD) 32768 $@
 
 kernel.elf: $(KERNEL_ASM) $(KERNEL_C) custom.lnk
