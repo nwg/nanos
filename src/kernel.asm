@@ -179,17 +179,20 @@ irq15:
   iretq
 
 software_interrupt:
+
+  ; Let scheduler know we are done with this process
   PUSHA
   mov rdi, rsp
-  call handle_syscall
-  POPA
-  iretq
+  call return_from_schedule
+
+  ; handler in c
+  mov rdi, rsp
+  jmp handle_syscall
 
 pit_handler:
 
-  ; Immediately save state
-  PUSHA
   ; Let scheduler know we are done with this process
+  PUSHA
   mov rdi, rsp
   call return_from_schedule
 
