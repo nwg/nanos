@@ -1,8 +1,9 @@
 #ifndef __STACK_H__
 #define __STACK_H__
 
-#include "types.h"
 #include "ptr.h"
+#include <stdint.h>
+#include "native.h"
 
 typedef uintnative_t *stackptr_t;
 

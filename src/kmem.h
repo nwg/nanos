@@ -1,7 +1,7 @@
 #ifndef __KMEM_H__
 #define __KMEM_H__
 
-#include "types.h"
+#include <stddef.h>
 
 #define KALLOC_START ((void*)0x100000)
 

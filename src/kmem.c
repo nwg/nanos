@@ -1,5 +1,6 @@
 #include "kmem.h"
 #include "ptr.h"
+#include "native.h"
 
 void *kcurrent = KALLOC_START;
 

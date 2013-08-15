@@ -10,7 +10,7 @@
 #define PAGE_SIZE 0x1000
 
 // This offset is used for differentiating between the actual page table addresses and lower modifier bits
-#define PAGE_MASK ~((u64_t)(PAGE_SIZE - 1))
+#define PAGE_MASK ~((uint64_t)(PAGE_SIZE - 1))
 
 typedef enum {
   PAGE_PRESENT = 1 << 0,

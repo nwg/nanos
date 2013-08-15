@@ -1,11 +1,11 @@
 #include "memory.h"
 #include "pages.h"
-#include "types.h"
 #include "sizes.h"
 #include "kmem.h"
 #include "video.h"
 #include "asm.h"
 #include "kernel.h"
+#include <stdint.h>
 
 uintptr_t *get_pagedir(uintptr_t *pml4, int ipdpt, int ipdt, int ipt) {
 	uintptr_t *pdpt = (uintptr_t*)(pml4[ipdpt] & PAGE_MASK);

@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 void wait();
-void print_hex(int row, int col, int color, u64_t v);
+void print_hex(int row, int col, int color, uint64_t v);
 int atoi(const char *a);
 
 int main(int argc, char **argv) {
@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
 	sys_test();
 
 	sys_add_pages(1);
-	*(u64_t*)USER_HEAP = 50;
+	*(uint64_t*)USER_HEAP = 50;
 
 	for (int i = 0; i < 80; i++) {
 		print(row, i, color, "\07");
@@ -45,7 +45,7 @@ int atoi(const char *a) {
 	return num;
 }
 
-void print_hex(int row, int col, int color, u64_t v) {
+void print_hex(int row, int col, int color, uint64_t v) {
 	char buf[2]; buf[1] = '\0';
 
 	for (int i = 0; i < 16; i++, col++) {

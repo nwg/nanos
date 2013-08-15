@@ -1,13 +1,15 @@
 #ifndef __LL_H__
 #define __LL_H__
 
-#include "types.h"
+#include <stddef.h>
+#include <stdbool.h>
+
 typedef struct node_s {
     struct node_s *next;
     void *data;
 } node_t;
 
-typedef BOOL (*ll_predicate)(node_t *node);
+typedef bool (*ll_predicate)(node_t *node);
 typedef void * (*allocator)(size_t size);
 
 node_t *ll_alloc_a(allocator alloc);

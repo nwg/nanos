@@ -1,7 +1,7 @@
 #ifndef __KERNEL_H__
 #define __KERNEL_H__
 
-#include "types.h"
+#include <stdint.h>
 
 #define KERNEL_HEAP 0x100000
 
@@ -11,13 +11,13 @@ extern uintptr_t *kernel_pdt;
 extern uintptr_t *kernel_pt;
 
 typedef struct {
-	u64_t rax;
-	u64_t rbx;
-	u64_t rcx;
-	u64_t rdx;
-	u64_t rbp;
-	u64_t rsi;
-	u64_t rdi;
+	uint64_t rax;
+	uint64_t rbx;
+	uint64_t rcx;
+	uint64_t rdx;
+	uint64_t rbp;
+	uint64_t rsi;
+	uint64_t rdi;
 } system_state_t;
 
 #endif

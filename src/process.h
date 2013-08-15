@@ -1,7 +1,6 @@
 #ifndef __PROCESS_H__
 #define __PROCESS_H__
 
-#include "types.h"
 #include "sizes.h"
 #include "stack.h"
 
@@ -15,7 +14,7 @@ typedef struct process_s {
   void *saved_sp;
   void *saved_registers;
   void *text;
-  u64_t num_pages;
+  uint64_t num_pages;
   void *pt;
   int argc;
   char **argv;
@@ -35,6 +34,6 @@ process_t *process_alloc(void *text, int argc, char **argv);
 
 void __attribute__ ((noreturn)) switch_to_process(process_t *process);
 void return_from_process(process_t *process, void *sp);
-void process_add_pages(process_t *process, u64_t num);
+void process_add_pages(process_t *process, uint64_t num);
 
 #endif

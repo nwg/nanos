@@ -7,7 +7,7 @@
 #include "video.h"
 #include "kernel.h"
 
-void process_add_pages(process_t *process, u64_t num) {
+void process_add_pages(process_t *process, uint64_t num) {
     uintptr_t *pt = get_pagedir(process->pages, 0, 0, 1);
 
     uintptr_t added_pages = (uintptr_t)kalloc_aligned(num * PAGE_SIZE, PAGE_SIZE);
@@ -73,7 +73,7 @@ void *process_page_table_alloc(uintptr_t stack_u, uintptr_t text) {
 
 stackptr_t configure_initial_stack(void *stack_k, void *stack_u, int argc, char **argv) {
     stackptr_t k = STACK(stack_k, K_STACK_SIZE);
-    u64_t flags;
+    uint64_t flags;
 
     uintptr_t u_and_argv = GET_USER_STACK_VMA(stack_u, argv);
 
