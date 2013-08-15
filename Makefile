@@ -42,10 +42,10 @@ $(BOCHS_IMG): bigboot
 	cp $< $@
 	$(PAD) 129024 $@
 
-run-bochs: $(BOCHS_IMG)
+run-bochs: $(BOCHS_IMG) kernel.ldsym
 	$(BOCHS) -q
 
-debug: $(BOCHS_IMG)
+debug: $(BOCHS_IMG) kernel.ldsym
 	$(BOCHS) -q -f bochsrc.debug
 
 %.bin: $(SRC)/%.asm $(SRC)/common.mac
