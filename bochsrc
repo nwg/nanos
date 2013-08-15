@@ -10,3 +10,4 @@ log: bochs.log
 mouse: enabled=0
 cpu: ips=15000000
 #vga_update_interval: 150000
+debug_symbols: file=kernel.ldsym

@@ -15,6 +15,7 @@ PAD = ./util/pad.sh
 ELF = kernel.elf
 BOCHS = /usr/local/bin/bochs
 BOCHS_IMG = bochs.img
+MKLDSYM = ./util/mkldsym
 
 .PHONY: all run run-qemu clean
 
@@ -28,8 +29,10 @@ kernel.bin: $(KERNEL_ASM) $(KERNEL_C) custom.lnk
 	$(PAD) 32768 $@
 
 kernel.elf: $(KERNEL_ASM) $(KERNEL_C) custom.lnk
-	$(LD) -o $@ $(KERNEL_OBJ)
-	$(PAD) 32768 $@
+	$(LD) -o $@ -T custom.lnk --oformat elf64-x86-64 $(KERNEL_OBJ)
+
+kernel.ldsym: kernel.elf
+	$(MKLDSYM) kernel.elf kernel.ldsym
 
 user1.bin: $(USER1_OBJ) user.lnk
 	$(LD) -T user.lnk -o $@ $(USER1_OBJ)

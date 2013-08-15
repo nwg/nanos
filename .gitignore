@@ -11,3 +11,4 @@ a.out
 .gdbinit
 *.sublime-workspace
 bochs.log
+*.ldsym
