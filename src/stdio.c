@@ -36,11 +36,13 @@ int i2a(char *dst, size_t n, uint64_t num) {
 
 int vsnprintf(char * restrict str, size_t n, const char * restrict format, va_list ap) {
     int i = 0;
-
     int v_i;
     char *v_s;
 
-    for (const char *f = format; *f != '\0' && i < n; ) {
+    if (n < 1)
+        return 0;
+
+    for (const char *f = format; *f != '\0' && i < n - 1; ) {
         if (*f != '%') {
             str[i++] = *f++;
             continue;
@@ -68,6 +70,8 @@ int vsnprintf(char * restrict str, size_t n, const char * restrict format, va_li
         }
 
     }
+
+    str[i++] = '\0';
 
     return 0;
 }
