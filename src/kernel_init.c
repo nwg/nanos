@@ -47,7 +47,7 @@ void spawn_test_programs() {
 	spawn((void*)TEST_PROG_PMA, argc1, argv1);
 
 	static char *argv2[] = {
-	"user1", "1", "12",
+	"user2", "1", "12",
 	};
 	static int argc2 = sizeof(argv2) / sizeof(char*);
 
