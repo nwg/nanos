@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <memory.h>
+#include "video.h"
 
 #define BASE10_BIGGEST 10000000000000000000UL
 
@@ -87,4 +88,28 @@ int snprintf(char * restrict str, size_t n, const char * restrict format, ...) {
     va_end(ap);
 
     return 0;
+}
+
+static int row = 0;
+static char buf[256];
+
+int
+vprintf(const char * restrict format, va_list ap) {
+    vsnprintf(buf, 256, format, ap);
+    print(row++, 0, COLOR_GREEN, buf);
+
+    row = row  % 25;
+    return 0;
+}
+
+int
+printf(const char * restrict format, ...) {
+    va_list ap;
+    va_start(ap, format);
+
+    int result = vprintf(format, ap);
+
+    va_end(ap);
+
+    return result;
 }
