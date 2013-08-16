@@ -6,6 +6,7 @@
 #include "stack.h"
 #include "video.h"
 #include "kernel.h"
+#include <stdio.h>
 
 void process_add_pages(process_t *process, uint64_t num) {
     uintptr_t *pt = get_pagedir(process->pages, 0, 0, 1);
@@ -92,6 +93,17 @@ stackptr_t configure_initial_stack(void *stack_k, void *stack_u, int argc, char 
     state->rsi = u_and_argv;
 
     return k;
+}
+
+void process_description(char *buf, int n, process_t *p) {
+    char *name = (char*)GET_USER_STACK_PMA(p->stack_u, p->argv[0]);
+    snprintf(buf, n, "%s @ %d", name, (int)(uintptr_t)p->text);
+}
+
+void dump_process(process_t *p) {
+    char buf[256];
+    process_description(buf, 256, p);
+    printf("%s", buf);
 }
 
 /*

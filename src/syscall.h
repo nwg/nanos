@@ -3,6 +3,7 @@
 
 typedef enum {
 	SYSCALL_TEST,
+    SYSCALL_EXIT,
     SYSCALL_ADD_PAGES,
 } syscall_code_t;
 
@@ -26,6 +27,7 @@ typedef enum {
     )
 
 #define sys_test() syscall0(SYSCALL_TEST)
+#define sys_exit() syscall0(SYSCALL_EXIT)
 #define sys_add_pages(count) syscall1i(SYSCALL_ADD_PAGES, count)
 
 #endif

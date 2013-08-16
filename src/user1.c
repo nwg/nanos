@@ -4,6 +4,7 @@
 #include <string.h>
 #include "asm.h"
 #include <stdio.h>
+#include <stdbool.h>
 
 void wait();
 void print_hex(int row, int col, int color, uint64_t v);
@@ -25,6 +26,12 @@ int main(int argc, char **argv) {
 	*(uint64_t*)USER_HEAP = 50;
 
 	for (int i = 0; i < 80; i++) {
+
+		if (i == 20 && row == 12) {
+			print(row, i, color, "*");
+			sys_exit();
+		}
+
 		print(row, i, color, "\07");
 		wait();
 	}

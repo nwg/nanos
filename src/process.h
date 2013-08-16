@@ -29,11 +29,15 @@ typedef struct process_s {
 #define TEST_PROG_PMA 0x28000
 
 #define GET_USER_STACK_VMA(stack_u, address) ((uintptr_t)address - (uintptr_t)(stack_u) + USER_STACK_VMA)
+#define GET_USER_STACK_PMA(stack_u, address) ((uintptr_t)address - USER_STACK_VMA + (uintptr_t)(stack_u))
 
 process_t *process_alloc(void *text, int argc, char **argv);
 
 void __attribute__ ((noreturn)) switch_to_process(process_t *process);
 void return_from_process(process_t *process, void *sp);
 void process_add_pages(process_t *process, uint64_t num);
+
+void dump_process(process_t *p);
+void process_description(char *buf, int n, process_t *p);
 
 #endif
