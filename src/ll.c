@@ -40,7 +40,7 @@ node_t *ll_last(node_t *ll) {
     if (ll->next == ll) {
         return NULL;
     }
-    
+
     return _ll_last(ll);
 }
 
@@ -62,4 +62,21 @@ node_t *ll_find(node_t *ll, void *data) {
     }
 
     return NULL;
+}
+
+int ll_size(node_t *ll) {
+    int size = 0;
+    for (node_t *node = ll->next; node != ll; node = node->next) {
+        size++;
+    }
+    return size;
+}
+
+void ll_remove(node_t *ll, node_t *target) {
+    for (node_t *node = ll->next; node != ll; node = node->next) {
+        if (node->next == target) {
+            node->next = node->next->next;
+            return;
+        }
+    }
 }

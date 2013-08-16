@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#define ll_empty(ll) (ll->next == ll)
+
 typedef struct node_s {
     struct node_s *next;
     void *data;
@@ -19,4 +21,7 @@ node_t *ll_last(node_t *ll);
 void ll_append(node_t *ll, node_t *node);
 void ll_append_data_a(allocator alloc, node_t *ll, void *data);
 node_t *ll_find(node_t *ll, void *data);
+void ll_remove(node_t *ll, node_t *node);
+int ll_size(node_t *ll);
+
 #endif
