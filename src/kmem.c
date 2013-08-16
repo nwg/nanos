@@ -15,4 +15,5 @@ void *kalloc_aligned(size_t size, size_t bounds) {
     return tmp;
 }
 
-
+void kfree(void *ptr) {
+}
