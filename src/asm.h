@@ -1,11 +1,15 @@
 #ifndef __ASM_H__
 #define __ASM_H__
 
+#include <stdint.h>
+
 extern void *tss64_sp;
 
 #define pushq(val) __asm__ ( "pushq %0\n\t" :: "m" (val) );
 #define pushqi(val) __asm__ ( "pushq %0\n\t" :: "i" (val) );
 #define pushfq() __asm__ ( "pushfq" );
+
+void outb(uint16_t port, uint8_t b);
 
 #define BOCHS_BRK() __asm__("xchg %bx, %bx\n\t")
 

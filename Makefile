@@ -1,5 +1,5 @@
 KERNEL_C = kmem.o ll.o process.o schedule.o pages.o memory.o kernel_init.o \
-		   syscall.o video.o stack.o ptr.o string.o stdio.o
+		   syscall.o video.o stack.o ptr.o string.o stdio.o timer.o intel_8254.o asm.o
 
 USER1_OBJ = user1.o video.o string.o stdio.o memory.o
 SRC = src/

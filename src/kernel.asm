@@ -7,6 +7,7 @@ global tss64_sp
 global return_to_process
 
 extern schedule, return_from_schedule
+extern handle_timer_interrupt
 extern spawn
 extern kernel_init
 extern handle_syscall
@@ -200,7 +201,7 @@ pit_handler:
   out 20h, al
 
   ; schedule next process
-  jmp schedule
+  jmp handle_timer_interrupt
 
 prog1_rsp: dq 0
 prog2_rsp: dq 0

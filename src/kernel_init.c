@@ -5,11 +5,13 @@
 #include "pages.h"
 #include "asm.h"
 #include "video.h"
+#include "timer.h"
 
 uintptr_t *kernel_pml4;
 uintptr_t *kernel_pdpt;
 uintptr_t *kernel_pdt;
 uintptr_t *kernel_pt;
+uint64_t kernel_ticks = 0;
 
 /**
  * Configure first 2MB for initial kernel use
@@ -58,4 +60,10 @@ void spawn_test_programs() {
 void kernel_init() {
 	init_kernel_pages();
 	schedule_init();
+	init_timer();
+}
+
+void handle_timer_interrupt() {
+	timer_tick();
+	schedule();
 }

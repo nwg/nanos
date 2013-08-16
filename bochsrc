@@ -8,7 +8,7 @@ ata0-master: type=disk, path=bochs.img, cylinders=2, heads=4, spt=63
 boot: c
 log: bochs.log
 mouse: enabled=0
-cpu: ips=15000000
+cpu: ips=8000000
 #vga_update_interval: 150000
 debug_symbols: file=kernel.ldsym
 magic_break: enabled=1
