@@ -92,7 +92,7 @@ void remove_process_node(node_t *node) {
 void remove_process(process_t *process) {
     node_t *node = ll_find(processes, process);
     remove_process_node(node);
-    dump_processes();
+    // dump_processes();
 }
 
 void spawn(void *text, int argc, char **argv) {

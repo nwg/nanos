@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
 		usleep(100000);
 	}
 
-	while (true) {}
+	sys_exit();
 }
 
 int atoi(const char *a) {

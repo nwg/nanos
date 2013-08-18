@@ -104,7 +104,7 @@ int ll_size(node_t *ll) {
 }
 
 void ll_remove(node_t *ll, node_t *target) {
-    for (node_t *node = ll->next; node != ll; node = node->next) {
+    for (node_t *node = ll; node->next != ll; node = node->next) {
         if (node->next == target) {
             node->next = node->next->next;
             return;
