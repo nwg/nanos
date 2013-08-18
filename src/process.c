@@ -7,6 +7,7 @@
 #include "video.h"
 #include "kernel.h"
 #include <stdio.h>
+#include "timer.h"
 
 void process_add_pages(process_t *process, uint64_t num) {
     uintptr_t *pt = get_pagedir(process->pages, 0, 0, 1);
@@ -135,6 +136,8 @@ process_t *process_alloc(void *text, int argc, char **argv) {
     process->pages = process_page_table_alloc((uintptr_t)process->stack_u, (uintptr_t)text);
     process->num_pages = 0;
     process->argc = argc;
+    process->sleep_until_tick = 0;
+    process->running = false;
 
     stackptr_t u = STACK(process->stack_u, U_STACK_SIZE);
     u = push_argv((void*)USER_STACK_VMA, process->stack_u, u, argc, argv);
@@ -158,6 +161,8 @@ void switch_to_process(process_t *process) {
 
     SET_RSP(process->saved_sp);
 
+    process->running = true;
+
     RETURN_TO_PROCESS();
 
     while (1) {}
@@ -170,5 +175,15 @@ void switch_to_process(process_t *process) {
  * sp is the IRETtable kernel-side stack pointer for the process
  */
 void return_from_process(process_t *process, void *sp) {
+    if (!process->running) {
+        PANIC("return_from_process on nonrunning process");
+    }
+
     process->saved_sp = sp;
 }
+
+void process_sleep(process_t *process, useconds_t useconds) {
+    uint64_t ticks = TIMER_GET_TICKS_US(useconds);
+    process->sleep_until_tick = g_timer_ticks + ticks;
+}
+

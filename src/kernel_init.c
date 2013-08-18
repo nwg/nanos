@@ -63,7 +63,9 @@ void kernel_init() {
 	init_timer();
 }
 
+#include <stdio.h>
 void handle_timer_interrupt() {
+	// printf("Timer");
 	timer_tick();
 	schedule();
 }

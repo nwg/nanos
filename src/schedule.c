@@ -4,6 +4,8 @@
 #include "ll.h"
 #include "memory.h"
 #include <stdio.h>
+#include "timer.h"
+#include "kernel.h"
 
 static node_t *processes = NULL;
 static node_t *current = NULL;
@@ -20,24 +22,37 @@ void schedule_init() {
     processes = ll_alloc();
 }
 
+static bool process_node_runnable(node_t *node) {
+    return g_timer_ticks >= P(node)->sleep_until_tick;
+}
+
+#include "asm.h"
+
 void schedule() {
     if (ll_empty(processes)) {
-        printf("No more processes to schedule. Spinning.");
+        printf("No more processes to schedule. Spinning forever.");
         while (true) {}
     }
 
+    current = ll_next_rr_p(processes, current, process_node_runnable);
+
     if (current == NULL) {
-        current = ll_first(processes);
-    } else {
-        current = ll_next_rr(processes, current);
+        HALT();
+        while (true) {}
     }
 
-    char buf[256];
-    process_description(buf, 256, P(current));
     switch_to_process(P(current));
 }
 
+bool process_running() {
+    return current != NULL && P(current)->running;
+}
+
 void return_from_schedule(void *sp) {
+    if (P(current) == NULL) {
+        PANIC("return_from_schedule with no current process");
+    }
+
     return_from_process(P(current), sp);
 }
 
@@ -77,6 +92,7 @@ void remove_process_node(node_t *node) {
 void remove_process(process_t *process) {
     node_t *node = ll_find(processes, process);
     remove_process_node(node);
+    dump_processes();
 }
 
 void spawn(void *text, int argc, char **argv) {

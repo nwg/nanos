@@ -2,6 +2,7 @@
 #define __KERNEL_H__
 
 #include <stdint.h>
+#include <stdio.h>
 
 #define KERNEL_HEAP 0x100000
 
@@ -19,5 +20,7 @@ typedef struct {
 	uint64_t rsi;
 	uint64_t rdi;
 } system_state_t;
+
+#define PANIC(s) ({ printf("%s", s); while (true) {} })
 
 #endif

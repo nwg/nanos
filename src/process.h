@@ -3,6 +3,8 @@
 
 #include "sizes.h"
 #include "stack.h"
+#include <unistd.h>
+#include <stdbool.h>
 
 #define K_STACK_SIZE 65536
 #define U_STACK_SIZE 65536
@@ -16,8 +18,10 @@ typedef struct process_s {
   void *text;
   uint64_t num_pages;
   void *pt;
+  uint64_t sleep_until_tick;
   int argc;
   char **argv;
+  bool running;
 } process_t;
 
 #define USER_STACK_VMA 0x200000
@@ -39,5 +43,6 @@ void process_add_pages(process_t *process, uint64_t num);
 
 void dump_process(process_t *p);
 void process_description(char *buf, int n, process_t *p);
+void process_sleep(process_t *process, useconds_t useconds);
 
 #endif

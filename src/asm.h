@@ -13,6 +13,12 @@ void outb(uint16_t port, uint8_t b);
 
 #define BOCHS_BRK() __asm__("xchg %bx, %bx\n\t")
 
+#define HALT() \
+    __asm__ __volatile__ ( \
+        "sti\n\t" \
+        "hlt\n\t" \
+    );
+
 #define GET_FLAGS(dst) \
     __asm__ __volatile__ ( \
         "pushfq\n\t" \

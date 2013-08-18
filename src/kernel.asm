@@ -12,6 +12,8 @@ extern spawn
 extern kernel_init
 extern handle_syscall
 extern spawn_test_programs
+extern process_running
+extern test_print
 
 [BITS 32]
 ;[org TOP]; start of second block of conventional memory
@@ -192,14 +194,29 @@ software_interrupt:
 
 pit_handler:
 
-  ; Let scheduler know we are done with this process
-  PUSHA
-  mov rdi, rsp
-  call return_from_schedule
-
+  ; send eoi
   mov al, 20h
   out 20h, al
+  cli
 
+  ; Immediately stash state
+  PUSHA
+
+  ; Was there a process running?
+  call process_running
+  cmp rax, 0
+  je no_process
+
+  ; If yes, Notify scheduler we are done with running process
+  mov rdi, rsp
+  call return_from_schedule
+  jmp done_pit
+
+  ; If no, fix stack
+no_process:
+  POPA
+
+done_pit:
   ; schedule next process
   jmp handle_timer_interrupt
 

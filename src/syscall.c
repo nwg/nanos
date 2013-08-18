@@ -21,6 +21,11 @@ void handle_syscall(system_state_t *state) {
 		case SYSCALL_ADD_PAGES:
 			process_add_pages(process, state->rbx);
 			break;
+
+		case SYSCALL_SLEEP:
+			process_sleep(process, state->rbx);
+			schedule();
+
 	}
 
     SET_RSP(process->saved_sp);

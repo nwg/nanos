@@ -7,7 +7,7 @@ node_t *ll_alloc_a(allocator alloc) {
     return head;
 }
 
-node_t *ll_next_rr(node_t *ll, node_t *node) {
+node_t *_ll_next_rr(node_t *ll, node_t *node) {
     node_t *next = node->next;
 
     if (next == ll) {
@@ -17,11 +17,42 @@ node_t *ll_next_rr(node_t *ll, node_t *node) {
     return next;
 }
 
-node_t *ll_first(node_t *ll) {
-    if (ll->next == ll) {
-        return NULL;
+node_t *ll_next_rr(node_t *ll, node_t *node) {
+    if (node == NULL) {
+        return ll->next;
     }
+    return _ll_next_rr(ll, node);
+}
 
+node_t *_ll_find_rr_p(node_t *ll, node_t *start, ll_predicate p) {
+    if (p(start)) return start;
+
+    for (node_t *node = _ll_next_rr(ll, start); node != start; node = _ll_next_rr(ll, node)) {
+        if (p(node)) return node;
+    };
+
+    return NULL;
+}
+
+node_t *ll_find_rr_p(node_t *ll, node_t *start, ll_predicate p) {
+    if (start == NULL) start = ll->next;
+    return _ll_find_rr_p(ll, start, p);
+}
+
+node_t *_ll_next_rr_p(node_t *ll, node_t *start, ll_predicate p) {
+    node_t *found = _ll_find_rr_p(ll, _ll_next_rr(ll, start), p);
+    if (found) return found;
+    if (p(start)) return start;
+    return NULL;
+}
+
+node_t *ll_next_rr_p(node_t *ll, node_t *start, ll_predicate p) {
+    if (start == NULL) start = ll->next;
+    return _ll_next_rr_p(ll, start, p);
+}
+
+node_t *ll_first(node_t *ll) {
+    if (ll->next == ll) return NULL;
     return ll->next;
 }
 
