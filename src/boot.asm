@@ -141,9 +141,6 @@ fill:
   cmp ecx, 4096
   jl fill
 
-  xchg bx, bx
-  ; jmp $
-
   ; Enable pae
   mov eax, 10100000b                ; Set the PAE and PGE bit.
   mov cr4, eax
