@@ -1,12 +1,29 @@
-%define TOP 0x7C00
-%define OFFS(a) (TOP + a - $$)
-%include "common.mac"
 
-[BITS 16] ;Tells the assembler that its a 16 bit code
-[ORG TOP]  ;Origin, tell the assembler that where the code w
-        ;be in memory after it is been loaded
+%define IMAGE_DEST 0x10000
+%define IMAGE_SIZE 0x20000
+%define ENTRY_POINT IMAGE_DEST
+%define INIT_PAGES_ADDR 0x8000
+%define INIT_STACK 0x8000
 
-  mov ax, 0x1000
+%define INIT_PML4 INIT_PAGES_ADDR
+%define INIT_PDPT (INIT_PML4 + 0x1000)
+%define INIT_PDT (INIT_PDPT + 0x1000)
+%define INIT_PT (INIT_PDT + 0x1000)
+
+; GDT base limit access flags
+%macro GDT 4
+  dw %2
+  dw %1
+  db %1 >> 16
+  db %3
+  db (%2 >> 16) & 0x0F | (%4 << 4)
+  db %1 >> 24
+%endmacro
+
+[BITS 16]
+[ORG 0x7C00]
+
+  mov ax, (IMAGE_DEST >> 4)
   mov bx, 0
   mov ch, 0 ; start track
   mov dh, 0 ; start head
@@ -32,7 +49,7 @@ read:
 next_read:
   mov ax, es
   add ax, (512*63) >> 4
-  cmp ax, 0x3020
+  cmp ax, (IMAGE_DEST + IMAGE_SIZE) >> 4
   jl read
 
   mov ax, 0
@@ -62,8 +79,7 @@ donea20:
   mov gs, ax
   mov ss, ax
 
-  ; put stack at end of our kernel's 16k (0x8000 - 0xc000)
-  mov esp, KERNEL_STACK
+  mov esp, INIT_STACK
 
   ; jump to kernel
   jmp 0x08:protmode
@@ -153,7 +169,7 @@ fill:
 
 [BITS 64]
 longmode:
-  jmp 0x10000
+  jmp ENTRY_POINT
 
 gdt64_d:
   dw end_gdt64 - gdt64 - 1

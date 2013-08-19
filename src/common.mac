@@ -107,8 +107,3 @@ pop ax
 ; Virtual address defs for usermode programs
 %define USER_TEXT 0x200000
 %define USER_VIDEO 0x3fe000
-
-%define INIT_PML4 0x8000
-%define INIT_PDPT (INIT_PML4 + 0x1000)
-%define INIT_PDT (INIT_PDPT + 0x1000)
-%define INIT_PT (INIT_PDT + 0x1000)
