@@ -100,7 +100,73 @@ ReadDisk:
 
 protmode:
 
+  mov ecx, 0
+fill:
+
+  ; Top level structures point at each other and single dirent
+  mov dword [INIT_PML4+ecx], INIT_PDPT
+  or dword [INIT_PML4+ecx], 111b
+  mov dword [INIT_PML4+ecx+4], 0
+  mov dword [INIT_PDPT+ecx], INIT_PDT
+  or dword [INIT_PDPT+ecx], 111b
+  mov dword [INIT_PDPT+ecx+4], 0
+  mov dword [INIT_PDT+ecx], INIT_PT
+  or dword [INIT_PDT+ecx], 111b
+  mov dword [INIT_PDT+ecx+4], 0
+
+  ; Identity mapping
+  mov eax, (4096/8)
+  mul ecx
+  mov dword [INIT_PT+ecx], eax
+  or dword [INIT_PT+ecx], 111b
+  mov dword [INIT_PT+ecx+4], 0
+
+  add ecx, 8
+  cmp ecx, 4096
+  jl fill
+
+  xchg bx, bx
+  ; jmp $
+
+  ; Enable pae
+  mov eax, 10100000b                ; Set the PAE and PGE bit.
+  mov cr4, eax
+
+  ; Point to long-mode paging root
+  mov eax, INIT_PML4
+  mov cr3, eax
+
+  ; Set lm bit in the EFER MSR (0xC0000080)
+  mov ecx, 0xC0000080
+  rdmsr
+  or eax, 1 << 8
+  wrmsr
+
+  ; Enable paging
+  mov eax, cr0
+  or eax, 0x80000000
+  mov cr0, eax
+
+  ; Reset gdt
+  lgdt [gdt64_d]
+  jmp 0x08:longmode
+
+[BITS 64]
+longmode:
   jmp 0x10000
+
+gdt64_d:
+  dw end_gdt64 - gdt64 - 1
+  dd gdt64
+
+gdt64:
+  GDT 0, 0, 0, 0
+  GDT 0, 0xfffff, 10011010b, 1010b ; ring0 cs (all mem)
+  GDT 0, 0xfffff, 10010010b, 1010b ; ring0 ds (all mem)
+  GDT 0, 0xfffff, 11111010b, 1010b ; ring3 cs (all mem), sz=0, L=1 for 64-bit
+  GDT 0, 0xfffff, 11110010b, 1010b ; ring3 ds (all mem), sz=0, L=1 for 64-bit
+end_gdt64:
+
 
 TIMES 510 - ($ - $$) db 0 ;Fill the rest of sector with 0
 DW 0xAA55     ;Add boot signature at the end of bootloader

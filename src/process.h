@@ -30,7 +30,7 @@ typedef struct process_s {
 #define USER_TEXT_SIZE (16*K)
 #define USER_HEAP 0x300000
 
-#define TEST_PROG_PMA 0x28000
+#define TEST_PROG_PMA 0x20000
 
 #define GET_USER_STACK_VMA(stack_u, address) ((uintptr_t)address - (uintptr_t)(stack_u) + USER_STACK_VMA)
 #define GET_USER_STACK_PMA(stack_u, address) ((uintptr_t)address - USER_STACK_VMA + (uintptr_t)(stack_u))

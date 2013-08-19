@@ -15,44 +15,13 @@ extern spawn_test_programs
 extern process_running
 extern test_print
 
-[BITS 32]
+[BITS 64]
 ;[org TOP]; start of second block of conventional memory
 
 _start:
 
-
-  ; Enable pae
-  mov eax, 10100000b                ; Set the PAE and PGE bit.
-  mov cr4, eax
-
-  ;mov eax, cr4
-  ;or eax, 1 << 5
-  ;mov cr4, eax
-
-  ; Point to long-mode paging root
-  mov eax, INIT_PML4
-  mov cr3, eax
-
-
-
-  ; Set lm bit in the EFER MSR (0xC0000080)
-  mov ecx, 0xC0000080
-  rdmsr
-  or eax, 1 << 8
-  wrmsr
-
-  ; Enable paging
-  mov eax, cr0
-  or eax, 0x80000000
-  mov cr0, eax
-
-  ; Reset gdt
+  ; Load gdt with tss ptr
   lgdt [gdt_d]
-  jmp 0x08:cont
-
-align 8 ; just for disassembly purposes
-[BITS 64]
-cont:
 
   mov rsp, KERNEL_STACK
 
@@ -69,7 +38,6 @@ cont:
 
   ; Load interrupt descriptor table
   lidt [idt_hdr]
-
 
   ; set up tss (task register, 16-byte descriptor in GDT)
   mov ax, 0x28
