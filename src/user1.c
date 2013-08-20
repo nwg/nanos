@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
 	int color = atoi(argv[1]) << 8;
 	int row = atoi(argv[2]);
 
-	snprintf(blah, 256, "snprintf test: %s %d.", "something", 12345);
+	snprintf(blah, 256, "snprintf test: %s %d %d %d.", "something", 12345, 0, -12345);
 	print(row+5, 0, color, blah);
 
 	sys_test();

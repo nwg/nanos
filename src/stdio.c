@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -7,17 +8,27 @@
 
 #define BASE10_BIGGEST 10000000000000000000UL
 
-int i2a(char *dst, size_t n, uint64_t num) {
+int i2a(char *dst, size_t n, int64_t num) {
     int i = 0;
     uint64_t mul = BASE10_BIGGEST;
 
+    if (n == 0) {
+        return 0;
+    }
+
+    if (num == 0) {
+        *dst++ = '0'; i++;
+        return i;
+    }
+
+    if (num < 0) {
+        *dst++ = '-'; i++;
+        num = -num;
+    }
 
     while (num / mul == 0) {
         mul /= 10;
     }
-
-    if (mul < 1)
-        return -1;
 
     for (; i < n && mul > 0; i++, mul /= 10) {
         uint64_t val = num / mul;
