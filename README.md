@@ -9,26 +9,26 @@ the screen.
 
 ![Sample screenshot](https://github.com/nwg/simpleos/raw/master/img/sample1.png)
 
-Instructions (Mac OS X):
+Instructions (Mac OS X)
+========================
 
-
-1) sudo port install qemu x86_64-elf-gcc nasm
-
+1. sudo port install qemu x86_64-elf-gcc nasm
 Note that the nasm included with the Xcode command-line tools is extremely
 outdated and will not build this project properly.
-
-2) make (the kernel is a flat binary called bigboot)
-
-3) make run (to test in qemu)
+1. make (the kernel is a flat binary called bigboot)
+1. make run (to test in qemu)
 
 
-Debugging Instructions (Mac OS X):
+Debugging Instructions (Mac OS X)
+=================================
 
 The bochs installation from macports does not have x86_64 support, you will
 need to compile your own
 
 If on mountain lion, first install XQuartz from
 http://xquartz.macosforge.org/landing/ This will give you an X server.
+
+Then, install some prequisites and build bochs and an elf gdb
 
 ```shell
 sudo port install gtk2
@@ -41,13 +41,15 @@ CFLAGS=-I/opt/local/include LDFLAGS=-L/opt/local/lib ./configure \
 make
 sudo make install
 sudo install bochs /usr/local/bin/bochs-native-debugger
+
+# And if you'd like gdb stub support
 CFLAGS=-I/opt/local/include LDFLAGS=-L/opt/local/lib ./configure \
 --enable-all-optimizations --enable-cdrom --with-x11 \
 --enable-x86-64 --enable-gdb-stub
 make
 sudo install bochs /usr/local/bin/bochs-gdb-stub
 
-# And if you'd like gdb stub support
+sudo port install gmp libelf
 curl -OJL http://ftp.gnu.org/gnu/gdb/gdb-7.6.tar.gz
 tar xvf gdb-7.6.tar.gz
 cd gdb-7.6
@@ -61,7 +63,7 @@ sudo make install
 
 ```
 
-Once everything is set up, you should be able to issue a "make bochs-native" in the
-source directory and see the bochs gui debugger. If you set upa  gdb stub, you can
-issue "make bochs-gdb" and connect by running the newly installed x86_64-elf-gdb
-from the main os source checkout directory.
+Once everything is set up, you should be able to issue a "make bochs-native" in
+the source directory and see the bochs debugger console. If you compiled gdb
+support above, you can issue "make bochs-gdb" and connect by running the newly
+installed x86_64-elf-gdb from the main os source checkout directory.
