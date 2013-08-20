@@ -8,7 +8,6 @@ a.out
 *.gch
 *.elf
 *.sym
-.gdbinit
 *.sublime-workspace
 bochs.log
 *.ldsym

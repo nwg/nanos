@@ -8,10 +8,8 @@ log: bochs.log
 mouse: enabled=0
 cpu: ips=15000000
 #vga_update_interval: 150000
-magic_break: enabled=1
-display_library: x, options="gui_debug"
 debug: action=report
 info: action=report
 error: action=report
 panic: action=ask
-debug_symbols: file=kernel.ldsym
+gdbstub: enabled=1, port=1234, text_base=0, data_base=0, bss_base=0

@@ -36,11 +36,32 @@ curl -OJL http://sourceforge.net/projects/bochs/files/latest/download?source=fil
 tar xvf bochs-$VERSION.tar.gz
 cd bochs-$VERSION
 CFLAGS=-I/opt/local/include LDFLAGS=-L/opt/local/lib ./configure \
---enable-all-optimizations --enable-debugger  --enable-cdrom --with-x11 \
---enable-x86-64
+--enable-all-optimizations --enable-cdrom --with-x11 \
+--enable-x86-64 --enable-debugger  
 make
 sudo make install
+sudo install bochs /usr/local/bin/bochs-native-debugger
+CFLAGS=-I/opt/local/include LDFLAGS=-L/opt/local/lib ./configure \
+--enable-all-optimizations --enable-cdrom --with-x11 \
+--enable-x86-64 --enable-gdb-stub
+make
+sudo install bochs /usr/local/bin/bochs-gdb-stub
+
+# And if you'd like gdb stub support
+curl -OJL http://ftp.gnu.org/gnu/gdb/gdb-7.6.tar.gz
+tar xvf gdb-7.6.tar.gz
+cd gdb-7.6
+mkdir build
+cd build
+../configure  --prefix=/usr/local --program-prefix=x86_64-elf-
+--with-gmp=/opt/local --with-libelf=/opt/local
+--with-build-libsubdir=/opt/local --target=x86_64-pc-linux-gnu
+make
+sudo make install
+
 ```
 
-Once everything is set up, you should be able to issue a "make debug" in the
-source directory and see the bochs gui debugger.
+Once everything is set up, you should be able to issue a "make bochs-native" in the
+source directory and see the bochs gui debugger. If you set upa  gdb stub, you can
+issue "make bochs-gdb" and connect by running the newly installed x86_64-elf-gdb
+from the main os source checkout directory.

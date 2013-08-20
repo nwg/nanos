@@ -9,16 +9,17 @@ KERNEL_OBJ = $(KERNEL_ASM) $(KERNEL_C)
 OBJ = $(KERNEL_OBJ)
 FLAT_BINS = boot.bin kernel.bin user1.bin
 CC = x86_64-elf-gcc
-CFLAGS = -fno-builtin -Wall -Werror -std=c99
+CFLAGS = -fno-builtin -Wall -Werror -std=c99 -g
 LD = x86_64-elf-ld
 PAD = ./util/pad.sh
 ELF = kernel.elf
-BOCHS = /usr/local/bin/bochs
+BOCHS_GDB = /usr/local/bin/bochs-gdb-stub
+BOCHS_NATIVE = /usr/local/bin/bochs-native-debugger
 BOCHS_IMG = bochs.img
 MKLDSYM = ./util/mkldsym
 OBJCOPY = x86_64-elf-objcopy
 
-.PHONY: all run run-qemu clean
+.PHONY: all run run-qemu clean bochs-gdb bochs-native
 
 .SUFFIXES:
 
@@ -32,6 +33,9 @@ kernel.bin: $(KERNEL_ASM) $(KERNEL_C) kernel.elf custom.lnk
 kernel.elf: $(KERNEL_ASM) $(KERNEL_C) custom.lnk
 	$(LD) -o $@ -T custom.lnk --oformat elf64-x86-64 $(KERNEL_OBJ)
 
+kernel.sym: kernel.elf
+	$(OBJCOPY) --only-keep-debug kernel.elf kernel.sym
+
 kernel.ldsym: kernel.elf
 	$(MKLDSYM) kernel.elf kernel.ldsym
 
@@ -43,11 +47,11 @@ $(BOCHS_IMG): bigboot
 	cp $< $@
 	$(PAD) 258048 $@
 
-run-bochs: $(BOCHS_IMG) kernel.ldsym
-	$(BOCHS) -q
+bochs-native: $(BOCHS_IMG) kernel.ldsym
+	$(BOCHS_NATIVE) -q
 
-debug: $(BOCHS_IMG) kernel.ldsym
-	$(BOCHS) -q -f bochsrc.debug
+bochs-gdb: $(BOCHS_IMG) kernel.sym
+	$(BOCHS_GDB) -q -f bochsrc.gdb
 
 %.bin: $(SRC)/%.asm $(SRC)/common.mac
 	nasm -I$(SRC) -o $@ $<
@@ -56,7 +60,7 @@ debug: $(BOCHS_IMG) kernel.ldsym
 	$(CC) -I$(SRC) $(CFLAGS) -c $<
 
 %.o: $(SRC)/%.asm $(SRC)/common.mac
-	nasm -I$(SRC) -f elf64 -o $@ $<
+	nasm -g -I$(SRC) -f elf64 -o $@ $<
 
 run: bigboot
 	qemu-system-x86_64 ./bigboot
