@@ -84,7 +84,6 @@ void outb(uint16_t port, uint8_t b);
 #define RETURN_TO_PROCESS() \
     __asm__ ("jmp return_to_process\n\t");
 
-#define PUSHA_NUM (7)
-#define PUSHA_SIZE (PUSHA_NUM*8)
+#define PUSHA_SIZE (15*8)
 
 #endif
