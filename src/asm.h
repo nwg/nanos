@@ -10,6 +10,7 @@ extern void *tss64_sp;
 #define pushfq() __asm__ ( "pushfq" );
 
 void outb(uint16_t port, uint8_t b);
+uint8_t inb(uint16_t port);
 
 #define BOCHS_BRK() __asm__("xchg %bx, %bx\n\t")
 
