@@ -6,39 +6,46 @@
 #include <memory.h>
 #include "video.h"
 
-#define BASE10_BIGGEST 10000000000000000000UL
+#define BASE10_LEFT 1000000000000000000
+#define BASE16_LEFT 0x1000000000000000
 
-int i2a(char *dst, size_t n, int64_t num) {
+char digits[] = "0123456789abcdef";
+
+int _i2a(char *dst, size_t n, int64_t num, int base, int64_t base_left) {
     int i = 0;
-    uint64_t mul = BASE10_BIGGEST;
+    uint64_t mul = base_left;
+    char *p = dst;
 
     if (n == 0) {
         return 0;
     }
 
     if (num == 0) {
-        *dst++ = '0'; i++;
+        *p++ = '0'; i++;
         return i;
     }
 
     if (num < 0) {
-        *dst++ = '-'; i++;
+        *p++ = '-'; i++;
         num = -num;
     }
 
     while (num / mul == 0) {
-        mul /= 10;
+        mul /= base;
     }
 
-    for (; i < n && mul > 0; i++, mul /= 10) {
+    for (; i < n && mul > 0; i++, mul /= base) {
         uint64_t val = num / mul;
-        *dst++ = val + '0';
+        *p++ = digits[val];
         num -= val * mul;
     }
 
     return i;
 }
 
+#define i2a_dec(dst, n, num) _i2a(dst, n,num, 10, BASE10_LEFT)
+#define i2a_hex(dst, n, num) _i2a(dst, n,num, 16, BASE16_LEFT)
+#define i2a i2a_dec
 
  #define min(a,b) \
    ({ __typeof__ (a) _a = (a); \
@@ -49,6 +56,7 @@ int i2a(char *dst, size_t n, int64_t num) {
 int vsnprintf(char * restrict str, size_t n, const char * restrict format, va_list ap) {
     int i = 0;
     int v_i;
+    unsigned int v_u;
     char *v_s;
 
     if (n < 1)
@@ -68,6 +76,13 @@ int vsnprintf(char * restrict str, size_t n, const char * restrict format, va_li
 
                 v_i = va_arg(ap, int);
                 i += i2a(&str[i], (n - i), v_i);
+                break;
+
+            case 'x':
+                f++;
+
+                v_u = va_arg(ap, unsigned int);
+                i += i2a_hex(&str[i], (n - i), v_u);
                 break;
 
             case 's':
