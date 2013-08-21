@@ -30,7 +30,7 @@ static bool process_node_runnable(node_t *node) {
 
 void schedule() {
     if (ll_empty(processes)) {
-        printf("No more processes to schedule. Spinning forever.");
+        HALT();
         while (true) {}
     }
 
