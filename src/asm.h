@@ -15,8 +15,11 @@ void outb(uint16_t port, uint8_t b);
 
 #define HALT() \
     __asm__ __volatile__ ( \
+        "movq %0, %%rsp\n\t" \
         "sti\n\t" \
         "hlt\n\t" \
+        : \
+        : "i" (KERNEL_STACK) \
     );
 
 #define GET_FLAGS(dst) \

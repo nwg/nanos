@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #define KERNEL_HEAP 0x100000
+#define KERNEL_STACK 0x8000
 
 extern uintptr_t *kernel_pml4;
 extern uintptr_t *kernel_pdpt;
