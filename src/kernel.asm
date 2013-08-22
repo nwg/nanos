@@ -121,11 +121,6 @@ cpu29:
 cpu30:
 cpu31:
 
-  ; disable paging
-  mov rax, cr0
-  and rax, 0x7fffffff
-  mov cr0, rax
-
   mov dword [0xb8010], 0x04690448
   jmp $
 
