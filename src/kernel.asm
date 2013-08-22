@@ -14,6 +14,7 @@ extern handle_syscall
 extern spawn_test_programs
 extern process_running
 extern test_print
+extern handle_irq1
 
 [BITS 64]
 ;[org TOP]; start of second block of conventional memory
@@ -26,7 +27,7 @@ _start:
   mov rsp, KERNEL_STACK
 
   ; Enable IRQ0 (PIT)
-  mov al, 0xfe
+  mov al, 0xfc
   out 0xa1, al
   mov al, 0xff
   out 0x21, al
@@ -128,6 +129,14 @@ irq0:
   jmp pit_handler
 
 irq1:
+
+  call handle_irq1
+
+  ; send eoi
+  mov al, 20h
+  out 20h, al
+
+  jmp done_irq
 irq2:
 irq3:
 irq4:
@@ -142,6 +151,7 @@ irq12:
 irq13:
 irq14:
 irq15:
+done_irq:
   iretq
 
 software_interrupt:
@@ -157,13 +167,12 @@ software_interrupt:
 
 pit_handler:
 
+  ; Immediately stash state
+  PUSHA
+
   ; send eoi
   mov al, 20h
   out 20h, al
-  cli
-
-  ; Immediately stash state
-  PUSHA
 
   ; Was there a process running?
   call process_running
