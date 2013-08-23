@@ -51,7 +51,7 @@ typedef enum {
 extern void *k_tss64_sp;
 extern system_state_t *k_replace_system_state;
 
-#define STATE_IS_PRIV(state, priv) ((state->iretq.code_selector & PRIV_RING3) == priv)
+#define STATE_IS_PRIV(state, priv) ((state->iretq.code_selector & 3) == priv)
 #define IS_USER_STATE(state) STATE_IS_PRIV(state, PRIV_RING3)
 #define IS_KERNEL_STATE(state) STATE_IS_PRIV(state, PRIV_RING0)
 
