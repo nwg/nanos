@@ -75,23 +75,22 @@ void *process_page_table_alloc(uintptr_t stack_u, uintptr_t text) {
 
 stackptr_t configure_initial_stack(void *stack_k, void *stack_u, int argc, char **argv) {
     stackptr_t k = STACK(stack_k, K_STACK_SIZE);
-    uint64_t flags;
+    system_state_t *state = STACK_ALLOC(k, sizeof(system_state_t));
 
-    uintptr_t u_and_argv = GET_USER_STACK_VMA(stack_u, argv);
+    uint64_t curflags;
+    GET_FLAGS(curflags);
+    uintptr_t u_vma = GET_USER_STACK_VMA(stack_u, argv);
+    uintptr_t argv_vma = u_vma;
 
-    STACK_PUSH(k, 0x20 | 3);
-    STACK_PUSH(k, u_and_argv);
-    GET_FLAGS(flags);
-    flags |= 0x200; // Force reallow interrupts for the initial iret
-    STACK_PUSH(k, flags);
-    STACK_PUSH(k, 0x18 | 3);
-    STACK_PUSH(k, (uintptr_t)USER_TEXT_VMA);
+    state->iretq.data_selector = 0x20 | PRIV_RING3;
+    state->iretq.rsp = u_vma;
+    state->iretq.rflags = curflags | 0x200;
+    state->iretq.code_selector = 0x18 | PRIV_RING3;
+    state->iretq.rip = USER_TEXT_VMA;
 
-    STACK_INC(k, PUSHA_SIZE);
-    memset(k, 0, PUSHA_SIZE);
-    system_state_t *state = (system_state_t*)k;
-    state->rdi = argc;
-    state->rsi = u_and_argv;
+    memset(&(state->registers), 0, sizeof(state->registers));
+    state->registers.rdi = argc;        // First argument for program main
+    state->registers.rsi = argv_vma;    // Second argument for program main
 
     return k;
 }
@@ -137,13 +136,13 @@ process_t *process_alloc(void *text, int argc, char **argv) {
     process->num_pages = 0;
     process->argc = argc;
     process->sleep_until_tick = 0;
-    process->running = false;
+    process->current = false;
 
     stackptr_t u = STACK(process->stack_u, U_STACK_SIZE);
     u = push_argv((void*)USER_STACK_VMA, process->stack_u, u, argc, argv);
     process->argv = (char**)u;
 
-    process->saved_sp = configure_initial_stack(process->stack_k, process->stack_u, process->argc, process->argv);
+    process->state = (system_state_t*)configure_initial_stack(process->stack_k, process->stack_u, process->argc, process->argv);
 
     return process;
 }
@@ -157,15 +156,15 @@ void switch_to_process(process_t *process) {
     SET_TSS_RSP(k);
 
     // Set up segments, including data segment (fourth GDT entry in kernel.asm)
-    SET_ALL_SEGMENTS(0x20 | 3);
+    SET_ALL_SEGMENTS(0x20 | PRIV_RING3);
 
-    SET_RSP(process->saved_sp);
+    // Set rsp kernel will use when switching back to user process
+    k_replace_system_state = process->state;
 
-    process->running = true;
+    // Flag process as running
+    process->current = true;
 
-    RETURN_TO_PROCESS();
-
-    while (1) {}
+    // dump_process(process);
 }
 
 /*
@@ -174,12 +173,12 @@ void switch_to_process(process_t *process) {
 
  * sp is the IRETtable kernel-side stack pointer for the process
  */
-void return_from_process(process_t *process, void *sp) {
-    if (!process->running) {
-        PANIC("return_from_process on nonrunning process");
+void return_from_process(process_t *process, system_state_t *state) {
+    if (!process->current) {
+        PANIC("return_from_process on noncurrent process");
     }
 
-    process->saved_sp = sp;
+    process->state = state;
 }
 
 void process_sleep(process_t *process, useconds_t useconds) {

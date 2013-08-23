@@ -6,6 +6,7 @@
 #include "asm.h"
 #include "video.h"
 #include "timer.h"
+#include "intel_8042_nanos.h"
 
 uintptr_t *kernel_pml4;
 uintptr_t *kernel_pdpt;
@@ -61,11 +62,7 @@ void kernel_init() {
 	init_kernel_pages();
 	schedule_init();
 	init_timer();
-}
-
-#include <stdio.h>
-void handle_timer_interrupt() {
-	// printf("Timer");
-	timer_tick();
+	spawn_test_programs();
 	schedule();
 }
+

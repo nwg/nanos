@@ -8,7 +8,7 @@
 void handle_syscall(system_state_t *state) {
 	process_t *process = current_process();
 
-	switch (state->rax) {
+	switch (state->registers.rax) {
 
 		case SYSCALL_TEST:
 			print(2, 2, COLOR_RED | COLOR_GREEN, "Syscall 0 Received!!");
@@ -16,19 +16,18 @@ void handle_syscall(system_state_t *state) {
 
 		case SYSCALL_EXIT:
 			remove_process(process);
-			schedule(); // does not return
+			schedule();
+			break;
 
 		case SYSCALL_ADD_PAGES:
-			process_add_pages(process, state->rbx);
+			process_add_pages(process, state->registers.rbx);
 			break;
 
 		case SYSCALL_SLEEP:
-			process_sleep(process, state->rbx);
+			process_sleep(process, state->registers.rbx);
 			schedule();
+			break;
 
 	}
-
-    SET_RSP(process->saved_sp);
-    RETURN_TO_PROCESS();
 }
 

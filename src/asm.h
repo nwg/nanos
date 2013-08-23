@@ -2,8 +2,7 @@
 #define __ASM_H__
 
 #include <stdint.h>
-
-extern void *tss64_sp;
+#include "kernel.h"
 
 #define pushq(val) __asm__ ( "pushq %0\n\t" :: "m" (val) );
 #define pushqi(val) __asm__ ( "pushq %0\n\t" :: "i" (val) );
@@ -16,11 +15,7 @@ uint8_t inb(uint16_t port);
 
 #define HALT() \
     __asm__ __volatile__ ( \
-        "movq %0, %%rsp\n\t" \
-        "sti\n\t" \
         "hlt\n\t" \
-        : \
-        : "i" (KERNEL_STACK) \
     );
 
 #define GET_FLAGS(dst) \
@@ -32,13 +27,12 @@ uint8_t inb(uint16_t port);
         : \
     )
 
-
 #define SET_TSS_RSP(src) \
     __asm__ __volatile__ ( \
         "movq %0, %%rax\n\t" \
         "movq %%rax, %1\n\t" \
         : \
-        : "m" (src), "m" (tss64_sp) \
+        : "m" (src), "m" (k_tss64_sp) \
         : "rax" \
     )
 
@@ -84,9 +78,6 @@ uint8_t inb(uint16_t port);
         : "i" (val) \
         : "rax" \
     )
-
-#define RETURN_TO_PROCESS() \
-    __asm__ ("jmp return_to_process\n\t");
 
 #define PUSHA_SIZE (15*8)
 

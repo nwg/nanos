@@ -3,18 +3,11 @@
 %include "common.mac"
 
 global _start
-global tss64_sp
-global return_to_process
+global k_tss64_sp
+global k_replace_system_state
 
-extern schedule, return_from_schedule
-extern handle_timer_interrupt
-extern spawn
 extern kernel_init
-extern handle_syscall
-extern spawn_test_programs
-extern process_running
-extern test_print
-extern handle_irq1
+extern handle_interrupt
 
 [BITS 64]
 ;[org TOP]; start of second block of conventional memory
@@ -86,119 +79,144 @@ _start:
   ;mov dword [USER_VIDEO + 80*2*14], 0x01690148
 
   call kernel_init
-  call spawn_test_programs
-  jmp schedule
+  mov rsp, [k_replace_system_state]
+  POPA
+  iretq
+
+irqno:
+  dq 0
+
+%macro INT 1
+mov byte [irqno], %1
+jmp call_irq_handler
+%endmacro
+
 
 cpu0:
+  INT 0
 cpu1:
+  INT 1
 cpu2:
+  INT 2
 cpu3:
+  INT 3
 cpu4:
+  INT 4
 cpu5:
+  INT 5
 cpu6:
+  INT 6
 cpu7:
+  INT 7
 cpu8:
+  INT 8
 cpu9:
+  INT 9
 cpu10:
+  INT 10
 cpu11:
+  INT 11
 cpu12:
+  INT 12
 cpu13:
+  INT 13
 cpu14:
+  INT 14
 cpu15:
+  INT 15
 cpu16:
+  INT 16
 cpu17:
+  INT 17
 cpu18:
+  INT 18
 cpu19:
+  INT 19
 cpu20:
+  INT 20
 cpu21:
+  INT 21
 cpu22:
+  INT 22
 cpu23:
+  INT 23
 cpu24:
+  INT 24
 cpu25:
+  INT 25
 cpu26:
+  INT 26
 cpu27:
+  INT 27
 cpu28:
+  INT 28
 cpu29:
+  INT 29
 cpu30:
+  INT 30
 cpu31:
-
-  mov dword [0xb8010], 0x04690448
-  jmp $
+  INT 31
 
 irq0:
-  jmp pit_handler
-
+  INT 32
 irq1:
-
-  call handle_irq1
-
-  ; send eoi
-  mov al, 20h
-  out 20h, al
-
-  jmp done_irq
+  INT 33
 irq2:
+  INT 34
 irq3:
+  INT 35
 irq4:
+  INT 36
 irq5:
+  INT 37
 irq6:
+  INT 38
 irq7:
+  INT 39
 irq8:
+  INT 40
 irq9:
+  INT 41
 irq10:
+  INT 42
 irq11:
+  INT 43
 irq12:
+  INT 44
 irq13:
+  INT 45
 irq14:
+  INT 46
 irq15:
-done_irq:
-  iretq
+  INT 47
 
 software_interrupt:
+  INT 48
 
-  ; Let scheduler know we are done with this process
-  PUSHA
-  mov rdi, rsp
-  call return_from_schedule
-
-  ; handler in c
-  mov rdi, rsp
-  jmp handle_syscall
-
-pit_handler:
-
-  ; Immediately stash state
+call_irq_handler:
   PUSHA
 
+  ; handle_interrupt(code, state)
+  mov byte rdi, [irqno]
+  mov qword rsi, rsp
+  call handle_interrupt
+
+  ; Swap out system state (@rsp) if requested
+.set_rsp:
+  cmp dword [k_replace_system_state], 0
+  je .return
+  mov rsp, [k_replace_system_state]
+  mov dword [k_replace_system_state], 0
+
+.return:
   ; send eoi
   mov al, 20h
   out 20h, al
-
-  ; Was there a process running?
-  call process_running
-  cmp rax, 0
-  je no_process
-
-  ; If yes, Notify scheduler we are done with running process
-  mov rdi, rsp
-  call return_from_schedule
-  jmp done_pit
-
-  ; If no, fix stack
-no_process:
-  POPA
-
-done_pit:
-  ; schedule next process
-  jmp handle_timer_interrupt
-
-prog1_rsp: dq 0
-prog2_rsp: dq 0
-
-; Called by scheduler to return to user mode
-return_to_process:
   POPA
   iretq
+
+k_replace_system_state:
+  dq 0
 
 gdt_d:
   dw end_gdt - gdt - 1
@@ -216,7 +234,7 @@ end_gdt:
 ; See "TASK MANAGEMENT IN 64-BIT MODE" of http://download.intel.com/products/processor/manual/325384.pdf
 tss64:
   dd 0
-tss64_sp:
+k_tss64_sp:
   dq 0 ; rsp will be set to this value when switching back to kernel
   TIMES 23 dd 0
 end_tss64:

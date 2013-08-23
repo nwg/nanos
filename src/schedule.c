@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include "timer.h"
 #include "kernel.h"
+#include "asm.h"
 
 static node_t *processes = NULL;
 static node_t *current = NULL;
@@ -26,34 +27,33 @@ static bool process_node_runnable(node_t *node) {
     return g_timer_ticks >= P(node)->sleep_until_tick;
 }
 
-#include "asm.h"
-
 void schedule() {
-    if (ll_empty(processes)) {
+    while (ll_empty(processes)) {
         HALT();
-        while (true) {}
     }
+
+    if (current) P(current)->current = false;
 
     current = ll_next_rr_p(processes, current, process_node_runnable);
 
-    if (current == NULL) {
+    while (current == NULL) {
         HALT();
-        while (true) {}
+        current = ll_next_rr_p(processes, current, process_node_runnable);
     }
 
     switch_to_process(P(current));
 }
 
 bool process_running() {
-    return current != NULL && P(current)->running;
+    return current != NULL && P(current)->current;
 }
 
-void return_from_schedule(void *sp) {
+void return_from_schedule(system_state_t *state) {
     if (P(current) == NULL) {
         PANIC("return_from_schedule with no current process");
     }
 
-    return_from_process(P(current), sp);
+    return_from_process(P(current), state);
 }
 
 void add_process(process_t *process) {

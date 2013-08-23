@@ -5,6 +5,7 @@
 #include "stack.h"
 #include <unistd.h>
 #include <stdbool.h>
+#include "kernel.h"
 
 #define K_STACK_SIZE 65536
 #define U_STACK_SIZE 65536
@@ -13,7 +14,7 @@ typedef struct process_s {
   void *stack_k;
   void *stack_u;
   void *pages;
-  void *saved_sp;
+  system_state_t *state;
   void *saved_registers;
   void *text;
   uint64_t num_pages;
@@ -21,7 +22,7 @@ typedef struct process_s {
   uint64_t sleep_until_tick;
   int argc;
   char **argv;
-  bool running;
+  bool current;
 } process_t;
 
 #define USER_STACK_VMA 0x200000
@@ -37,8 +38,8 @@ typedef struct process_s {
 
 process_t *process_alloc(void *text, int argc, char **argv);
 
-void __attribute__ ((noreturn)) switch_to_process(process_t *process);
-void return_from_process(process_t *process, void *sp);
+void switch_to_process(process_t *process);
+void return_from_process(process_t *process, system_state_t *state);
 void process_add_pages(process_t *process, uint64_t num);
 
 void dump_process(process_t *p);

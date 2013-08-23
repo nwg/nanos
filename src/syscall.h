@@ -1,6 +1,8 @@
 #ifndef __SYSCALL_H__
 #define __SYSCALL_H__
 
+#include "kernel.h"
+
 typedef enum {
 	SYSCALL_TEST,
     SYSCALL_EXIT,
@@ -41,5 +43,8 @@ typedef enum {
 #define sys_exit() syscall0(SYSCALL_EXIT)
 #define sys_add_pages(count) syscall1i(SYSCALL_ADD_PAGES, count)
 #define sys_sleep(useconds) syscall1m(SYSCALL_SLEEP, useconds)
+
+void handle_syscall(system_state_t *state);
+
 
 #endif
