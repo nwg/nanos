@@ -73,8 +73,7 @@ void *process_page_table_alloc(uintptr_t stack_u, uintptr_t text) {
     return pml4;
 }
 
-stackptr_t configure_initial_stack(void *stack_k, void *stack_u, int argc, char **argv) {
-    stackptr_t k = STACK(stack_k, K_STACK_SIZE);
+stackptr_t push_system_state(stackptr_t k, void *stack_u, int argc, char **argv) {
     system_state_t *state = STACK_ALLOC(k, sizeof(system_state_t));
 
     uint64_t curflags;
@@ -107,8 +106,10 @@ void dump_process(process_t *p) {
 }
 
 /*
- * Copy argv contents to stack at s
- * Returns new pointer to argv (also on stack)
+ * Copy argv and its contents to stack at s
+ * Returns new pointer to argv
+ *
+ * This will only work for backwards-growing stacks
  */
 stackptr_t push_argv(void *vstart, void *pstart, stackptr_t s, int argc, char **argv) {
 
@@ -142,7 +143,8 @@ process_t *process_alloc(void *text, int argc, char **argv) {
     u = push_argv((void*)USER_STACK_VMA, process->stack_u, u, argc, argv);
     process->argv = (char**)u;
 
-    process->state = (system_state_t*)configure_initial_stack(process->stack_k, process->stack_u, process->argc, process->argv);
+    stackptr_t k = STACK(process->stack_k, K_STACK_SIZE);
+    process->state = (system_state_t*)push_system_state(k, process->stack_u, process->argc, process->argv);
 
     return process;
 }
