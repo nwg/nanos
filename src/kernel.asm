@@ -79,16 +79,14 @@ _start:
   ;mov dword [USER_VIDEO + 80*2*14], 0x01690148
 
   call kernel_init
-  mov rsp, [k_replace_system_state]
-  POPA
-  iretq
+  jmp interrupt.return
 
 irqno:
   dq 0
 
 %macro INT 1
 mov byte [irqno], %1
-jmp call_irq_handler
+jmp interrupt
 %endmacro
 
 
@@ -193,7 +191,7 @@ irq15:
 software_interrupt:
   INT 48
 
-call_irq_handler:
+interrupt:
   PUSHA
 
   ; handle_interrupt(code, state)
@@ -201,17 +199,18 @@ call_irq_handler:
   mov qword rsi, rsp
   call handle_interrupt
 
-  ; Swap out system state (@rsp) if requested
-.set_rsp:
-  cmp dword [k_replace_system_state], 0
-  je .return
-  mov rsp, [k_replace_system_state]
-  mov dword [k_replace_system_state], 0
-
-.return:
   ; send eoi
   mov al, 20h
   out 20h, al
+
+  ; Swap out system state (@rsp) if requested
+.return:
+  cmp dword [k_replace_system_state], 0
+  je .finish_return
+  mov rsp, [k_replace_system_state]
+  mov dword [k_replace_system_state], 0
+
+.finish_return:
   POPA
   iretq
 
