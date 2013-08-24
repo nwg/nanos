@@ -1,17 +1,18 @@
 #ifndef __TIMER_H__
 #define __TIMER_H__
 
-#include "intel_8254.h"
 #include <stdint.h>
 
-uint64_t g_timer_ticks;
+extern uint64_t g_timer_ticks;
 
-#define INTEL_100HZ_TICK_DIVISOR 11932
-#define TICK_PERIOD (1.0 / (INTEL_8254_HZ / INTEL_100HZ_TICK_DIVISOR))
-#define TIMER_GET_TICKS_S(t) (INTEL_8254_HZ * (t) / INTEL_100HZ_TICK_DIVISOR)
-#define TIMER_GET_TICKS_US(t) (INTEL_8254_HZ * (t) / 1000000 / INTEL_100HZ_TICK_DIVISOR)
+// Timer configuration vars
+extern uint64_t g_timer_tps;            // Integral HZ of timer source
+extern uint64_t g_timer_tps_divisor;    // Integral divisor of timer source. Set 1 if unneeded.
 
-void init_timer();
+#define TICK_PERIOD (1.0 / (g_timer_tps / g_timer_tps_divisor))
+#define TIMER_GET_TICKS_S(t) (g_timer_tps * (t) / g_timer_tps_divisor)
+#define TIMER_GET_TICKS_US(t) (g_timer_tps * (t) / 1000000 / g_timer_tps_divisor)
+
 void timer_tick();
 
 #endif

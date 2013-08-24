@@ -3,6 +3,7 @@
 #include "timer.h"
 #include "schedule.h"
 #include "intel_8042_nanos.h"
+#include "intel_8254_nanos.h"
 #include "syscall.h"
 
 void handle_interrupt(interrupt_e code, system_state_t *state) {
@@ -17,10 +18,13 @@ void handle_interrupt(interrupt_e code, system_state_t *state) {
 
     switch (code) {
         case INTERRUPT_IRQ0:
-            timer_tick();
+
+            intel_8254_nanos_irq0();
+
             if (IS_USER_STATE(state)) {
                 schedule();
             }
+
             break;
         case INTERRUPT_IRQ1:
             intel_8042_nanos_handle_irq1();

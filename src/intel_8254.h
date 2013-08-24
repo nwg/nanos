@@ -14,6 +14,7 @@
 #include <stdint.h>
 
 #define INTEL_8254_HZ 1193182
+#define INTEL_100HZ_TICK_DIVISOR 11932
 #define TIMER_PORT_CHAN0 0x40
 #define TIMER_PORT_COMMAND 0x43
 

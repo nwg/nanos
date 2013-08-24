@@ -7,6 +7,7 @@
 #include "video.h"
 #include "timer.h"
 #include "intel_8042_nanos.h"
+#include "intel_8254_nanos.h"
 
 uintptr_t *kernel_pml4;
 uintptr_t *kernel_pdpt;
@@ -60,8 +61,8 @@ void spawn_test_programs() {
 
 void kernel_init() {
 	init_kernel_pages();
+	intel_8254_nanos_init();
 	schedule_init();
-	init_timer();
 	spawn_test_programs();
 	schedule();
 }
