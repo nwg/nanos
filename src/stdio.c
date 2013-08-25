@@ -5,6 +5,7 @@
 #include <string.h>
 #include <memory.h>
 #include "video.h"
+#include "num.h"
 
 #define BASE10_LEFT 1000000000000000000
 #define BASE16_LEFT 0x1000000000000000
@@ -46,12 +47,6 @@ int _i2a(char *dst, size_t n, int64_t num, int base, int64_t base_left) {
 #define i2a_dec(dst, n, num) _i2a(dst, n,num, 10, BASE10_LEFT)
 #define i2a_hex(dst, n, num) _i2a(dst, n,num, 16, BASE16_LEFT)
 #define i2a i2a_dec
-
- #define min(a,b) \
-   ({ __typeof__ (a) _a = (a); \
-       __typeof__ (b) _b = (b); \
-     _a < _b ? _a : _b; })
-
 
 int vsnprintf(char * restrict str, size_t n, const char * restrict format, va_list ap) {
     int i = 0;
