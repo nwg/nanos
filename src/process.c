@@ -102,7 +102,7 @@ void process_description(char *buf, int n, process_t *p) {
 void dump_process(process_t *p) {
     char buf[256];
     process_description(buf, 256, p);
-    printf("%s", buf);
+    kprintf("%s\n", buf);
 }
 
 /*

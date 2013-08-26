@@ -160,24 +160,3 @@ void term_write(const char *str) {
         term_write_c(*p);
     }
 }
-
-static char print_buf[256];
-
-int
-kvprintf(const char * restrict format, va_list ap) {
-    vsnprintf(print_buf, 256, format, ap);
-    term_write(print_buf);
-    return 0;
-}
-
-int
-kprintf(const char * restrict format, ...) {
-    va_list ap;
-    va_start(ap, format);
-
-    int result = kvprintf(format, ap);
-
-    va_end(ap);
-
-    return result;
-}

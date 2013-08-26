@@ -12,7 +12,7 @@ void handle_interrupt(interrupt_e code, system_state_t *state) {
     }
 
     if (IS_CPU_INTERRUPT(code)) {
-        printf("CPU Exception %d received", code);
+        kprintf("CPU Exception %d received\n", code);
         return;
     }
 

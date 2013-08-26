@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdarg.h>
 
 #define KERNEL_HEAP 0x100000
 #define KERNEL_STACK 0x8000
@@ -50,6 +51,9 @@ typedef enum {
 
 extern void *k_tss64_sp;
 extern system_state_t *k_replace_system_state;
+
+int kvprintf(const char * restrict format, va_list ap);
+int kprintf(const char * restrict format, ...);
 
 #define STATE_IS_PRIV(state, priv) ((state->iretq.code_selector & 3) == priv)
 #define IS_USER_STATE(state) STATE_IS_PRIV(state, PRIV_RING3)

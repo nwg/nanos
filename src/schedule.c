@@ -62,8 +62,8 @@ void add_process(process_t *process) {
 
 void dump_processes() {
     int len = ll_size(processes);
-    printf("%d Processes", len);
-    printf("---------");
+    kprintf("%d Processes\n", len);
+    kprintf("---------\n");
     for (node_t *node = processes->next; node != processes; node = node->next) {
         dump_process(P(node));
     }
@@ -73,7 +73,7 @@ void remove_process_node(node_t *node) {
 
     char buf[256];
     process_description(buf, 256, P(current));
-    printf("Removing process %s", buf);
+    kprintf("Removing process %s\n", buf);
 
     if (node == current) {
         current = ll_next_rr(processes, node);
