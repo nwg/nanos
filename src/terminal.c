@@ -23,10 +23,6 @@ void term_init() {
     ring = ring_alloc(kalloc, TERM_BACK_BUFFER, TERM_WIDTH);
     ring_add_row(ring);
     term_clear();
-
-    for (int i = 0; i < 24; i++) {
-        kprintf("row%d\n", i);
-    }
 }
 
 // temporary
@@ -69,7 +65,7 @@ void term_redraw() {
             }
         } else {
             for (int col = 0; col < TERM_WIDTH; col++) {
-                printc(row, col, TERM_COLOR, ' ');
+                printc(row, col, TERM_COLOR, VIDEO_CLEAR_CHAR);
             }
         }
     }
@@ -127,6 +123,17 @@ void term_write_printable(char c) {
     }
 }
 
+void term_backspace(int count) {
+    char *row = term_last_row();
+    while (term_col > 0 && count > 0) {
+        term_col--; count--;
+        row[term_col] = VIDEO_CLEAR_CHAR;
+        printc(term_current_screen_row(), term_col, TERM_COLOR, VIDEO_CLEAR_CHAR);
+    }
+    update_cursor();
+}
+
+
 void term_write_c(char c) {
     switch (c) {
         case '\n':
@@ -137,6 +144,9 @@ void term_write_c(char c) {
             break;
         case '\t':
             term_add_cols(8);
+            break;
+        case '\b':
+            term_backspace(1);
             break;
         default:
             term_write_printable(c);
