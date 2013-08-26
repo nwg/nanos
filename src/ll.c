@@ -111,3 +111,9 @@ void ll_remove(node_t *ll, node_t *target) {
         }
     }
 }
+
+void ll_foreach(node_t *ll, ll_effect effect) {
+    for (node_t *node = ll->next; node != ll; node = node->next) {
+        effect(node);
+    }
+}

@@ -10,6 +10,17 @@
 #define K_STACK_SIZE 65536
 #define U_STACK_SIZE 65536
 
+typedef enum {
+  PROCESS_RUNNABLE,
+  PROCESS_SLEEPING,
+  PROCESS_WAIT_READ,
+} process_runstate_e;
+
+typedef union {
+  uint64_t sleep_until_tick;
+  uint64_t read_filedes;
+} runstate_u;
+
 typedef struct process_s {
   void *stack_k;
   void *stack_u;
@@ -17,9 +28,10 @@ typedef struct process_s {
   system_state_t *state;
   void *saved_registers;
   void *text;
+  process_runstate_e runstate;
+  runstate_u runinfo;
   uint64_t num_pages;
   void *pt;
-  uint64_t sleep_until_tick;
   int argc;
   char **argv;
   bool current;
@@ -45,5 +57,7 @@ void process_add_pages(process_t *process, uint64_t num);
 void dump_process(process_t *p);
 void process_description(char *buf, int n, process_t *p);
 void process_sleep(process_t *process, useconds_t useconds);
+void process_check_sleep(process_t *process);
+void process_wake(process_t *process);
 
 #endif

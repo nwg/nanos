@@ -12,6 +12,7 @@ typedef struct node_s {
 } node_t;
 
 typedef bool (*ll_predicate)(node_t *node);
+typedef void (*ll_effect)(node_t *node);
 typedef void * (*allocator)(size_t size);
 
 node_t *ll_alloc_a(allocator alloc);
@@ -24,5 +25,5 @@ void ll_append_data_a(allocator alloc, node_t *ll, void *data);
 node_t *ll_find(node_t *ll, void *data);
 void ll_remove(node_t *ll, node_t *node);
 int ll_size(node_t *ll);
-
+void ll_foreach(node_t *ll, ll_effect effect);
 #endif

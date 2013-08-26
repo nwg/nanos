@@ -17,4 +17,6 @@ void add_process(process_t *process);
 process_t *current_process();
 void spawn(void *text, int argc, char **argv);
 void remove_process(process_t *process);
+void schedule_wake_sleepers();
+
 #endif

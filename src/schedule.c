@@ -24,7 +24,15 @@ void schedule_init() {
 }
 
 static bool process_node_runnable(node_t *node) {
-    return g_timer_ticks >= P(node)->sleep_until_tick;
+    return P(node)->runstate == PROCESS_RUNNABLE;
+}
+
+static void schedule_wake_sleeper(node_t *node) {
+    process_wake(P(node));
+}
+
+void schedule_wake_sleepers() {
+    ll_foreach(processes, schedule_wake_sleeper);
 }
 
 void schedule() {

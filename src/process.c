@@ -136,7 +136,7 @@ process_t *process_alloc(void *text, int argc, char **argv) {
     process->pages = process_page_table_alloc((uintptr_t)process->stack_u, (uintptr_t)text);
     process->num_pages = 0;
     process->argc = argc;
-    process->sleep_until_tick = 0;
+    process->runstate = PROCESS_RUNNABLE;
     process->current = false;
 
     stackptr_t u = STACK(process->stack_u, U_STACK_SIZE);
@@ -185,6 +185,12 @@ void return_from_process(process_t *process, system_state_t *state) {
 
 void process_sleep(process_t *process, useconds_t useconds) {
     uint64_t ticks = TIMER_GET_TICKS_US(useconds);
-    process->sleep_until_tick = g_timer_ticks + ticks;
+    process->runstate = PROCESS_SLEEPING;
+    process->runinfo.sleep_until_tick = g_timer_ticks + ticks;
 }
 
+void process_wake(process_t *process) {
+    if (process->runstate == PROCESS_SLEEPING && g_timer_ticks >= process->runinfo.sleep_until_tick) {
+        process->runstate = PROCESS_RUNNABLE;
+    }
+}
