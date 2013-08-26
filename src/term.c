@@ -103,10 +103,6 @@ int term_current_screen_row() {
 }
 
 char *term_last_row() {
-    if (term_row < TERM_HEIGHT - 1) {
-        return ring_get_row(ring, term_row);
-    }
-
     return ring_get_row(ring, -1);
 }
 
