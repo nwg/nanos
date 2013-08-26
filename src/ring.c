@@ -1,7 +1,6 @@
 #include "ring.h"
 #include <memory.h>
-
-#define NEGMOD(n, M) (((n % M) + M) % M)
+#include "num.h"
 
 ring_t *ring_alloc(ring_allocator allocator, int length, size_t width) {
     ring_t *ring = allocator(sizeof(ring_t));
