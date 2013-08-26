@@ -1,4 +1,4 @@
-#include "terminal.h"
+#include "term.h"
 #include "video.h"
 #include "num.h"
 #include <memory.h>

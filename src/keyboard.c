@@ -1,15 +1,12 @@
 #include "keyboard.h"
 #include <stdio.h>
-#include "terminal.h"
+#include "term.h"
 
 void keyboard_press(keycode_e code) {
     if (code == KEY_ESC) {
         term_clear();
     } else {
-        char buf[2];
-        buf[1] = '\0';
-        buf[0] = keychars(code)[0];
-        term_write(buf);
+        term_write_c(keychars(code)[0]);
     }
 }
 

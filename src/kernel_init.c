@@ -8,7 +8,7 @@
 #include "timer.h"
 #include "intel_8042_nanos.h"
 #include "intel_8254_nanos.h"
-#include "terminal.h"
+#include "term.h"
 
 uintptr_t *kernel_pml4;
 uintptr_t *kernel_pdpt;
