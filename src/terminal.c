@@ -5,19 +5,28 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include "ring.h"
+#include "kmem.h"
+#include <stdint.h>
 
 static int term_row = 0;
 static int term_col = 0;
-static int term_top = 0;
 
 #define TERM_COLOR COLOR_GREEN
 #define TERM_WIDTH 80
 #define TERM_HEIGHT 25
+#define TERM_BACK_BUFFER 4096
 
-static char term_buf[TERM_HEIGHT][TERM_WIDTH];
+static ring_t *ring;
 
 void term_init() {
+    ring = ring_alloc(kalloc, TERM_BACK_BUFFER, TERM_WIDTH);
+    ring_add_row(ring);
     term_clear();
+
+    for (int i = 0; i < 24; i++) {
+        kprintf("row%d\n", i);
+    }
 }
 
 // temporary
@@ -34,23 +43,34 @@ void video_set_cursor(int row, int col) {
  }
 
 void update_cursor() {
-    video_set_cursor(term_row, term_col);
+    video_set_cursor(min(term_row, TERM_HEIGHT - 1), term_col);
 }
 
 void term_clear() {
-    term_row = 0; term_col = 0; term_top = 0;
+    term_row = 0; term_col = 0;
 
-    memset(term_buf, 0, sizeof(term_buf));
-    video_clear();
+    for (int i = 0; i < ring->current_length; i++) {
+        void *row = ring_get_row(ring, i);
+        if (row) {
+            memset(row, VIDEO_CLEAR_CHAR, TERM_WIDTH);
+        }
+    }
+    video_clear(TERM_COLOR);
     update_cursor();
 }
 
 void term_redraw() {
-    for (int i = 0; i < TERM_HEIGHT; i++) {
-        int row = (i + term_top) % TERM_HEIGHT;
-        char *rowbuf = term_buf[row];
-        for (int col = 0; col < TERM_WIDTH; col++) {
-            printc(i, col, TERM_COLOR, rowbuf[col]);
+    for (int row = 0; row < TERM_HEIGHT; row++) {
+        int back_idx = -TERM_HEIGHT + row;
+        char *rowbuf = ring_get_row(ring, back_idx);
+        if (rowbuf) {
+            for (int col = 0; col < TERM_WIDTH; col++) {
+                printc(row, col, TERM_COLOR, rowbuf[col]);
+            }
+        } else {
+            for (int col = 0; col < TERM_WIDTH; col++) {
+                printc(row, col, TERM_COLOR, ' ');
+            }
         }
     }
 }
@@ -58,15 +78,15 @@ void term_redraw() {
 void term_add_rows(int count) {
     if (count <= 0) return;
 
-    if (term_row + count >= TERM_HEIGHT) {
-        for (int row = max(term_row + 1, TERM_HEIGHT); row < term_row + count + 1; row++) {
-            char *new_row = term_buf[row % TERM_HEIGHT];
-            memset(new_row, 0, TERM_WIDTH);
-        }
-        term_top = (term_row + count + 1) % TERM_HEIGHT;
-        term_redraw();
+    for (int i = 0; i < count; i++) {
+        void *row = ring_add_row(ring);
+        memset(row, VIDEO_CLEAR_CHAR, sizeof(row));
     }
     term_row += count;
+
+    if (term_row >= TERM_HEIGHT) {
+        term_redraw();
+    }
 
     update_cursor();
 }
@@ -82,6 +102,31 @@ static bool is_printable(char c) {
     return true;
 }
 
+int term_current_screen_row() {
+    return min(ring->current_length - 1, TERM_HEIGHT - 1);
+}
+
+char *term_last_row() {
+    if (term_row < TERM_HEIGHT - 1) {
+        return ring_get_row(ring, term_row);
+    }
+
+    return ring_get_row(ring, -1);
+}
+
+void term_write_printable(char c) {
+    if (is_printable(c)) {
+        char *row = term_last_row();
+        if (!row) {
+            PANIC("Write with no row");
+        }
+
+        row[term_col] = c;
+        printc(term_current_screen_row(), term_col, TERM_COLOR, c);
+        term_add_cols(1);
+    }
+}
+
 void term_write_c(char c) {
     switch (c) {
         case '\n':
@@ -94,12 +139,7 @@ void term_write_c(char c) {
             term_add_cols(8);
             break;
         default:
-            if (is_printable(c)) {
-                term_buf[term_row % TERM_HEIGHT][term_col] = c;
-                printc(min(term_row, TERM_HEIGHT - 1), term_col, TERM_COLOR, c);
-                term_add_cols(1);
-            }
-
+            term_write_printable(c);
             break;
 
     }
