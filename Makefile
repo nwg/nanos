@@ -20,6 +20,8 @@ BOCHS_NATIVE = /usr/local/bin/bochs-native-debugger
 BOCHS_IMG = bochs.img
 MKLDSYM = ./util/mkldsym
 OBJCOPY = /opt/local/bin/x86_64-elf-objcopy
+NASM = nasm
+AFLAGS = -w+error
 
 .PHONY: all run run-qemu clean bochs-gdb bochs-native
 
@@ -56,13 +58,13 @@ bochs-gdb: $(BOCHS_IMG) kernel.sym
 	$(BOCHS_GDB) -q -f bochsrc.gdb
 
 %.bin: $(SRC)/%.asm $(SRC)/common.mac
-	nasm -I$(SRC) -o $@ $<
+	$(NASM) $(AFLAGS) -I$(SRC) -o $@ $<
 
 %.o: $(SRC)/%.c $(KERNEL_HEADERS)
 	$(CC) -I$(SRC) $(CFLAGS) -c $<
 
 %.o: $(SRC)/%.asm $(SRC)/common.mac
-	nasm -g -I$(SRC) -f elf64 -o $@ $<
+	$(NASM) $(AFLAGS) -g -I$(SRC) -f elf64 -o $@ $<
 
 run: bigboot
 	qemu-system-x86_64 ./bigboot
