@@ -16,9 +16,15 @@ typedef enum {
   PROCESS_WAIT_READ,
 } process_runstate_e;
 
+typedef struct {
+  uint64_t filedes;
+  char *buf;
+  int len;
+} readinfo_t;
+
 typedef union {
   uint64_t sleep_until_tick;
-  uint64_t read_filedes;
+  readinfo_t readinfo;
 } runstate_u;
 
 typedef struct process_s {
@@ -59,5 +65,8 @@ void process_description(char *buf, int n, process_t *p);
 void process_sleep(process_t *process, useconds_t useconds);
 void process_check_sleep(process_t *process);
 void process_wake(process_t *process);
+void process_wait_read(process_t *process, int filedes, char *buf, size_t len);
+void switch_from_process(process_t *process);
+void process_finish_read(process_t *process);
 
 #endif

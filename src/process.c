@@ -8,6 +8,8 @@
 #include "kernel.h"
 #include <stdio.h>
 #include "timer.h"
+#include <string.h>
+#include "term.h"
 
 void process_add_pages(process_t *process, uint64_t num) {
     uintptr_t *pt = get_pagedir(process->pages, 0, 0, 1);
@@ -169,6 +171,10 @@ void switch_to_process(process_t *process) {
     // dump_process(process);
 }
 
+void switch_from_process(process_t *process) {
+    process->current = false;
+}
+
 /*
  * This function must be called when returning to the kernel after
  * running a process, e.g. via a timer interrupt
@@ -193,4 +199,24 @@ void process_wake(process_t *process) {
     if (process->runstate == PROCESS_SLEEPING && g_timer_ticks >= process->runinfo.sleep_until_tick) {
         process->runstate = PROCESS_RUNNABLE;
     }
+}
+
+void process_wait_read(process_t *process, int filedes, char *buf, size_t len) {
+    process->runstate = PROCESS_WAIT_READ;
+    process->runinfo.readinfo.buf = buf;
+    process->runinfo.readinfo.filedes = filedes;
+    process->runinfo.readinfo.len = len;
+}
+
+void process_finish_read(process_t *process) {
+    if (process->runinfo.readinfo.filedes != 0) {
+        PANIC("Tried to finish read on nonzero descriptor (no stdin)");
+    }
+
+    char *buf = process->runinfo.readinfo.buf;
+    int len = process->runinfo.readinfo.len;
+
+    int readlen = term_read_stdin(buf, len);
+    process->runstate = PROCESS_RUNNABLE;
+    process->state->registers.rdi = readlen;
 }

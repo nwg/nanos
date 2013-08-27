@@ -6,7 +6,7 @@ void keyboard_press(keycode_e code) {
     if (code == KEY_ESC) {
         term_clear();
     } else {
-        term_write_c(keychars(code)[0]);
+        term_write_c_stdin(keychars(code)[0]);
     }
 }
 
@@ -70,6 +70,7 @@ const char* keychars(keycode_e code) {
         case KEY_COMMA: return ",<";
         case KEY_PERIOD: return ".>";
         case KEY_SLASH: return "/?";
+        case KEY_SPACE: return "  ";
 
         default: return "\0\0";
     }

@@ -55,6 +55,8 @@ typedef enum {
     KEY_SLASH,
     KEY_RSHIFT,
 
+    KEY_SPACE = 0x39,
+
     KEY_ENTER = 0x1C,
 } keycode_e;
 

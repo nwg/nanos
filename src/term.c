@@ -8,6 +8,9 @@
 #include "ring.h"
 #include "kmem.h"
 #include <stdint.h>
+#include <string.h>
+
+term_newline_handler g_term_newline_handler = NULL;
 
 static int term_row = 0;
 static int term_col = 0;
@@ -16,13 +19,27 @@ static int term_col = 0;
 #define TERM_WIDTH 80
 #define TERM_HEIGHT 25
 #define TERM_BACK_BUFFER 4096
+#define TERM_STDIN_BUFSIZE 1024
+#define TERM_STDIN_LINESIZE 512
 
 static ring_t *ring;
+static char stdin_buf[TERM_STDIN_BUFSIZE];
+// static char stdin_line[TERM_STDIN_LINESIZE];
+static int stdin_buf_offset = 0;
+static int stdin_buf_last_newline = 0;
+// static int stdin_line_offset = 0;
 
 void term_init() {
     ring = ring_alloc(kalloc, TERM_BACK_BUFFER, TERM_WIDTH);
     ring_add_row(ring);
     term_clear();
+    term_clear_stdin();
+}
+
+void term_clear_stdin() {
+    memset(stdin_buf, 0, sizeof(stdin_buf));
+    stdin_buf_offset = 0;
+    stdin_buf_last_newline = 0;
 }
 
 // temporary
@@ -129,6 +146,13 @@ void term_backspace(int count) {
     update_cursor();
 }
 
+static inline void call_newline_handler() {
+    if (g_term_newline_handler) {
+        if (g_term_newline_handler(stdin_buf)) {
+            term_clear_stdin();
+        }
+    }
+}
 
 void term_write_c(char c) {
     switch (c) {
@@ -148,6 +172,37 @@ void term_write_c(char c) {
             term_write_printable(c);
             break;
 
+    }
+}
+
+int term_read_stdin(char *dst, size_t maxlen) {
+    int size = min(maxlen, stdin_buf_last_newline);
+    strncpy(dst, stdin_buf, size);
+
+    if (size < stdin_buf_offset) {
+        memcpy(stdin_buf, &stdin_buf[stdin_buf_offset], stdin_buf_offset - stdin_buf_last_newline);
+    } else {
+        term_clear_stdin();
+    }
+
+    return size;
+}
+
+void term_write_c_stdin(char c) {
+    if (stdin_buf_offset >= TERM_STDIN_BUFSIZE - 1)
+        return;
+
+    // save char for last newline
+    if (stdin_buf_offset == TERM_STDIN_BUFSIZE - 2 && c != '\n')
+        return;
+
+    term_write_c(c);
+
+    stdin_buf[stdin_buf_offset++] = c;
+
+    if (c == '\n') {
+        stdin_buf_last_newline = stdin_buf_offset;
+        call_newline_handler();
     }
 }
 

@@ -42,6 +42,12 @@ uint8_t inb(uint16_t port);
         : "=m" (dst) \
     )
 
+#define GET_RDI(dst) \
+    __asm__ __volatile__ ( \
+        "movq %%rdi, %0\n\t" \
+        : "=m" (dst) \
+    )
+
 #define SET_RSP(src) \
     __asm__ __volatile__ ( \
         "movq %0, %%rsp\n\t" \
