@@ -85,7 +85,7 @@ irqno:
   dq 0
 
 %macro INT 1
-mov byte [irqno], %1
+mov qword [irqno], %1
 jmp interrupt
 %endmacro
 
@@ -195,7 +195,7 @@ interrupt:
   PUSHA
 
   ; handle_interrupt(code, state)
-  mov byte rdi, [irqno]
+  mov rdi, [irqno]
   mov qword rsi, rsp
   call handle_interrupt
 

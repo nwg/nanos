@@ -1,6 +1,6 @@
 ; GDT base limit access flags
 %macro GDT 4
-  dw %2
+  dw %2 & 0xFFFF
   dw %1
   db %1 >> 16
   db %3
@@ -10,8 +10,8 @@
 
 ; GDT64 base(64-bit) limit access flags
 %macro GDT64 4
-  dw %2
-  dw %1
+  dw %2 & 0xFFFF
+  dw %1 & 0xFFFF
   db %1 >> 16
   db %3
   db (%2 >> 16) & 0x0F | (%4 << 4)
@@ -21,12 +21,12 @@
 %endmacro
 
 %macro IDT64 3
-dw %2
+dw (%2 & 0xFFFF)
 dw %1
 db 0
 db %3
-dw (%2  >> 16)
-dd (%2  >> 32)
+dw (%2  >> 16) & 0xFFFF
+dd (%2  >> 32) & 0xFFFFFFFF
 dd 0
 %endmacro
 
