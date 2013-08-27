@@ -6,6 +6,7 @@
 #include <memory.h>
 #include "video.h"
 #include "num.h"
+#include <unistd.h>
 
 #define BASE10_LEFT 1000000000000000000
 #define BASE16_LEFT 0x1000000000000000
@@ -93,9 +94,9 @@ int vsnprintf(char * restrict str, size_t n, const char * restrict format, va_li
 
     }
 
-    str[i++] = '\0';
+    str[i] = '\0';
 
-    return 0;
+    return i;
 }
 
 
@@ -104,22 +105,19 @@ int snprintf(char * restrict str, size_t n, const char * restrict format, ...) {
     va_list ap;
     va_start(ap, format);
 
-    vsnprintf(str, n, format, ap);
+    int len = vsnprintf(str, n, format, ap);
 
     va_end(ap);
 
-    return 0;
+    return len;
 }
 
-static int row = 0;
 static char buf[256];
 
 int
 vprintf(const char * restrict format, va_list ap) {
     vsnprintf(buf, 256, format, ap);
-    print(row++, 0, COLOR_GREEN, buf);
-
-    row = row  % 25;
+    write(STDOUT_FILENO, buf, 256);
     return 0;
 }
 

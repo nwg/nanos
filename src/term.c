@@ -206,8 +206,9 @@ void term_write_c_stdin(char c) {
     }
 }
 
-void term_write(const char *str) {
-    for (const char *p = str; *p; p++) {
+void term_write(const char *str, size_t len) {
+    int i = 0;
+    for (const char *p = str; *p && i < len; p++, i++) {
         term_write_c(*p);
     }
 }

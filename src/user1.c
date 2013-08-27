@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
 	int row = atoi(argv[2]);
 
 	int len = read(STDIN_FILENO, buf, 256);
-	printf("Got line %s len %d", buf, len);
+	printf("Got len %d line %s", len, buf);
 
 	sys_test();
 

@@ -59,6 +59,6 @@ int kprintf(const char * restrict format, ...);
 #define IS_USER_STATE(state) STATE_IS_PRIV(state, PRIV_RING3)
 #define IS_KERNEL_STATE(state) STATE_IS_PRIV(state, PRIV_RING0)
 
-#define PANIC(s) ({ printf("%s", s); while (true) {} })
+#define PANIC(s) ({ kprintf("%s", s); while (true) {} })
 
 #endif

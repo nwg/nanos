@@ -1,7 +1,7 @@
 KERNEL_C = kmem.o ll.o process.o schedule.o pages.o memory.o kernel_init.o \
 		   syscall.o video.o stack.o ptr.o string.o stdio.o timer.o intel_8254.o \
 		   asm.o intel_8042.o intel_8042_nanos.o keyboard.o interrupt.o \
-		   intel_8254_nanos.o term.o ring.o
+		   intel_8254_nanos.o term.o ring.o unistd.o
 
 USER1_OBJ = user1.o video.o string.o stdio.o memory.o unistd.o
 SRC = src/

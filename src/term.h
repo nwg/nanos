@@ -9,7 +9,7 @@ typedef bool (*term_newline_handler)();
 extern term_newline_handler g_term_newline_handler;
 
 void term_init();
-void term_write(const char *str);
+void term_write(const char *str, size_t len);
 void term_write_c(char c);
 void term_clear();
 void term_clear_stdin();

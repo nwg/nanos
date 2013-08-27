@@ -16,8 +16,13 @@ sleep(unsigned int seconds) {
 }
 
 ssize_t read(int filedes, void *buf, size_t nbyte) {
-    sys_read(filedes, buf, nbyte);
-    uint64_t len;
-    GET_RDI(len);
+    ssize_t len;
+    sys_read(filedes, buf, nbyte, len);
+    return len;
+}
+
+ssize_t write(int fildes, const void *buf, size_t nbyte) {
+    ssize_t len;
+    sys_write(filedes, buf, nbyte, len);
     return len;
 }
