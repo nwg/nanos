@@ -1,6 +1,7 @@
 #include "intel_8042_nanos.h"
 #include "intel_8042.h"
 #include "keyboard.h"
+#include "interrupt.h"
 
 static void convert_scancode(uint64_t scancode, int length, keycode_e *keycode, bool *is_release) {
     if (length > 2) {
@@ -12,6 +13,10 @@ static void convert_scancode(uint64_t scancode, int length, keycode_e *keycode, 
     *is_release = scancode & I8042_RELEASE_BIT;
     scancode &= ~I8042_RELEASE_BIT;
     *keycode = (keycode_e)scancode;
+}
+
+void intel_8042_nanos_init() {
+    enable_irq(1);
 }
 
 void intel_8042_nanos_handle_irq1() {

@@ -1,6 +1,7 @@
 #ifndef __INTEL_8042_NANOS__
 #define __INTEL_8042_NANOS__
 
+void intel_8042_nanos_init();
 void intel_8042_nanos_handle_irq1();
 
 /*

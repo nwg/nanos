@@ -6,6 +6,15 @@
 #include "intel_8254_nanos.h"
 #include "syscall.h"
 #include "asm.h"
+#include "intel_8259.h"
+
+void enable_irq(int irqno) {
+    intel_8259_enable_irq(irqno);
+}
+
+void disable_irq(int irqno) {
+    intel_8259_disable_irq(irqno);
+}
 
 void handle_irq(system_state_t *state, irq_e code) {
     if (IS_USER_STATE(state)) {

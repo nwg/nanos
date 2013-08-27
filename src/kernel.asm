@@ -3,13 +3,14 @@
 %include "common.mac"
 
 global _start
-global k_tss64_sp
-global k_replace_system_state
+global k_tss64_sp               ; forced rsp @ ring3 -> ring0 transition
+global k_replace_system_state   ; registers and iretq will be popped starting here
 
 extern kernel_init
 extern handle_irq
 extern handle_cpu_exception
 extern handle_syscall
+extern intel_8259_set_idt_start
 
 [BITS 64]
 ;[org TOP]; start of second block of conventional memory
@@ -19,66 +20,18 @@ _start:
   ; Load gdt with tss ptr
   lgdt [gdt_d]
 
+  ; Set tss64 GDT offset
+  mov ax, 0x28
+  ltr ax
+
   mov rsp, KERNEL_STACK
-
-  ; Enable IRQ0 (PIT)
-  mov al, 0xfc
-  out 0xa1, al
-  mov al, 0xff
-  out 0x21, al
-
-  ; Disable PIC
-  ; mov al, 0xff
-  ; out 0xa1, al
-  ; out 0x21, al
 
   ; Load interrupt descriptor table
   lidt [idt_hdr]
 
-  ; set up tss (task register, 16-byte descriptor in GDT)
-  mov ax, 0x28
-  ltr ax
-
-  ; remap the PIC
-  ; Master is irq0 to irq7 and starts at 32 (0x20)
-  ; Slave is irq8 to irq15 and starts at handler 40 (0x28)
-  in al, PIC1_DATA
-  push rax
-  in al, PIC2_DATA
-  push rax
-
-  mov al, ICW1_INIT+ICW1_ICW4
-  out PIC1_COMMAND, al
-  IOWAIT
-  out PIC2_COMMAND, al
-  IOWAIT
-  mov al, 0x20
-  out PIC1_DATA, al
-  IOWAIT
-  mov al, 0x28
-  out PIC2_DATA, al
-  IOWAIT
-  mov al, 4
-  out PIC1_DATA, al
-  IOWAIT
-  mov al, 2
-  out PIC2_DATA, al
-  IOWAIT
-
-  mov al, ICW4_8086
-  out PIC1_DATA, al
-  IOWAIT
-  out PIC2_DATA, al
-  IOWAIT
-
-  pop rax
-  out PIC1_DATA, al
-  IOWAIT
-  pop rax
-  out PIC2_DATA, al
-  IOWAIT
-
-  ;mov dword [USER_VIDEO + 80*2*14], 0x01690148
+  ; Set IRQ idt start index to 32 to match our idt setup below
+  mov rdi, 32
+  call intel_8259_set_idt_start
 
   call kernel_init
   jmp interrupt.return

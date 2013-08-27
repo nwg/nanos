@@ -9,6 +9,8 @@
 #include "intel_8042_nanos.h"
 #include "intel_8254_nanos.h"
 #include "term.h"
+#include "intel_8259_nanos.h"
+#include "binary.h"
 
 uintptr_t *kernel_pml4;
 uintptr_t *kernel_pdpt;
@@ -62,8 +64,10 @@ void spawn_test_programs() {
 
 void kernel_init() {
 	init_kernel_pages();
+    intel_8259_nanos_init();
+    intel_8042_nanos_init();
+    intel_8254_nanos_init();
 	term_init();
-	intel_8254_nanos_init();
 	schedule_init();
 	spawn_test_programs();
 	schedule();

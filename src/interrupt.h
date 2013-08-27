@@ -61,4 +61,7 @@ typedef enum {
 void handle_irq(system_state_t *state, irq_e code);
 void handle_cpu_exception(system_state_t *state, cpu_exception_e code);
 
+void enable_irq(int irqno);
+void disable_irq(int irqno);
+
 #endif
