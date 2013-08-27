@@ -1,4 +1,4 @@
-#include "video.h"
+#include "user_vga.h"
 #include "syscall.h"
 #include "process.h"
 #include <string.h>

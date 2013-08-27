@@ -4,7 +4,7 @@
 #include "kmem.h"
 #include "pages.h"
 #include "asm.h"
-#include "video.h"
+#include "user_vga.h"
 #include "timer.h"
 #include "intel_8042_nanos.h"
 #include "intel_8254_nanos.h"

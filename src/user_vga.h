@@ -1,5 +1,5 @@
-#ifndef __VIDEO_H__
-#define __VIDEO_H__
+#ifndef __USER_VIDEO_H__
+#define __USER_VIDEO_H__
 
 #include <stdint.h>
 

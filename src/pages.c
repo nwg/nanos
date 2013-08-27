@@ -2,7 +2,6 @@
 #include "pages.h"
 #include "sizes.h"
 #include "kmem.h"
-#include "video.h"
 #include "asm.h"
 #include "kernel.h"
 #include <stdint.h>

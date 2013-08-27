@@ -1,5 +1,5 @@
 
-#include "video.h"
+#include "user_vga.h"
 #include "native.h"
 #include <memory.h>
 

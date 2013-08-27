@@ -4,12 +4,12 @@
 #include "pages.h"
 #include "asm.h"
 #include "stack.h"
-#include "video.h"
 #include "kernel.h"
 #include <stdio.h>
 #include "timer.h"
 #include <string.h>
 #include "term.h"
+#include "user_vga.h"
 
 void process_add_pages(process_t *process, uint64_t num) {
     uintptr_t *pt = get_pagedir(process->pages, 0, 0, 1);

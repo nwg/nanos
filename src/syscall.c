@@ -2,7 +2,6 @@
 #include "kernel.h"
 #include "process.h"
 #include "schedule.h"
-#include "video.h"
 #include "asm.h"
 #include "term.h"
 
