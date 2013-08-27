@@ -85,6 +85,12 @@ uint8_t inb(uint16_t port);
         : "rax" \
     )
 
+#define EOI() \
+    __asm__ __volatile__ ( \
+        "movb $0x20, %al\n\t" \
+        "outb %al, $0x20\n\t" \
+    )
+
 #define PUSHA_SIZE (15*8)
 
 #endif

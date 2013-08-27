@@ -5,19 +5,15 @@
 #include "intel_8042_nanos.h"
 #include "intel_8254_nanos.h"
 #include "syscall.h"
+#include "asm.h"
 
-void handle_interrupt(interrupt_e code, system_state_t *state) {
+void handle_irq(system_state_t *state, irq_e code) {
     if (IS_USER_STATE(state)) {
         return_from_schedule(state);
     }
 
-    if (IS_CPU_INTERRUPT(code)) {
-        kprintf("CPU Exception %d received\n", code);
-        return;
-    }
-
     switch (code) {
-        case INTERRUPT_IRQ0:
+        case IRQ0:
 
             intel_8254_nanos_irq0();
 
@@ -26,13 +22,20 @@ void handle_interrupt(interrupt_e code, system_state_t *state) {
             }
 
             break;
-        case INTERRUPT_IRQ1:
+
+        case IRQ1:
             intel_8042_nanos_handle_irq1();
             break;
-        case INTERRUPT_SOFTWARE:
-            handle_syscall(state);
-            break;
+
         default:
             break;
     }
+
+    EOI();
+}
+
+void handle_cpu_exception(system_state_t *state, cpu_exception_e code) {
+    kprintf("CPU Exception %d received\n", code);
+
+    while (true) {}
 }

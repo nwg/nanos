@@ -7,7 +7,9 @@ global k_tss64_sp
 global k_replace_system_state
 
 extern kernel_init
-extern handle_interrupt
+extern handle_irq
+extern handle_cpu_exception
+extern handle_syscall
 
 [BITS 64]
 ;[org TOP]; start of second block of conventional memory
@@ -81,127 +83,129 @@ _start:
   call kernel_init
   jmp interrupt.return
 
-irqno:
+int_no:
   dq 0
 
-%macro INT 1
-mov qword [irqno], %1
+int_handler:
+  dq 0
+
+%macro INT 2
+mov qword [int_handler], %1
+mov qword [int_no], %2
 jmp interrupt
 %endmacro
 
+%define IRQ(n) INT handle_irq, n
+%define CPU(n) INT handle_cpu_exception, n
 
 cpu0:
-  INT 0
+  CPU(0)
 cpu1:
-  INT 1
+  CPU(1)
 cpu2:
-  INT 2
+  CPU(2)
 cpu3:
-  INT 3
+  CPU(3)
 cpu4:
-  INT 4
+  CPU(4)
 cpu5:
-  INT 5
+  CPU(5)
 cpu6:
-  INT 6
+  CPU(6)
 cpu7:
-  INT 7
+  CPU(7)
 cpu8:
-  INT 8
+  CPU(8)
 cpu9:
-  INT 9
+  CPU(9)
 cpu10:
-  INT 10
+  CPU(10)
 cpu11:
-  INT 11
+  CPU(11)
 cpu12:
-  INT 12
+  CPU(12)
 cpu13:
-  INT 13
+  CPU(13)
 cpu14:
-  INT 14
+  CPU(14)
 cpu15:
-  INT 15
+  CPU(15)
 cpu16:
-  INT 16
+  CPU(16)
 cpu17:
-  INT 17
+  CPU(17)
 cpu18:
-  INT 18
+  CPU(18)
 cpu19:
-  INT 19
+  CPU(19)
 cpu20:
-  INT 20
+  CPU(20)
 cpu21:
-  INT 21
+  CPU(21)
 cpu22:
-  INT 22
+  CPU(22)
 cpu23:
-  INT 23
+  CPU(23)
 cpu24:
-  INT 24
+  CPU(24)
 cpu25:
-  INT 25
+  CPU(25)
 cpu26:
-  INT 26
+  CPU(26)
 cpu27:
-  INT 27
+  CPU(27)
 cpu28:
-  INT 28
+  CPU(28)
 cpu29:
-  INT 29
+  CPU(29)
 cpu30:
-  INT 30
+  CPU(30)
 cpu31:
-  INT 31
+  CPU(31)
 
 irq0:
-  INT 32
+  IRQ(0)
 irq1:
-  INT 33
+  IRQ(1)
 irq2:
-  INT 34
+  IRQ(2)
 irq3:
-  INT 35
+  IRQ(3)
 irq4:
-  INT 36
+  IRQ(4)
 irq5:
-  INT 37
+  IRQ(5)
 irq6:
-  INT 38
+  IRQ(6)
 irq7:
-  INT 39
+  IRQ(7)
 irq8:
-  INT 40
+  IRQ(8)
 irq9:
-  INT 41
+  IRQ(9)
 irq10:
-  INT 42
+  IRQ(10)
 irq11:
-  INT 43
+  IRQ(11)
 irq12:
-  INT 44
+  IRQ(12)
 irq13:
-  INT 45
+  IRQ(13)
 irq14:
-  INT 46
+  IRQ(14)
 irq15:
-  INT 47
+  IRQ(15)
 
 software_interrupt:
-  INT 48
+  INT handle_syscall, 0
 
 interrupt:
   PUSHA
 
   ; handle_interrupt(code, state)
-  mov rdi, [irqno]
-  mov qword rsi, rsp
-  call handle_interrupt
-
-  ; send eoi
-  mov al, 20h
-  out 20h, al
+  mov qword rdi, rsp
+  mov rsi, [int_no]
+  call [int_handler]
 
   ; Swap out system state (@rsp) if requested
 .return:

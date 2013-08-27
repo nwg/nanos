@@ -7,6 +7,11 @@
 #include "term.h"
 
 void handle_syscall(system_state_t *state) {
+
+	if (!IS_USER_STATE(state)) PANIC("Syscall outside of usermode");
+
+	return_from_schedule(state);
+
 	process_t *process = current_process();
 
 	switch (state->registers.rax) {
