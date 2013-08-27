@@ -9,6 +9,8 @@
 #include "kmem.h"
 #include <stdint.h>
 #include <string.h>
+#include "vga.h"
+#include "kernel.h"
 
 term_newline_handler g_term_newline_handler = NULL;
 
@@ -40,21 +42,8 @@ void term_clear_stdin() {
     stdin_buf_last_newline = 0;
 }
 
-// temporary
-#include "asm.h"
-void video_set_cursor(int row, int col) {
-    uint16_t position = row*80 + col;
-
-    // cursor LOW port to vga INDEX register
-    outb(0x3D4, 0x0F);
-    outb(0x3D5, (uint8_t)(position & 0xFF));
-    // cursor HIGH port to vga INDEX register
-    outb(0x3D4, 0x0E);
-    outb(0x3D5, (uint8_t)((position >> 8) & 0xFF));
- }
-
 void update_cursor() {
-    video_set_cursor(min(term_row, TERM_HEIGHT - 1), term_col);
+    vga_set_cursor(min(term_row, TERM_HEIGHT - 1), term_col);
 }
 
 void term_clear() {
