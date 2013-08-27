@@ -12,7 +12,7 @@
 
 ; GDT base limit access flags
 %macro GDT 4
-  dw %2
+  dw %2 & 0xFFFF
   dw %1
   db %1 >> 16
   db %3
