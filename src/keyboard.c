@@ -62,11 +62,11 @@ const char* keychars(keycode_e code) {
 
         case KEY_Z: return "zZ";
         case KEY_X: return "xX";
-        case KEY_C: return "xX";
-        case KEY_V: return "xX";
-        case KEY_B: return "xX";
-        case KEY_N: return "xX";
-        case KEY_M: return "xX";
+        case KEY_C: return "cC";
+        case KEY_V: return "vV";
+        case KEY_B: return "bB";
+        case KEY_N: return "nN";
+        case KEY_M: return "mM";
         case KEY_COMMA: return ",<";
         case KEY_PERIOD: return ".>";
         case KEY_SLASH: return "/?";
