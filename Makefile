@@ -1,4 +1,4 @@
-KERNEL_C = kmem.o ll.o process.o schedule.o pages.o memory.o kernel_init.o \
+KERNEL_C = kmem.o ll.o process.o schedule.o pages.o memory.o kernel.o \
 		   syscall.o video.o stack.o ptr.o string.o stdio.o timer.o intel_8254.o \
 		   asm.o intel_8042.o intel_8042_nanos.o keyboard.o interrupt.o \
 		   intel_8254_nanos.o term.o ring.o unistd.o intel_8259.o intel_8259_nanos.o
@@ -6,7 +6,7 @@ KERNEL_C = kmem.o ll.o process.o schedule.o pages.o memory.o kernel_init.o \
 USER1_OBJ = user1.o video.o string.o stdio.o memory.o unistd.o
 SRC = src/
 KERNEL_HEADERS = $(wildcard src/*.h)
-KERNEL_ASM = kernel.o
+KERNEL_ASM = kernel_init.o
 KERNEL_OBJ = $(KERNEL_ASM) $(KERNEL_C)
 OBJ = $(KERNEL_OBJ)
 FLAT_BINS = boot.bin kernel.bin user1.bin
@@ -27,7 +27,7 @@ OBJCOPY = /opt/local/bin/x86_64-elf-objcopy
 
 all: bigboot
 
-# kernel.o must be the first object passed to the linker
+# kernel_init.o must be the first object passed to the linker
 kernel.bin: $(KERNEL_ASM) $(KERNEL_C) kernel.elf custom.lnk
 	$(OBJCOPY) -O binary --set-section-flags .bss=alloc,load,contents kernel.elf kernel.bin
 	$(PAD) 65536 $@
