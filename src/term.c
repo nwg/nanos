@@ -24,10 +24,8 @@ static int term_col = 0;
 
 static ring_t *ring;
 static char stdin_buf[TERM_STDIN_BUFSIZE];
-// static char stdin_line[TERM_STDIN_LINESIZE];
 static int stdin_buf_offset = 0;
 static int stdin_buf_last_newline = 0;
-// static int stdin_line_offset = 0;
 
 void term_init() {
     ring = ring_alloc(kalloc, TERM_BACK_BUFFER, TERM_WIDTH);

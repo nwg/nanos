@@ -43,12 +43,10 @@ void handle_syscall(system_state_t *state) {
 
 			int readlen = term_read_stdin(buf, len);
 			if (readlen > 0) {
-				kprintf("Got %d bytes\n", readlen);
 				state->registers.rdi = readlen;
 				break;
 			}
 
-			kprintf("Waiting for read\n", readlen);
 			process_wait_read(process, filedes, buf, len);
 			schedule();
 
