@@ -246,10 +246,10 @@ bool process_runnable(process_t *this) {
 
 ssize_t process_read_file(process_t *this, int fileno, char *buf, size_t len) {
 
-    this->runstate = PROCESS_WAIT_READ;
     file_t *file = this->files[fileno];
     if (!file) return -1;
 
+    this->runstate = PROCESS_WAIT_READ;
     this->runinfo.fileinfo.fileno = fileno;
     this->runinfo.fileinfo.file = file;
 
@@ -264,10 +264,10 @@ ssize_t process_read_file(process_t *this, int fileno, char *buf, size_t len) {
 
 ssize_t process_write_file(process_t *this, int fileno, const char *buf, size_t len) {
 
-    this->runstate = PROCESS_WAIT_WRITE;
     file_t *file = this->files[fileno];
     if (!file) return -1;
 
+    this->runstate = PROCESS_WAIT_WRITE;
     this->runinfo.fileinfo.fileno = fileno;
     this->runinfo.fileinfo.file = file;
 
