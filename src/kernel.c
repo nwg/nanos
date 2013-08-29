@@ -79,7 +79,7 @@ static char print_buf[256];
 
 int kvprintf(const char * restrict format, va_list ap) {
     int len = vsnprintf(print_buf, 256, format, ap);
-    term_write(print_buf, len);
+    term_write(g_term, print_buf, len);
     return 0;
 }
 

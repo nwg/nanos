@@ -35,7 +35,7 @@ ssize_t termbuf_write(termbuf_t *this, const char *str, size_t nbytes) {
     inbuf_t *inbuf = this->inbuf;
     ssize_t result = inbuf_write(inbuf, str, nbytes);
     if (result > 0) {
-        return file_write(g_term_file, str, result);
+        return file_write(g_term->file, str, result);
     }
 
     return result;

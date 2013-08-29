@@ -5,7 +5,7 @@
 
 void keyboard_press(keycode_e code) {
     if (code == KEY_ESC) {
-        term_clear();
+        term_clear(g_term);
     } else {
         char buf[2];
         buf[1] = '\0';

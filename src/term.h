@@ -4,16 +4,26 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include "file.h"
+#include "ring.h"
 
-extern file_t *g_term_file;
+typedef struct {
+    int row;
+    int col;
+    ring_t *ring;
+    file_t *file;
+} term_t;
+
+extern term_t *g_term;
 
 void term_init();
-void term_write(const char *str, size_t len);
-void term_write_c(char c);
-void term_clear();
-void term_clear_stdin();
-void term_write_c_stdin(char c);
-int term_read_stdin(char *dst, size_t maxlen);
+
+term_t *term_alloc();
+void term_write(term_t *term, const char *str, size_t len);
+void term_write_c(term_t *term, char c);
+void term_clear(term_t *term);
+void term_clear_stdin(term_t *term);
+void term_write_c_stdin(term_t *term, char c);
+int term_read_stdin(term_t *term, char *dst, size_t maxlen);
 file_t *term_get_global_file();
 
 int kprintf(const char * restrict format, ...);
