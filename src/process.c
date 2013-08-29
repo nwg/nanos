@@ -33,7 +33,7 @@ process_t *process_alloc(void *text, int argc, char **argv) {
 
     process->files = kalloc(sizeof(file_t) * PROCESS_MAX_FILES);
     process->files[0] = g_termbuf->file;
-    process->files[1] = g_termbuf->file;
+    process->files[1] = g_term_file;
 
     stackptr_t u = STACK(process->stack_u, U_STACK_SIZE);
     u = push_argv((void*)USER_STACK_VMA, process->stack_u, u, argc, argv);
