@@ -74,6 +74,8 @@ typedef enum {
 #define sys_read(filedes, buf, nbyte, ret) syscall3mo(SYSCALL_READ, filedes, buf, nbyte, ret)
 #define sys_write(filedes, buf, nbyte, ret) syscall3mo(SYSCALL_WRITE, fildes, buf, nbyte, ret)
 
+#define YIELD() sys_yield()
+
 void handle_syscall(system_state_t *state);
 
 

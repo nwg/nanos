@@ -61,4 +61,7 @@ int kprintf(const char * restrict format, ...);
 
 #define PANIC(s) ({ kprintf("%s", s); while (true) {} })
 
+#include "termbuf.h"
+extern termbuf_t *g_termbuf;
+
 #endif

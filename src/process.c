@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include "timer.h"
 #include <string.h>
-#include "term.h"
 #include "user_vga.h"
 #include "syscall.h"
 
@@ -31,6 +30,10 @@ process_t *process_alloc(void *text, int argc, char **argv) {
     process->runstate = PROCESS_RUNNABLE;
     process->current = false;
     process->next_switch_is_kernel = false;
+
+    process->files = kalloc(sizeof(file_t) * PROCESS_MAX_FILES);
+    process->files[0] = g_termbuf->file;
+    process->files[1] = g_termbuf->file;
 
     stackptr_t u = STACK(process->stack_u, U_STACK_SIZE);
     u = push_argv((void*)USER_STACK_VMA, process->stack_u, u, argc, argv);
@@ -162,6 +165,14 @@ stackptr_t push_argv(void *vstart, void *pstart, stackptr_t s, int argc, char **
     return s;
 }
 
+void process_set_file(process_t *this, int fileno, file_t *file) {
+    if (fileno > PROCESS_MAX_FILES) {
+        PANIC("Max files");
+    }
+
+    this->files[fileno] = file;
+}
+
 /* Perform context switch and enter user mode to run given process */
 void switch_to_process(process_t *process) {
     SET_CR3(process->pages);
@@ -231,22 +242,56 @@ void process_wake(process_t *process) {
     }
 }
 
-void process_wait_read(process_t *process, int filedes, char *buf, size_t len) {
-    process->runstate = PROCESS_WAIT_READ;
-    process->runinfo.readinfo.buf = buf;
-    process->runinfo.readinfo.filedes = filedes;
-    process->runinfo.readinfo.len = len;
-}
+bool process_runnable(process_t *this) {
+    switch (this->runstate) {
+        case PROCESS_RUNNABLE:
+            return true;
 
-void process_finish_read(process_t *process) {
-    if (process->runinfo.readinfo.filedes != 0) {
-        PANIC("Tried to finish read on nonzero descriptor (no stdin)");
+        case PROCESS_SLEEPING:
+            return g_timer_ticks >= this->runinfo.sleep_until_tick;
+
+        case PROCESS_WAIT_READ:
+            return file_can_read(this->runinfo.fileinfo.file);
+
+        case PROCESS_WAIT_WRITE:
+            return file_can_write(this->runinfo.fileinfo.file);
     }
 
-    char *buf = process->runinfo.readinfo.buf;
-    int len = process->runinfo.readinfo.len;
+    return false;
+}
 
-    int readlen = term_read_stdin(buf, len);
-    process->runstate = PROCESS_RUNNABLE;
-    process->state->registers.rdi = readlen;
+ssize_t process_read_file(process_t *this, int fileno, char *buf, size_t len) {
+
+    this->runstate = PROCESS_WAIT_READ;
+    file_t *file = this->files[fileno];
+    if (!file) return -1;
+
+    this->runinfo.fileinfo.fileno = fileno;
+    this->runinfo.fileinfo.file = file;
+
+    ssize_t result;
+    while ( (result = file_read(file, buf, len)) < 0) {
+        YIELD();
+    }
+
+    this->runstate = PROCESS_RUNNABLE;
+    return result;
+}
+
+ssize_t process_write_file(process_t *this, int fileno, const char *buf, size_t len) {
+
+    this->runstate = PROCESS_WAIT_WRITE;
+    file_t *file = this->files[fileno];
+    if (!file) return -1;
+
+    this->runinfo.fileinfo.fileno = fileno;
+    this->runinfo.fileinfo.file = file;
+
+    ssize_t result;
+    while ( (result = file_write(file, buf, len)) < 0) {
+        YIELD();
+    }
+
+    this->runstate = PROCESS_RUNNABLE;
+    return result;
 }

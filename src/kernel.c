@@ -17,6 +17,7 @@ uintptr_t *kernel_pdpt;
 uintptr_t *kernel_pdt;
 uintptr_t *kernel_pt;
 uint64_t kernel_ticks = 0;
+termbuf_t *g_termbuf = NULL;
 
 /**
  * Configure first 2MB for initial kernel use
@@ -64,6 +65,7 @@ void spawn_test_programs() {
 
 void kernel_init() {
 	init_kernel_pages();
+    g_termbuf = termbuf_alloc();
     intel_8259_nanos_init();
     intel_8042_nanos_init();
     intel_8254_nanos_init();

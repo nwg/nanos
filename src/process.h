@@ -6,25 +6,28 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include "kernel.h"
+#include "file.h"
 
 #define K_STACK_SIZE 65536
 #define U_STACK_SIZE 65536
+
+#define PROCESS_MAX_FILES 16
 
 typedef enum {
   PROCESS_RUNNABLE,
   PROCESS_SLEEPING,
   PROCESS_WAIT_READ,
+  PROCESS_WAIT_WRITE,
 } process_runstate_e;
 
 typedef struct {
-  uint64_t filedes;
-  char *buf;
-  int len;
-} readinfo_t;
+  uint64_t fileno;
+  file_t *file;
+} fileinfo_t;
 
 typedef union {
   uint64_t sleep_until_tick;
-  readinfo_t readinfo;
+  fileinfo_t fileinfo;
 } runstate_u;
 
 struct process_s;
@@ -38,6 +41,7 @@ typedef struct process_s {
   system_state_t *kstate;
   void *saved_registers;
   void *text;
+  file_t **files;
   process_runstate_e runstate;
   process_run_condition runcondition;
   runstate_u runinfo;
@@ -71,8 +75,9 @@ void process_description(char *buf, int n, process_t *p);
 void process_sleep(process_t *process, useconds_t useconds);
 void process_check_sleep(process_t *process);
 void process_wake(process_t *process);
-void process_wait_read(process_t *process, int filedes, char *buf, size_t len);
 void switch_from_process(process_t *process);
-void process_finish_read(process_t *process);
+ssize_t process_read_file(process_t *process, int filedes, char *buf, size_t len);
+ssize_t process_write_file(process_t *this, int fileno, const char *buf, size_t len);
+bool process_runnable(process_t *this);
 
 #endif

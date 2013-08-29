@@ -46,14 +46,7 @@ void handle_syscall(system_state_t *state) {
 
 			if (filedes != 0) PANIC("read from bad filedes");
 
-			int readlen = term_read_stdin(buf, len);
-			if (readlen > 0) {
-				state->registers.rdi = readlen;
-				break;
-			}
-
-			process_wait_read(process, filedes, buf, len);
-			schedule();
+			state->registers.rdi = process_read_file(process, filedes, buf, len);
 
 			break;
 		}
@@ -63,9 +56,8 @@ void handle_syscall(system_state_t *state) {
 			const char *buf = (const char*)state->registers.rcx;
 			size_t len = state->registers.rdx;
 
-			if (filedes != 1) PANIC("write to bad filedes");
+			state->registers.rdi = process_write_file(process, filedes, buf, len);
 
-			term_write(buf, len);
 			break;
 		}
 	}

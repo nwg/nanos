@@ -18,7 +18,6 @@ static node_t *current = NULL;
 #define P(node) ((process_t*)node->data)
 
 // Private
-bool schedule_wake_stdin_reader(const char *line);
 void schedule_switch_to_process(node_t *node);
 
 
@@ -28,30 +27,13 @@ process_t *current_process() {
 
 void schedule_init() {
     processes = ll_alloc();
-    g_term_newline_handler = schedule_wake_stdin_reader;
 }
 
 static bool process_node_runnable(node_t *node) {
     process_t *process = P(node);
     return P(node)->runstate == PROCESS_RUNNABLE
-        || (process->runcondition && process->runcondition(process));
-}
-
-static bool is_stdin_reader(node_t *node) {
-    process_t *p = P(node);
-    return p->runstate == PROCESS_WAIT_READ && p->runinfo.readinfo.filedes == 0;
-}
-
-bool schedule_wake_stdin_reader(const char *line) {
-    node_t *reader = ll_find_p(processes, is_stdin_reader);
-    if (reader) {
-        schedule_switch_to_process(reader);
-        process_t *p = P(reader);
-        process_finish_read(p);
-        return true;
-    }
-
-    return false;
+        || (process->runcondition && process->runcondition(process))
+        || process_runnable(process);
 }
 
 node_t *choose_next_process() {
