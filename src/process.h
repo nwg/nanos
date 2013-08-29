@@ -31,7 +31,6 @@ typedef union {
 } runstate_u;
 
 struct process_s;
-typedef bool (*process_run_condition)(struct process_s *process);
 
 typedef struct process_s {
   void *stack_k;
@@ -43,7 +42,6 @@ typedef struct process_s {
   void *text;
   file_t **files;
   process_runstate_e runstate;
-  process_run_condition runcondition;
   runstate_u runinfo;
   uint64_t num_pages;
   void *pt;

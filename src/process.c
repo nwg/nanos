@@ -218,28 +218,12 @@ void process_stash_state(process_t *process, system_state_t *state) {
     }
 }
 
-void process_sleep_until(process_t *this, process_run_condition condition) {
-    this->runcondition = process_done_sleep;
-    sys_yield();
-    this->runcondition = NULL;
-}
-
-bool process_done_sleep(process_t *this) {
-    return g_timer_ticks >= this->runinfo.sleep_until_tick;
-}
-
 void process_sleep(process_t *this, useconds_t useconds) {
     uint64_t sleep_until = g_timer_ticks + TIMER_GET_TICKS_US(useconds);
     this->runstate = PROCESS_SLEEPING;
     this->runinfo.sleep_until_tick = sleep_until;
-    process_sleep_until(this, process_done_sleep);
+    YIELD();
     this->runstate = PROCESS_RUNNABLE;
-}
-
-void process_wake(process_t *process) {
-    if (process->runstate == PROCESS_SLEEPING && g_timer_ticks >= process->runinfo.sleep_until_tick) {
-        process->runstate = PROCESS_RUNNABLE;
-    }
 }
 
 bool process_runnable(process_t *this) {

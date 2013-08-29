@@ -32,7 +32,6 @@ void schedule_init() {
 static bool process_node_runnable(node_t *node) {
     process_t *process = P(node);
     return P(node)->runstate == PROCESS_RUNNABLE
-        || (process->runcondition && process->runcondition(process))
         || process_runnable(process);
 }
 
