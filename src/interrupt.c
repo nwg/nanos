@@ -17,7 +17,12 @@ void disable_irq(int irqno) {
 }
 
 void handle_irq(system_state_t *state, irq_e code) {
-    if (IS_USER_STATE(state)) {
+
+    // IRQ from kernel mode => was HLT
+    bool is_halt = IS_KERNEL_STATE(state);
+
+    if (!is_halt) {
+        // HLT => not in schedule
         return_from_schedule(state);
     }
 
@@ -26,7 +31,7 @@ void handle_irq(system_state_t *state, irq_e code) {
 
             intel_8254_nanos_irq0();
 
-            if (IS_USER_STATE(state)) {
+            if (!is_halt) {
                 schedule();
             }
 
