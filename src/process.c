@@ -11,6 +11,32 @@
 #include "term.h"
 #include "user_vga.h"
 
+uintptr_t *process_page_dirent_alloc(uintptr_t stack_u, uintptr_t text);
+void *process_page_table_alloc(uintptr_t stack_u, uintptr_t text);
+stackptr_t push_argv(void *vstart, void *pstart, stackptr_t s, int argc, char **argv);
+stackptr_t push_system_state(stackptr_t k, void *stack_u, int argc, char **argv);
+
+process_t *process_alloc(void *text, int argc, char **argv) {
+    process_t *process = (process_t*)kalloc(sizeof(process_t));
+    process->text = text;
+    process->stack_k = kalloc(K_STACK_SIZE);
+    process->stack_u = kalloc_aligned(U_STACK_SIZE, 4096);
+    process->pages = process_page_table_alloc((uintptr_t)process->stack_u, (uintptr_t)text);
+    process->num_pages = 0;
+    process->argc = argc;
+    process->runstate = PROCESS_RUNNABLE;
+    process->current = false;
+
+    stackptr_t u = STACK(process->stack_u, U_STACK_SIZE);
+    u = push_argv((void*)USER_STACK_VMA, process->stack_u, u, argc, argv);
+    process->argv = (char**)u;
+
+    stackptr_t k = STACK(process->stack_k, K_STACK_SIZE);
+    process->state = (system_state_t*)push_system_state(k, process->stack_u, process->argc, process->argv);
+
+    return process;
+}
+
 void process_add_pages(process_t *process, uint64_t num) {
     uintptr_t *pt = get_pagedir(process->pages, 0, 0, 1);
 
@@ -128,27 +154,6 @@ stackptr_t push_argv(void *vstart, void *pstart, stackptr_t s, int argc, char **
     }
 
     return s;
-}
-
-process_t *process_alloc(void *text, int argc, char **argv) {
-    process_t *process = (process_t*)kalloc(sizeof(process_t));
-    process->text = text;
-    process->stack_k = kalloc(K_STACK_SIZE);
-    process->stack_u = kalloc_aligned(U_STACK_SIZE, 4096);
-    process->pages = process_page_table_alloc((uintptr_t)process->stack_u, (uintptr_t)text);
-    process->num_pages = 0;
-    process->argc = argc;
-    process->runstate = PROCESS_RUNNABLE;
-    process->current = false;
-
-    stackptr_t u = STACK(process->stack_u, U_STACK_SIZE);
-    u = push_argv((void*)USER_STACK_VMA, process->stack_u, u, argc, argv);
-    process->argv = (char**)u;
-
-    stackptr_t k = STACK(process->stack_k, K_STACK_SIZE);
-    process->state = (system_state_t*)push_system_state(k, process->stack_u, process->argc, process->argv);
-
-    return process;
 }
 
 /* Perform context switch and enter user mode to run given process */
