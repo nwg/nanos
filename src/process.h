@@ -27,20 +27,26 @@ typedef union {
   readinfo_t readinfo;
 } runstate_u;
 
+struct process_s;
+typedef bool (*process_run_condition)(struct process_s *process);
+
 typedef struct process_s {
   void *stack_k;
   void *stack_u;
   void *pages;
   system_state_t *state;
+  system_state_t *kstate;
   void *saved_registers;
   void *text;
   process_runstate_e runstate;
+  process_run_condition runcondition;
   runstate_u runinfo;
   uint64_t num_pages;
   void *pt;
   int argc;
   char **argv;
   bool current;
+  bool next_switch_is_kernel;
 } process_t;
 
 #define USER_STACK_VMA 0x200000
@@ -57,7 +63,7 @@ typedef struct process_s {
 process_t *process_alloc(void *text, int argc, char **argv);
 
 void switch_to_process(process_t *process);
-void return_from_process(process_t *process, system_state_t *state);
+void process_stash_state(process_t *process, system_state_t *state);
 void process_add_pages(process_t *process, uint64_t num);
 
 void dump_process(process_t *p);

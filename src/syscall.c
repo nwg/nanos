@@ -7,8 +7,6 @@
 
 void handle_syscall(system_state_t *state) {
 
-	if (!IS_USER_STATE(state)) PANIC("Syscall outside of usermode");
-
 	return_from_schedule(state);
 
 	process_t *process = current_process();
@@ -17,6 +15,14 @@ void handle_syscall(system_state_t *state) {
 
 		case SYSCALL_TEST:
 			kprintf("Syscall 0 Received!!\n");
+			break;
+
+		case SYSCALL_YIELD:
+			if (!IS_KERNEL_STATE(state)) {
+				PANIC("Yield from usermode");
+			}
+
+			schedule();
 			break;
 
 		case SYSCALL_EXIT:

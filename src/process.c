@@ -10,14 +10,18 @@
 #include <string.h>
 #include "term.h"
 #include "user_vga.h"
+#include "syscall.h"
 
 uintptr_t *process_page_dirent_alloc(uintptr_t stack_u, uintptr_t text);
 void *process_page_table_alloc(uintptr_t stack_u, uintptr_t text);
 stackptr_t push_argv(void *vstart, void *pstart, stackptr_t s, int argc, char **argv);
 stackptr_t push_system_state(stackptr_t k, void *stack_u, int argc, char **argv);
+bool process_done_sleep(process_t *this);
 
 process_t *process_alloc(void *text, int argc, char **argv) {
     process_t *process = (process_t*)kalloc(sizeof(process_t));
+    memset(process, 0, sizeof(process));
+
     process->text = text;
     process->stack_k = kalloc(K_STACK_SIZE);
     process->stack_u = kalloc_aligned(U_STACK_SIZE, 4096);
@@ -26,6 +30,7 @@ process_t *process_alloc(void *text, int argc, char **argv) {
     process->argc = argc;
     process->runstate = PROCESS_RUNNABLE;
     process->current = false;
+    process->next_switch_is_kernel = false;
 
     stackptr_t u = STACK(process->stack_u, U_STACK_SIZE);
     u = push_argv((void*)USER_STACK_VMA, process->stack_u, u, argc, argv);
@@ -33,6 +38,7 @@ process_t *process_alloc(void *text, int argc, char **argv) {
 
     stackptr_t k = STACK(process->stack_k, K_STACK_SIZE);
     process->state = (system_state_t*)push_system_state(k, process->stack_u, process->argc, process->argv);
+    process->kstate = NULL;
 
     return process;
 }
@@ -167,11 +173,16 @@ void switch_to_process(process_t *process) {
     // Set up segments, including data segment (fourth GDT entry in kernel.asm)
     SET_ALL_SEGMENTS(0x20 | PRIV_RING3);
 
-    // Set rsp kernel will use when switching back to user process
-    k_replace_system_state = process->state;
-
     // Flag process as running
     process->current = true;
+
+    // Set rsp kernel will use when switching back to user process
+    if (process->next_switch_is_kernel) {
+        k_replace_system_state = process->kstate;
+        process->next_switch_is_kernel = false;
+    } else {
+        k_replace_system_state = process->state;
+    }
 
     // dump_process(process);
 }
@@ -181,23 +192,37 @@ void switch_from_process(process_t *process) {
 }
 
 /*
- * This function must be called when returning to the kernel after
- * running a process, e.g. via a timer interrupt
-
- * sp is the IRETtable kernel-side stack pointer for the process
+ * All interrupt events should stash state using this function
  */
-void return_from_process(process_t *process, system_state_t *state) {
+void process_stash_state(process_t *process, system_state_t *state) {
     if (!process->current) {
         PANIC("return_from_process on noncurrent process");
     }
 
-    process->state = state;
+    if (IS_USER_STATE(state)) {
+        process->state = state;
+    } else {
+        process->next_switch_is_kernel = true;
+        process->kstate = state;
+    }
 }
 
-void process_sleep(process_t *process, useconds_t useconds) {
-    uint64_t ticks = TIMER_GET_TICKS_US(useconds);
-    process->runstate = PROCESS_SLEEPING;
-    process->runinfo.sleep_until_tick = g_timer_ticks + ticks;
+void process_sleep_until(process_t *this, process_run_condition condition) {
+    this->runcondition = process_done_sleep;
+    sys_yield();
+    this->runcondition = NULL;
+}
+
+bool process_done_sleep(process_t *this) {
+    return g_timer_ticks >= this->runinfo.sleep_until_tick;
+}
+
+void process_sleep(process_t *this, useconds_t useconds) {
+    uint64_t sleep_until = g_timer_ticks + TIMER_GET_TICKS_US(useconds);
+    this->runstate = PROCESS_SLEEPING;
+    this->runinfo.sleep_until_tick = sleep_until;
+    process_sleep_until(this, process_done_sleep);
+    this->runstate = PROCESS_RUNNABLE;
 }
 
 void process_wake(process_t *process) {

@@ -8,5 +8,4 @@ uint64_t g_timer_tps_divisor = 1;
 
 void timer_tick() {
     g_timer_ticks += 1;
-    schedule_wake_sleepers();
 }

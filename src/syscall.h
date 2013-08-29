@@ -10,6 +10,7 @@ typedef enum {
     SYSCALL_SLEEP,
     SYSCALL_READ,
     SYSCALL_WRITE,
+    SYSCALL_YIELD,
 } syscall_code_t;
 
 #define syscall0(code) \
@@ -66,6 +67,7 @@ typedef enum {
     )
 
 #define sys_test() syscall0(SYSCALL_TEST)
+#define sys_yield() syscall0(SYSCALL_YIELD)
 #define sys_exit() syscall0(SYSCALL_EXIT)
 #define sys_add_pages(count) syscall1i(SYSCALL_ADD_PAGES, count)
 #define sys_sleep(useconds) syscall1m(SYSCALL_SLEEP, useconds)

@@ -32,15 +32,9 @@ void schedule_init() {
 }
 
 static bool process_node_runnable(node_t *node) {
-    return P(node)->runstate == PROCESS_RUNNABLE;
-}
-
-static void schedule_wake_sleeper(node_t *node) {
-    process_wake(P(node));
-}
-
-void schedule_wake_sleepers() {
-    ll_foreach(processes, schedule_wake_sleeper);
+    process_t *process = P(node);
+    return P(node)->runstate == PROCESS_RUNNABLE
+        || (process->runcondition && process->runcondition(process));
 }
 
 static bool is_stdin_reader(node_t *node) {
@@ -94,7 +88,7 @@ void return_from_schedule(system_state_t *state) {
         PANIC("return_from_schedule with no current process");
     }
 
-    return_from_process(P(current), state);
+    process_stash_state(P(current), state);
 }
 
 void add_process(process_t *process) {
