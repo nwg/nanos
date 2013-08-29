@@ -1,10 +1,10 @@
 #include "user_vga.h"
 #include "syscall.h"
-#include "process.h"
+#include <unistd.h>
 #include <string.h>
-#include "asm.h"
 #include <stdio.h>
 #include <stdbool.h>
+#include "user.h"
 
 int atoi(const char *a);
 
