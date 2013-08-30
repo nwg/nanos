@@ -29,19 +29,11 @@ void init_kernel_pages() {
 
 void spawn_test_programs() {
 	static char *argv1[] = {
-		"user1", "4", "11",
+		"sh"
 	};
 	static int argc1 = sizeof(argv1) / sizeof(char*);
 
 	spawn((void*)TEST_PROG_PMA, argc1, argv1);
-
-	static char *argv2[] = {
-	"user2", "1", "12",
-	};
-	static int argc2 = sizeof(argv2) / sizeof(char*);
-
-	spawn((void*)TEST_PROG_PMA, argc2, argv2);
-
 }
 
 void kernel_init() {

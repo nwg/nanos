@@ -11,6 +11,7 @@ typedef enum {
     SYSCALL_READ,
     SYSCALL_WRITE,
     SYSCALL_YIELD,
+    SYSCALL_SPAWN,
 } syscall_code_t;
 
 #define syscall0(code) \
@@ -73,6 +74,7 @@ typedef enum {
 #define sys_sleep(useconds) syscall1m(SYSCALL_SLEEP, useconds)
 #define sys_read(filedes, buf, nbyte, ret) syscall3mo(SYSCALL_READ, filedes, buf, nbyte, ret)
 #define sys_write(filedes, buf, nbyte, ret) syscall3mo(SYSCALL_WRITE, fildes, buf, nbyte, ret)
+#define sys_spawn(text, argc, argv, ret) syscall3mo(SYSCALL_SPAWN, text, argc, argv, ret)
 
 #define YIELD() sys_yield()
 

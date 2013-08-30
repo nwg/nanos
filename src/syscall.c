@@ -60,6 +60,18 @@ void handle_syscall(system_state_t *state) {
 
 			break;
 		}
+
+		case SYSCALL_SPAWN: {
+			void *text = (void*)state->registers.rbx;
+			int argc = state->registers.rcx;
+			char **argv = (char**)state->registers.rdx;
+
+			spawn(text, argc, argv);
+
+			state->registers.rdi = 0;
+
+			break;
+		}
 	}
 }
 

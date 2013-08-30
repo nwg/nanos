@@ -10,13 +10,8 @@ int atoi(const char *a);
 
 int main(int argc, char **argv) {
 
-	char buf[256];
-
 	int color = atoi(argv[1]) << 8;
 	int row = atoi(argv[2]);
-
-	int len = read(STDIN_FILENO, buf, 256);
-	printf("Got len %d line %s", len, buf);
 
 	sys_test();
 

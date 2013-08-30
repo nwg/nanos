@@ -4,13 +4,14 @@ KERNEL_C = kmem.o ll.o process.o schedule.o pages.o memory.o kernel.o \
 		   intel_8254_nanos.o term.o ring.o unistd.o intel_8259.o intel_8259_nanos.o \
 		   vga.o file.o inbuf.o termbuf.o
 
+USER_SH_OBJ = sh.o unistd.o stdio.o string.o memory.o
 USER1_OBJ = user1.o user_vga.o string.o stdio.o memory.o unistd.o
 SRC = src/
 KERNEL_HEADERS = $(wildcard src/*.h)
 KERNEL_ASM = kernel_init.o
 KERNEL_OBJ = $(KERNEL_ASM) $(KERNEL_C)
 OBJ = $(KERNEL_OBJ)
-FLAT_BINS = boot.bin kernel.bin user1.bin
+FLAT_BINS = boot.bin kernel.bin sh.bin user1.bin
 CC = /opt/local/bin/x86_64-elf-gcc
 CFLAGS = -fno-builtin -Wall -Werror -std=c99 -g
 LD = /opt/local/bin/x86_64-elf-ld
@@ -43,6 +44,10 @@ kernel.sym: kernel.elf
 
 kernel.ldsym: kernel.elf
 	$(MKLDSYM) kernel.elf kernel.ldsym
+
+sh.bin: $(USER_SH_OBJ) user.lnk
+	$(LD) -T user.lnk -o $@ $(USER_SH_OBJ)
+	$(PAD) 16384 $@
 
 user1.bin: $(USER1_OBJ) user.lnk
 	$(LD) -T user.lnk -o $@ $(USER1_OBJ)
