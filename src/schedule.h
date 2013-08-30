@@ -5,9 +5,6 @@
 #include <stdbool.h>
 #include "kernel.h"
 
-#define K_STACK_SIZE 65536
-#define U_STACK_SIZE 65536
-
 void schedule_init();
 void switch_to_process(process_t *process);
 void schedule();
