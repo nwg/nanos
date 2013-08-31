@@ -39,6 +39,8 @@ void pt_dealloc(uintptr_t ****pppp) {
         }
         kfree(ppp);
     }
+
+    kfree(pppp);
 }
 
 void pt_map(uintptr_t ****pppp, uintptr_t vaddr, uintptr_t paddr, size_t nbytes,
