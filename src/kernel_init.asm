@@ -174,11 +174,13 @@ interrupt:
 k_replace_system_state:
   dq 0
 
-align 8
-
+align 4
+  dw 0 ; force gdt descriptor at odd word address
 gdt_d:
   dw end_gdt - gdt - 1
   dd gdt
+
+align 8
 
 gdt:
   GDT 0, 0, 0, 0
@@ -199,9 +201,11 @@ k_tss64_sp:
   TIMES 23 dd 0
 end_tss64:
 
+align 4
+  dw 0 ; force idt header at odd address
 idt_hdr:
-dw end_idt_data - idt_data
-dq idt_data
+  dw end_idt_data - idt_data
+  dq idt_data
 
 idt_data:
 
