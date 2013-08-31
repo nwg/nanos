@@ -174,6 +174,8 @@ interrupt:
 k_replace_system_state:
   dq 0
 
+align 8
+
 gdt_d:
   dw end_gdt - gdt - 1
   dd gdt
@@ -186,6 +188,8 @@ gdt:
   GDT 0, 0xfffff, 11110010b, 1010b ; ring3 ds (all mem), sz=0, L=1 for 64-bit
   GDT64 OFFS(tss64), (end_tss64 - tss64), 11101001b, 0001b ; 64-bit pointer to ts, byte granularity
 end_gdt:
+
+align 8
 
 ; See "TASK MANAGEMENT IN 64-BIT MODE" of http://download.intel.com/products/processor/manual/325384.pdf
 tss64:
