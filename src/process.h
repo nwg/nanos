@@ -36,7 +36,7 @@ struct process_s;
 typedef struct process_s {
   void *stack_k;
   void *stack_u;
-  void *pages;
+  uintptr_t ****pages;
   system_state_t *state;
   system_state_t *kstate;
   void *saved_registers;
@@ -70,5 +70,6 @@ void switch_from_process(process_t *process);
 ssize_t process_read_file(process_t *process, int filedes, char *buf, size_t len);
 ssize_t process_write_file(process_t *this, int fileno, const char *buf, size_t len);
 bool process_runnable(process_t *this);
+void process_dealloc(process_t *this);
 
 #endif

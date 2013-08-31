@@ -46,6 +46,14 @@ process_t *process_alloc(void *text, int argc, char **argv) {
     return process;
 }
 
+void process_dealloc(process_t *this) {
+    kfree(this->stack_k);
+    kfree(this->stack_u);
+    pt_dealloc(this->pages);
+    kfree(this->files);
+    kfree(this);
+}
+
 void process_add_pages(process_t *process, uint64_t num) {
     uintptr_t added_pages = (uintptr_t)kalloc_aligned(num * 4096, 4096);
     page_flag_e uf = PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;

@@ -101,7 +101,7 @@ void remove_process_node(node_t *node) {
     }
 
     ll_remove(processes, node);
-    kfree(P(node));
+    process_dealloc(P(node));
     kfree(node);
 }
 
