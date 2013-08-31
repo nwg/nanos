@@ -8,7 +8,7 @@
 
 #define DROPFLAGS(p) ( (__typeof__(p)) ((uintptr_t)p & PAGE_MASK) )
 #define WITHFLAGS(p, flags) ( (__typeof__(p)) ( ((uintptr_t)p) | flags) )
-#define PPPP_IDX(addr) ( (((uintptr_t)addr) >> 41) & 0x1FF )
+#define PPPP_IDX(addr) ( (((uintptr_t)addr) >> 39) & 0x1FF )
 #define PPP_IDX(addr)  ( (((uintptr_t)addr) >> 30) & 0x1FF )
 #define PP_IDX(addr)   ( (((uintptr_t)addr) >> 21) & 0x1FF )
 #define P_IDX(addr)    ( (((uintptr_t)addr) >> 12) & 0x1FF )
