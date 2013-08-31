@@ -47,67 +47,24 @@ process_t *process_alloc(void *text, int argc, char **argv) {
 }
 
 void process_add_pages(process_t *process, uint64_t num) {
-    uintptr_t *pt = get_pagedir(process->pages, 0, 0, 1);
-
-    uintptr_t added_pages = (uintptr_t)kalloc_aligned(num * PAGE_SIZE, PAGE_SIZE);
-
-    int heap_start = (USER_HEAP & PAGE_DIRENT_MASK) / PAGE_SIZE;
-
-    for (int i = 0; i < num; i++) {
-        int poffset = heap_start + process->num_pages + i;
-        pt[poffset] = (added_pages + i*PAGE_SIZE) | PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
-    }
+    uintptr_t added_pages = (uintptr_t)kalloc_aligned(num * 4096, 4096);
+    page_flag_e uf = PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
+    pt_map(process->pages, USER_HEAP + 4096*process->num_pages, added_pages, 4096*num, uf, uf, uf, uf);
 
     process->num_pages += num;
 }
 
-uintptr_t *process_page_dirent_alloc(uintptr_t stack_u, uintptr_t text) {
-
-    uintptr_t *pt = kalloc_aligned(PAGE_DIRENT_SIZE, 4096);
-    memset(pt, 0, PAGE_DIRENT_SIZE);
-
-    // 64K stack
-    for (int i = 0; i < U_STACK_SIZE / PAGE_DIRENT_SIZE; i++) {
-        pt[i] = (stack_u + i*PAGE_DIRENT_SIZE) | PAGE_USER | PAGE_PRESENT | PAGE_WRITEABLE;
-    }
-
-    // Map 16k program
-    for (int i = 0; i < USER_TEXT_SIZE/PAGE_SIZE; i++) {
-        uintptr_t paddr = (uintptr_t)text + i*PAGE_SIZE;
-        uintptr_t vaddr = (USER_TEXT_VMA + i*PAGE_SIZE);
-        int offset = (vaddr & PAGE_DIRENT_MASK) / PAGE_SIZE;
-
-        pt[offset] = paddr | PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
-    }
-
-    // Map user video to 0x1fe000
-    int voffset = (USER_VIDEO & PAGE_DIRENT_MASK) / PAGE_DIRENT_SIZE;
-    pt[voffset] = 0xb8000 | PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
-    pt[voffset + 1] = 0xb9000 | PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
-
-    return pt;
-}
-
 void *process_page_table_alloc(uintptr_t stack_u, uintptr_t text) {
 
-    uintptr_t *descriptor = process_page_dirent_alloc(stack_u, text);
+    uintptr_t ****pages = pt_alloc();
+    page_flag_e kf = PAGE_PRESENT | PAGE_WRITEABLE;
+    page_flag_e uf = PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
+    pt_map(pages, 0, 0, 2*M, uf, uf, uf, kf);
+    pt_map(pages, USER_STACK_VMA, stack_u, U_STACK_SIZE, uf, uf, uf, uf);
+    pt_map(pages, USER_TEXT_VMA, text, 16*K, uf, uf, uf, uf);
+    pt_map(pages, USER_VIDEO, 0xb8000, 8*K, uf, uf, uf, uf);
 
-    uintptr_t *pdt = kalloc_aligned(4096, 4096);
-    memset(pdt, 0, 4096);
-
-    // First 2MB is protected kernel pages
-    pdt[0] = (uintptr_t)kernel_pt | PAGE_PRESENT | PAGE_WRITEABLE;
-
-    // Next 2MB is user pages
-    pdt[1] = (uintptr_t)descriptor | PAGE_USER | PAGE_PRESENT | PAGE_WRITEABLE;
-
-    // Upper 2 levels just points at our single pdt
-    uintptr_t *pdpt = kalloc_aligned(4096, 4096);
-    memsetqw(pdpt, (uintptr_t)pdt | PAGE_USER | PAGE_PRESENT | PAGE_WRITEABLE, 512);
-    uintptr_t *pml4 = kalloc_aligned(4096, 4096);
-    memsetqw(pml4, (uintptr_t)pdpt | PAGE_USER | PAGE_PRESENT | PAGE_WRITEABLE, 512);
-
-    return pml4;
+    return pages;
 }
 
 stackptr_t push_system_state(stackptr_t k, void *stack_u, int argc, char **argv) {
@@ -175,6 +132,7 @@ void process_set_file(process_t *this, int fileno, file_t *file) {
 
 /* Perform context switch and enter user mode to run given process */
 void switch_to_process(process_t *process) {
+    BOCHS_BRK();
     SET_CR3(process->pages);
 
     // Kernel stack base address (for interrupts)

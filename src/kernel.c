@@ -12,38 +12,19 @@
 #include "intel_8259_nanos.h"
 #include "binary.h"
 
-uintptr_t *kernel_pml4;
-uintptr_t *kernel_pdpt;
-uintptr_t *kernel_pdt;
-uintptr_t *kernel_pt;
-uint64_t kernel_ticks = 0;
 termbuf_t *g_termbuf = NULL;
 
 /**
  * Configure first 2MB for initial kernel use
  */
 void init_kernel_pages() {
-	kernel_pml4 = kalloc_aligned(4096, 4096);
-	kernel_pdpt = kalloc_aligned(4096, 4096);
-	kernel_pdt = kalloc_aligned(4096, 4096);
-	kernel_pt = kalloc_aligned(4096, 4096);
 
-	for (int i = 0; i < 512; i++) {
-		kernel_pml4[i] = (uintptr_t)kernel_pdpt | PAGE_PRESENT;
-		kernel_pdpt[i] = (uintptr_t)kernel_pdt | PAGE_PRESENT;
-		kernel_pdt[i] = (uintptr_t)kernel_pt | PAGE_PRESENT;
-	}
+    uintptr_t ****pages = pt_alloc();
+    page_flag_e kf = PAGE_PRESENT | PAGE_WRITEABLE;
+    pt_map(pages, 0, 0, 2*M, kf, kf, kf, kf);
+    pt_map(pages, USER_VIDEO, 0xb8000, 8*K, kf, kf, kf, kf);
 
-	// Just an identity map of first 2MB of memory
-	for (int i = 0; i < 512; i++) {
-		kernel_pt[i] = i*4096 | PAGE_PRESENT | PAGE_WRITEABLE;
-	}
-
-    int voffset = (USER_VIDEO & PAGE_DIRENT_MASK) / PAGE_DIRENT_SIZE;
-    kernel_pt[voffset] = 0xb8000 | PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
-    kernel_pt[voffset + 1] = 0xb9000 | PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
-
-	SET_CR3(kernel_pml4);
+	SET_CR3(pages);
 }
 
 void spawn_test_programs() {
