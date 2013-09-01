@@ -26,8 +26,8 @@ void term_init() {
 }
 
 term_t *term_alloc() {
-     term_t *this = kalloc(sizeof(term_t));
-    memset(this, 0, sizeof(this));
+    term_t *this = kalloc(sizeof(term_t));
+    memset(this, 0, sizeof(term_t));
 
     file_t *file = file_alloc();
     file->ctx = this;
@@ -82,7 +82,7 @@ void term_add_rows(term_t *this, int count) {
 
     for (int i = 0; i < count; i++) {
         void *row = ring_add_row(this->ring);
-        memset(row, VIDEO_CLEAR_CHAR, sizeof(row));
+        memset(row, VIDEO_CLEAR_CHAR, TERM_WIDTH);
     }
     this->row += count;
 
