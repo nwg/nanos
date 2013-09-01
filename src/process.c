@@ -19,7 +19,7 @@ bool process_done_sleep(process_t *this);
 
 process_t *process_alloc(void *text, int argc, char **argv) {
     process_t *process = (process_t*)kalloc(sizeof(process_t));
-    memset(process, 0, sizeof(process));
+    memset(process, 0, sizeof(process_t));
 
     process->text = text;
     process->stack_k = kalloc(K_STACK_SIZE);
