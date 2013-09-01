@@ -1,6 +1,6 @@
 OUTPUT_FORMAT("binary")
 ENTRY(main)
-phys = 0x210000;
+phys = 0x1000000;
 SECTIONS
 {
   . = phys;

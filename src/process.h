@@ -10,7 +10,6 @@
 #include "user.h"
 
 #define K_STACK_SIZE (16*K)
-#define U_STACK_SIZE (16*K)
 
 #define PROCESS_MAX_FILES 16
 

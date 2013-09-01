@@ -67,7 +67,7 @@ void *process_page_table_alloc(uintptr_t stack_u, uintptr_t text) {
     uintptr_t ****pages = pt_alloc();
     page_flag_e kf = PAGE_PRESENT | PAGE_WRITEABLE;
     page_flag_e uf = PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
-    pt_map(pages, 0, 0, 2*M, uf, uf, uf, kf);
+    pt_map(pages, 0, 0, 16*M, uf, uf, uf, kf);
     pt_map(pages, USER_STACK_VMA, stack_u, U_STACK_SIZE, uf, uf, uf, uf);
     pt_map(pages, USER_TEXT_VMA, text, 16*K, uf, uf, uf, uf);
     pt_map(pages, USER_VIDEO, 0xb8000, 8*K, uf, uf, uf, uf);
@@ -140,7 +140,6 @@ void process_set_file(process_t *this, int fileno, file_t *file) {
 
 /* Perform context switch and enter user mode to run given process */
 void switch_to_process(process_t *process) {
-    BOCHS_BRK();
     SET_CR3(process->pages);
 
     // Kernel stack base address (for interrupts)
