@@ -5,6 +5,7 @@
 #include "asm.h"
 #include "kernel.h"
 #include <stdint.h>
+#include "ptr.h"
 
 #define DROPFLAGS(p) ( (__typeof__(p)) ((uintptr_t)p & PAGE_MASK) )
 #define WITHFLAGS(p, flags) ( (__typeof__(p)) ( ((uintptr_t)p) | flags) )
@@ -56,6 +57,7 @@ void pt_map(uintptr_t ****pppp, uintptr_t vaddr, uintptr_t paddr, size_t nbytes,
         uintptr_t ***ppp = pppp[i];
         if (!ppp) {
             ppp = kalloc_aligned(4096, 4096);
+            memset(ppp, 0, 4096);
         }
         pppp[i] = WITHFLAGS(ppp, flags4);
 
@@ -65,6 +67,7 @@ void pt_map(uintptr_t ****pppp, uintptr_t vaddr, uintptr_t paddr, size_t nbytes,
             uintptr_t **pp = ppp[j];
             if (!pp) {
                 pp = kalloc_aligned(4096, 4096);
+                memset(pp, 0, 4096);
             }
             ppp[j] = WITHFLAGS(pp, flags3);
 
@@ -73,12 +76,13 @@ void pt_map(uintptr_t ****pppp, uintptr_t vaddr, uintptr_t paddr, size_t nbytes,
                 uintptr_t *p = pp[k];
                 if (!p) {
                     p = kalloc_aligned(4096, 4096);
+                    memset(p, 0, 4096);
                 }
                 pp[k] = WITHFLAGS(p, flags2);
 
                 p = DROPFLAGS(p);
                 for (int l = P_IDX(vaddr); b < nbytes; l++) {
-                    p[l] = WITHFLAGS(paddrp + b, flags1);
+                    p[l] = WITHFLAGS(CANON(paddrp + b), flags1);
                     b += 4096;
                 }
             }
