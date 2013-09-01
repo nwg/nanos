@@ -37,7 +37,10 @@ int inbuf_get_lines(inbuf_t *this, char *dst, size_t maxlen) {
     strncpy(dst, this->buf, size);
 
     if (size < this->offset) {
-        memcpy(this->buf, &this->buf[this->offset], this->offset - this->last_newline);
+        memcpy(this->buf, &this->buf[this->offset], this->offset - size);
+        this->offset = this->offset - size;
+        this->last_newline = this->last_newline - size;
+        memset(&this->buf[this->offset], 0, this->nbytes - this->offset);
     } else {
         inbuf_clear(this);
     }
