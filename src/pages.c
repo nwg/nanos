@@ -52,7 +52,7 @@ void pt_map(uintptr_t ****pppp, uintptr_t vaddr, uintptr_t paddr, size_t nbytes,
     size_t b = 0;
 
     // 9 bits (512 entries) per level, starting at increments of 4096 in the pagedir
-    for (int i = PPPP_IDX(vaddrp); b < nbytes; i++) {
+    for (int i = PPPP_IDX(vaddrp); i < 512 && b < nbytes; i++) {
 
         uintptr_t ***ppp = pppp[i];
         if (!ppp) {
@@ -62,7 +62,7 @@ void pt_map(uintptr_t ****pppp, uintptr_t vaddr, uintptr_t paddr, size_t nbytes,
         pppp[i] = WITHFLAGS(ppp, flags4);
 
         ppp = DROPFLAGS(ppp);
-        for (int j = PPP_IDX(vaddr); b < nbytes; j++) {
+        for (int j = PPP_IDX(vaddr); j < 512 && b < nbytes; j++) {
 
             uintptr_t **pp = ppp[j];
             if (!pp) {
@@ -72,7 +72,7 @@ void pt_map(uintptr_t ****pppp, uintptr_t vaddr, uintptr_t paddr, size_t nbytes,
             ppp[j] = WITHFLAGS(pp, flags3);
 
             pp = DROPFLAGS(pp);
-            for (int k = PP_IDX(vaddr); b < nbytes; k++) {
+            for (int k = PP_IDX(vaddr); k < 512 && b < nbytes; k++) {
                 uintptr_t *p = pp[k];
                 if (!p) {
                     p = kalloc_aligned(4096, 4096);
@@ -81,8 +81,8 @@ void pt_map(uintptr_t ****pppp, uintptr_t vaddr, uintptr_t paddr, size_t nbytes,
                 pp[k] = WITHFLAGS(p, flags2);
 
                 p = DROPFLAGS(p);
-                for (int l = P_IDX(vaddr); b < nbytes; l++) {
-                    p[l] = WITHFLAGS(CANON(paddrp + b), flags1);
+                for (int l = P_IDX(vaddr); l < 512 && b < nbytes; l++) {
+                    p[l] = WITHFLAGS(paddrp + b, flags1);
                     b += 4096;
                 }
             }
