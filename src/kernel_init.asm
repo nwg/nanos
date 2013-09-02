@@ -174,8 +174,8 @@ interrupt:
 k_replace_system_state:
   dq 0
 
-align 4
-  dw 0 ; force gdt descriptor at odd word address
+align 8
+dw 0
 gdt_d:
   dw end_gdt - gdt - 1
   dd gdt
@@ -192,7 +192,6 @@ gdt:
 end_gdt:
 
 align 8
-
 ; See "TASK MANAGEMENT IN 64-BIT MODE" of http://download.intel.com/products/processor/manual/325384.pdf
 tss64:
   dd 0
@@ -206,6 +205,8 @@ align 4
 idt_hdr:
   dw end_idt_data - idt_data
   dq idt_data
+
+align 8
 
 idt_data:
 
