@@ -25,9 +25,7 @@ void inbuf_dealloc(inbuf_t *this) {
     kfree(this);
 }
 
-#include "asm.h"
 void inbuf_clear(inbuf_t *this) {
-    // BOCHS_BRK();
     memset(this->buf, 0, this->nbytes);
     this->offset = 0;
     this->last_newline = 0;
@@ -40,13 +38,11 @@ int inbuf_get_lines(inbuf_t *this, char *dst, size_t maxlen) {
     strncpy(dst, this->buf, size);
 
     if (size < this->offset) {
-        kprintf("Resetting with extra\n");
         memcpy(this->buf, &this->buf[this->offset], this->offset - size);
         this->offset = this->offset - size;
         this->last_newline = this->last_newline - size;
         memset(&this->buf[this->offset], 0, this->nbytes - this->offset);
     } else {
-        kprintf("Clearing\n");
         inbuf_clear(this);
     }
 
