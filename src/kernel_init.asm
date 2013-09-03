@@ -150,10 +150,10 @@ irq15:
   IRQ(15)
 
 software_interrupt:
+  cli
   INT handle_syscall, 0
 
 interrupt:
-  cli
   PUSHA
 
   ; handle_interrupt(code, state)
