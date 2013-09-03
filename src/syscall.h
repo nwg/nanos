@@ -64,7 +64,7 @@ typedef enum {
         "movq %%rdi, %0\n\t" \
         :  "=m" (r) \
         : "i" (code), "m" (arg1), "m" (arg2), "m" (arg3) \
-        : "rax", "rbx", "rcx", "rdx" \
+        : "rax", "rbx", "rcx", "rdx", "rdi" \
     )
 
 #define sys_test() syscall0(SYSCALL_TEST)
