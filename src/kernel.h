@@ -13,7 +13,7 @@ typedef struct {
     uintptr_t code_selector;
     uint64_t rflags;
     uintptr_t rsp;
-    uintptr_t data_selector;
+    uintptr_t stack_selector;
 } iretq_state_t;
 
 typedef struct {

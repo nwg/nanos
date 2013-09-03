@@ -83,7 +83,7 @@ stackptr_t push_system_state(stackptr_t k, void *stack_u, int argc, char **argv)
     uintptr_t u_vma = GET_USER_STACK_VMA(stack_u, argv);
     uintptr_t argv_vma = u_vma;
 
-    state->iretq.data_selector = 0x20 | PRIV_RING3;
+    state->iretq.stack_selector = 0x20 | PRIV_RING3;
     state->iretq.rsp = u_vma;
     state->iretq.rflags = curflags | 0x200;
     state->iretq.code_selector = 0x18 | PRIV_RING3;
