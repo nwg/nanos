@@ -201,7 +201,7 @@ k_tss64_sp:
   TIMES 23 dd 0
 end_tss64:
 
-align 4
+align 8
   dw 0 ; force idt header at odd address
 idt_hdr:
   dw end_idt_data - idt_data
