@@ -18,10 +18,6 @@ void handle_syscall(system_state_t *state) {
 			break;
 
 		case SYSCALL_YIELD:
-			if (!IS_KERNEL_STATE(state)) {
-				PANIC("Yield from usermode");
-			}
-
 			schedule();
 			break;
 
