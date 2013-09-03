@@ -146,9 +146,6 @@ void switch_to_process(process_t *process) {
     stackptr_t k = STACK(process->stack_k, K_STACK_SIZE);
     SET_TSS_RSP(k);
 
-    // Set up segments, including data segment (fourth GDT entry in kernel.asm)
-    SET_ALL_SEGMENTS(0x20 | PRIV_RING3);
-
     // Flag process as running
     process->current = true;
 

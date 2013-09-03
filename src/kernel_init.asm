@@ -20,6 +20,13 @@ _start:
   ; Load gdt with tss ptr
   lgdt [gdt_d]
 
+  ; DS constant at ring3 GDT data descriptor
+  mov ax, 0x20
+  mov ds, ax
+  mov es, ax
+  mov fs, ax
+  mov gs, ax
+
   ; Set tss64 GDT offset
   mov ax, 0x28
   ltr ax
