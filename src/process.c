@@ -144,7 +144,7 @@ void switch_to_process(process_t *process) {
 
     // Kernel stack base address (for interrupts)
     stackptr_t k = STACK(process->stack_k, K_STACK_SIZE);
-    SET_TSS_RSP(k);
+    k_tss64_sp = k;
 
     // Flag process as running
     process->current = true;
