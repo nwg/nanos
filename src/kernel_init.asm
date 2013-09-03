@@ -153,6 +153,7 @@ software_interrupt:
   INT handle_syscall, 0
 
 interrupt:
+  cli
   PUSHA
 
   ; handle_interrupt(code, state)

@@ -13,9 +13,13 @@ uint8_t inb(uint16_t port);
 
 #define BOCHS_BRK() __asm__("xchg %bx, %bx\n\t")
 
+// sti lags one instruction, so there is no interrupt race
+// condition with the sti/hlt combo
 #define HALT() \
     __asm__ __volatile__ ( \
+        "sti\n\t" \
         "hlt\n\t" \
+        "cli\n\t" \
     );
 
 #define GET_FLAGS(dst) \
