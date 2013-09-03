@@ -2,9 +2,9 @@
 #define __USER_VIDEO_H__
 
 #include <stdint.h>
+#include "user.h"
 
 #define VIDEO_START_PHYS 0xb8000
-#define USER_VIDEO 0x3fe000
 #define VIDEO_SIZE (80*25*2)
 #define VIDEO_CLEAR_CHAR (' ')
 #define COLOR_BLUE (0x01 << 8)
