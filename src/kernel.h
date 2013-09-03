@@ -44,6 +44,10 @@ typedef enum {
     PRIV_RING3 = 3
 } privilege_level_e;
 
+typedef enum {
+    FLAG_INTERRUPT_ENABLE = 1 << 9,
+} flag_e;
+
 extern void *k_tss64_sp;
 extern system_state_t *k_replace_system_state;
 
