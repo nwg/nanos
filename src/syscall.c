@@ -36,7 +36,6 @@ void handle_syscall(system_state_t *state) {
 
 		case SYSCALL_SLEEP:
 			process_sleep(process, state->registers.rbx);
-			schedule();
 			break;
 
 		case SYSCALL_READ: {
