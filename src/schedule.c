@@ -111,7 +111,9 @@ void remove_process(process_t *process) {
     // dump_processes();
 }
 
-void spawn(void *text, int argc, char **argv) {
+process_t *spawn(void *text, int argc, char **argv) {
     process_t *process = process_alloc(text, argc, argv);
     add_process(process);
+
+    return process;
 }

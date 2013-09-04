@@ -12,6 +12,7 @@ typedef enum {
     SYSCALL_WRITE,
     SYSCALL_YIELD,
     SYSCALL_SPAWN,
+    SYSCALL_WAIT,
 } syscall_code_t;
 
 #define syscall0(code) \
@@ -31,6 +32,17 @@ typedef enum {
         :  \
         : "i" (code), "i" (arg1) \
         : "rax", "rbx" \
+    )
+
+#define syscall1o(code, arg1, out) \
+    __asm__ __volatile__ ( \
+        "movq %1, %%rax\n\t" \
+        "movq %2, %%rbx\n\t" \
+        "int $48\n\t" \
+        "mov %%rdi, %0\n\t" \
+        :  "=m" (out) \
+        : "i" (code), "m" (arg1) \
+        : "rax", "rbx", "rdi" \
     )
 
 #define syscall1m(code, arg1) \
@@ -75,6 +87,7 @@ typedef enum {
 #define sys_read(filedes, buf, nbyte, ret) syscall3mo(SYSCALL_READ, filedes, buf, nbyte, ret)
 #define sys_write(filedes, buf, nbyte, ret) syscall3mo(SYSCALL_WRITE, fildes, buf, nbyte, ret)
 #define sys_spawn(text, argc, argv, ret) syscall3mo(SYSCALL_SPAWN, text, argc, argv, ret)
+#define sys_wait(stat_loc, ret) syscall1o(SYSCALL_WAIT, stat_loc, ret)
 
 #define YIELD() sys_yield()
 

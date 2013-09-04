@@ -28,12 +28,27 @@ void init_kernel_pages() {
 }
 
 void spawn_test_programs() {
-	static char *argv1[] = {
-		"sh"
-	};
-	static int argc1 = sizeof(argv1) / sizeof(char*);
+    // static char *argv1[] = {
+    //         "user1", "4", "11",
+    // };
+    // static int argc1 = sizeof(argv1) / sizeof(char*);
 
-	spawn((void*)TEST_PROG_PMA, argc1, argv1);
+    // spawn((void*)TEST_PROG_PMA + 16*K, argc1, argv1);
+
+    // static char *argv2[] = {
+    // "user2", "1", "12",
+    // };
+    // static int argc2 = sizeof(argv2) / sizeof(char*);
+
+    // spawn((void*)TEST_PROG_PMA + 16*K, argc2, argv2);
+
+    static char *argv3[] = {
+        "sh"
+    };
+    static int argc3 = sizeof(argv3) / sizeof(char*);
+    spawn((void*)TEST_PROG_PMA, argc3, argv3);
+
+
 }
 
 void kernel_init() {

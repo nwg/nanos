@@ -13,8 +13,6 @@ int main(int argc, char **argv) {
 	int color = atoi(argv[1]) << 8;
 	int row = atoi(argv[2]);
 
-	sys_test();
-
 	sys_add_pages(1);
 	*(uint64_t*)USER_HEAP = 50;
 

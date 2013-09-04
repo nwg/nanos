@@ -27,5 +27,9 @@ void ll_remove(node_t *ll, node_t *node);
 int ll_size(node_t *ll);
 void ll_foreach(node_t *ll, ll_effect effect);
 node_t *ll_find_p(node_t *ll, ll_predicate p);
+bool ll_all(node_t *ll, ll_predicate p);
+
+#define ll_any ll_find_p
+#define ll_none(ll, p) (!ll_find_p(ll, p))
 
 #endif

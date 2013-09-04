@@ -8,6 +8,7 @@
 #include "kernel.h"
 #include "file.h"
 #include "user.h"
+#include "ll.h"
 
 #define K_STACK_SIZE (16*K)
 
@@ -18,6 +19,7 @@ typedef enum {
   PROCESS_SLEEPING,
   PROCESS_WAIT_READ,
   PROCESS_WAIT_WRITE,
+  PROCESS_WAIT_ANY,
 } process_runstate_e;
 
 typedef struct {
@@ -29,6 +31,13 @@ typedef union {
   uint64_t sleep_until_tick;
   fileinfo_t fileinfo;
 } runstate_u;
+
+typedef struct {
+  pid_t pid;
+  int exit_status;
+  bool is_finished;
+  bool has_waiter;
+} process_status_t;
 
 struct process_s;
 
@@ -43,8 +52,11 @@ typedef struct process_s {
   file_t **files;
   process_runstate_e runstate;
   runstate_u runinfo;
+  node_t *child_statuses;
+  struct process_s *parent;
   uint64_t num_pages;
   void *pt;
+  pid_t pid;
   int argc;
   char **argv;
   bool current;
@@ -64,11 +76,13 @@ void dump_process(process_t *p);
 void process_description(char *buf, int n, process_t *p);
 void process_sleep(process_t *process, useconds_t useconds);
 void process_check_sleep(process_t *process);
-void process_wake(process_t *process);
 void switch_from_process(process_t *process);
 ssize_t process_read_file(process_t *process, int filedes, char *buf, size_t len);
 ssize_t process_write_file(process_t *this, int fileno, const char *buf, size_t len);
 bool process_runnable(process_t *this);
 void process_dealloc(process_t *this);
+pid_t process_wait(process_t *this);
+void process_child_finished(process_t *this, process_t *child);
+void process_add_child(process_t *this, process_t *child);
 
 #endif

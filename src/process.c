@@ -11,11 +11,15 @@
 #include "user_vga.h"
 #include "syscall.h"
 
-uintptr_t *process_page_dirent_alloc(uintptr_t stack_u, uintptr_t text);
+#define S(node) (node ? (process_status_t*)node->data : NULL)
+
+static pid_t next_pid = 0;
+
 void *process_page_table_alloc(uintptr_t stack_u, uintptr_t text);
 stackptr_t push_argv(void *vstart, void *pstart, stackptr_t s, int argc, char **argv);
 stackptr_t push_system_state(stackptr_t k, void *stack_u, int argc, char **argv);
 bool process_done_sleep(process_t *this);
+bool waitable_status(node_t *node);
 
 process_t *process_alloc(void *text, int argc, char **argv) {
     process_t *process = (process_t*)kalloc(sizeof(process_t));
@@ -35,9 +39,13 @@ process_t *process_alloc(void *text, int argc, char **argv) {
     process->files[0] = g_termbuf->file;
     process->files[1] = g_term->file;
 
+    process->child_statuses = ll_alloc_a(kalloc);
+
     stackptr_t u = STACK(process->stack_u, U_STACK_SIZE);
     u = push_argv((void*)USER_STACK_VMA, process->stack_u, u, argc, argv);
     process->argv = (char**)u;
+
+    process->pid = next_pid++;
 
     stackptr_t k = STACK(process->stack_k, K_STACK_SIZE);
     process->state = (system_state_t*)push_system_state(k, process->stack_u, process->argc, process->argv);
@@ -51,7 +59,36 @@ void process_dealloc(process_t *this) {
     kfree(this->stack_u);
     pt_dealloc(this->pages);
     kfree(this->files);
+    kfree(this->child_statuses);
     kfree(this);
+}
+
+void process_add_child(process_t *this, process_t *child) {
+    process_status_t *status = kalloc(sizeof(process_status_t));
+    memset(status, 0, sizeof(process_status_t));
+    status->pid = child->pid;
+    status->has_waiter = false;
+    status->is_finished = false;
+    ll_append_data_a(kalloc, this->child_statuses, status);
+
+    child->parent = this;
+}
+
+node_t *find_status(process_t *this, process_t *child) {
+    for (node_t *node = this->child_statuses->next; node != this->child_statuses; node = node->next) {
+        if (S(node)->pid == child->pid) {
+            return node;
+        }
+    }
+
+    return NULL;
+}
+
+void process_child_finished(process_t *this, process_t *child) {
+    node_t *status = find_status(this, child);
+    if (!status) PANIC("child_finished for unknown child");
+
+    S(status)->is_finished = true;
 }
 
 void process_add_pages(process_t *process, uint64_t num) {
@@ -201,9 +238,12 @@ bool process_runnable(process_t *this) {
 
         case PROCESS_WAIT_WRITE:
             return file_can_write(this->runinfo.fileinfo.file);
-    }
 
-    return false;
+        case PROCESS_WAIT_ANY:
+            return ll_any(this->child_statuses, waitable_status);
+
+        default: return false;
+    }
 }
 
 ssize_t process_read_file(process_t *this, int fileno, char *buf, size_t len) {
@@ -236,6 +276,38 @@ ssize_t process_write_file(process_t *this, int fileno, const char *buf, size_t 
     ssize_t result;
     while ( (result = file_write(file, buf, len)) < 0) {
         YIELD();
+    }
+
+    this->runstate = PROCESS_RUNNABLE;
+    return result;
+}
+
+bool waitable_status(node_t *node) {
+    return S(node)->is_finished && !S(node)->has_waiter;
+}
+
+bool needs_waiter(node_t *node) {
+    return !S(node)->has_waiter;
+}
+
+pid_t process_wait(process_t *this) {
+    this->runstate = PROCESS_WAIT_ANY;
+
+    pid_t result = -1;
+    node_t *found = NULL;
+    while ( (found = ll_find_p(this->child_statuses, waitable_status)) == NULL ) {
+
+        // It's possible the wait slots could all be eaten up
+        if (ll_none(this->child_statuses, needs_waiter)) {
+            break;
+        }
+
+        YIELD();
+    }
+
+    if (found) {
+        ll_remove(this->child_statuses, found);
+        result = S(found)->pid;
     }
 
     this->runstate = PROCESS_RUNNABLE;

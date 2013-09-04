@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include "user.h"
 #include "sizes.h"
+#include <sys/wait.h>
 
 int spawn(void *text, int argc, char **argv);
 
@@ -24,12 +25,15 @@ int main(int argc, char **argv) {
 		buf[len - 1] = '\0';
 		printf("Got line %s\n", buf);
 
-		// static char *argv2[] = {
-		// 	"user2", "1", "12",
-		// };
-		// static int argc2 = sizeof(argv2) / sizeof(char*);
+		static char *argv2[] = {
+			"user2", "1", "12",
+		};
+		static int argc2 = sizeof(argv2) / sizeof(char*);
 
-		// spawn((void*)TEST_PROG_PMA, argc2, argv2);
+		spawn((void*)TEST_PROG_PMA + 16*K, argc2, argv2);
+
+		pid_t pid = wait(NULL);
+		printf("Finished running pid=%d\n", pid);
 	}
 
 	sys_exit();

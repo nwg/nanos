@@ -4,7 +4,7 @@ KERNEL_C = kmem.o ll.o process.o schedule.o pages.o memory.o kernel.o \
 		   intel_8254_nanos.o term.o ring.o unistd.o intel_8259.o intel_8259_nanos.o \
 		   vga.o file.o inbuf.o termbuf.o
 
-USER_SH_OBJ = sh.o unistd.o stdio.o string.o memory.o
+USER_SH_OBJ = sh.o unistd.o stdio.o string.o memory.o wait.o
 USER1_OBJ = user1.o user_vga.o string.o stdio.o memory.o unistd.o
 SRC = src/
 KERNEL_HEADERS = $(wildcard src/*.h)

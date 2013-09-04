@@ -22,6 +22,10 @@ void handle_syscall(system_state_t *state) {
 			break;
 
 		case SYSCALL_EXIT:
+			if (process->parent) {
+				process_child_finished(process->parent, process);
+			}
+
 			remove_process(process);
 			schedule();
 			break;
@@ -56,14 +60,19 @@ void handle_syscall(system_state_t *state) {
 			break;
 		}
 
+		case SYSCALL_WAIT:
+			state->registers.rdi = process_wait(process);
+			break;
+
 		case SYSCALL_SPAWN: {
 			void *text = (void*)state->registers.rbx;
 			int argc = state->registers.rcx;
 			char **argv = (char**)state->registers.rdx;
 
-			spawn(text, argc, argv);
+			process_t *spawned = spawn(text, argc, argv);
+			process_add_child(process, spawned);
 
-			state->registers.rdi = 0;
+			state->registers.rdi = spawned->pid;
 
 			break;
 		}
