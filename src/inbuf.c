@@ -49,25 +49,49 @@ int inbuf_get_lines(inbuf_t *this, char *dst, size_t maxlen) {
     return size;
 }
 
-void inbuf_write_char(inbuf_t *this, char c) {
-    if (this->offset >= this->nbytes - 1)
-        return;
+size_t inbuf_write_backspace(inbuf_t *this) {
+    if (this->offset <= 0 || this->offset >= this->nbytes)
+        return 0;
 
+    this->buf[this->offset--] = '\0';
+    return 1;
+}
+
+size_t inbuf_write_newline(inbuf_t *this) {
+    if (this->offset >= this->nbytes - 1)
+        return 0;
+
+    this->buf[this->offset++] = '\n';
+    this->last_newline = this->offset;
+
+    return 1;
+}
+
+
+size_t inbuf_write_normal(inbuf_t *this, char c) {
     // save char for last newline
-    if (this->offset == this->nbytes - 2 && c != '\n')
-        return;
+    if (this->offset >= this->nbytes - 2)
+        return 0;
 
     this->buf[this->offset++] = c;
 
+    return 1;
+}
+
+size_t inbuf_write_char(inbuf_t *this, char c) {
     if (c == '\n') {
-        this->last_newline = this->offset;
+        return inbuf_write_newline(this);
+    } else if (c == '\b') {
+        return inbuf_write_backspace(this);
+    } else {
+        return inbuf_write_normal(this, c);
     }
 }
 
 ssize_t inbuf_write(inbuf_t *this, const char *str, size_t nbytes) {
     int i = 0;
-    for (const char *p = str; *p != '\0' && i < nbytes; p++, i++) {
-        inbuf_write_char(this, *p);
+    for (const char *p = str; *p != '\0' && i < nbytes; p++) {
+        i += inbuf_write_char(this, *p);
     }
 
     return i;
