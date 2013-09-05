@@ -55,6 +55,7 @@ typedef struct process_s {
   node_t *child_statuses;
   struct process_s *parent;
   uint64_t num_pages;
+  uint64_t num_waitable;
   void *pt;
   pid_t pid;
   int argc;

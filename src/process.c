@@ -34,6 +34,7 @@ process_t *process_alloc(void *text, int argc, char **argv) {
     process->runstate = PROCESS_RUNNABLE;
     process->current = false;
     process->next_switch_is_kernel = false;
+    process->num_waitable = 0;
 
     process->files = kalloc(sizeof(file_t) * PROCESS_MAX_FILES);
     process->files[0] = g_termbuf->file;
@@ -70,6 +71,7 @@ void process_add_child(process_t *this, process_t *child) {
     status->has_waiter = false;
     status->is_finished = false;
     ll_append_data_a(kalloc, this->child_statuses, status);
+    this->num_waitable++;
 
     child->parent = this;
 }
@@ -240,7 +242,7 @@ bool process_runnable(process_t *this) {
             return file_can_write(this->runinfo.fileinfo.file);
 
         case PROCESS_WAIT_ANY:
-            return ll_any(this->child_statuses, waitable_status);
+            return this->num_waitable == 0 || ll_any(this->child_statuses, waitable_status);
 
         default: return false;
     }
@@ -286,28 +288,24 @@ bool waitable_status(node_t *node) {
     return S(node)->is_finished && !S(node)->has_waiter;
 }
 
-bool needs_waiter(node_t *node) {
-    return !S(node)->has_waiter;
-}
-
 pid_t process_wait(process_t *this) {
+    if (this->num_waitable == 0)
+        return -1;
+
     this->runstate = PROCESS_WAIT_ANY;
 
     pid_t result = -1;
     node_t *found = NULL;
-    while ( (found = ll_find_p(this->child_statuses, waitable_status)) == NULL ) {
-
-        // It's possible the wait slots could all be eaten up
-        if (ll_none(this->child_statuses, needs_waiter)) {
-            break;
-        }
-
+    while (this->num_waitable > 0 && (found = ll_find_p(this->child_statuses, waitable_status)) == NULL ) {
         YIELD();
     }
 
     if (found) {
-        ll_remove(this->child_statuses, found);
         result = S(found)->pid;
+        ll_remove(this->child_statuses, found);
+        kfree(S(found));
+        kfree(found);
+        this->num_waitable--;
     }
 
     this->runstate = PROCESS_RUNNABLE;
