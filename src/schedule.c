@@ -2,7 +2,6 @@
 #include "kmem.h"
 #include "process.h"
 #include "ll.h"
-#include "memory.h"
 #include <stdio.h>
 #include "timer.h"
 #include "kernel.h"

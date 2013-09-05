@@ -1,4 +1,3 @@
-#include "memory.h"
 #include "pages.h"
 #include "sizes.h"
 #include "kmem.h"
@@ -6,6 +5,7 @@
 #include "kernel.h"
 #include <stdint.h>
 #include "ptr.h"
+#include <string.h>
 
 #define DROPFLAGS(p) ( (__typeof__(p)) ((uintptr_t)p & PAGE_MASK) )
 #define WITHFLAGS(p, flags) ( (__typeof__(p)) ( ((uintptr_t)p) | flags) )

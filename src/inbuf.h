@@ -2,7 +2,6 @@
 #define __INBUF_H__
 
 #include <stddef.h>
-#include <memory.h>
 #include "file.h"
 #include <stdbool.h>
 

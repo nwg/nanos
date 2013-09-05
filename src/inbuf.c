@@ -1,5 +1,4 @@
 #include "inbuf.h"
-#include <memory.h>
 #include "num.h"
 #include "kmem.h"
 #include <string.h>

@@ -3,7 +3,6 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <string.h>
-#include <memory.h>
 #include "num.h"
 #include <unistd.h>
 

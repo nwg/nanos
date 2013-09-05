@@ -1,7 +1,6 @@
 #include "term.h"
 #include "user_vga.h"
 #include "num.h"
-#include <memory.h>
 #include <stdbool.h>
 #include <stdarg.h>
 #include <stdio.h>

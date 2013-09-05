@@ -1,5 +1,4 @@
 #include "ring.h"
-#include <memory.h>
 #include "num.h"
 
 ring_t *ring_alloc(ring_allocator allocator, int length, size_t width) {

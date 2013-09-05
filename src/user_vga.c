@@ -1,7 +1,6 @@
 
 #include "user_vga.h"
 #include "native.h"
-#include <memory.h>
 
 static uint16_t *video = (uint16_t*)USER_VIDEO;
 

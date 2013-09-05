@@ -1,6 +1,6 @@
 #include "file.h"
 #include "kmem.h"
-#include <memory.h>
+#include <string.h>
 
 static uint64_t next_global_id = 0;
 

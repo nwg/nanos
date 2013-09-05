@@ -1,6 +1,5 @@
 #include "kernel.h"
 #include "schedule.h"
-#include "memory.h"
 #include "kmem.h"
 #include "pages.h"
 #include "asm.h"

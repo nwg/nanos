@@ -1,6 +1,5 @@
 #include "stack.h"
 #include "string.h"
-#include "memory.h"
 
 stackptr_t push_string(stackptr_t s, const char *str) {
     int len = strlen(str);
