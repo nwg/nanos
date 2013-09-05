@@ -14,6 +14,7 @@ typedef struct node_s {
 typedef bool (*ll_predicate)(node_t *node);
 typedef void (*ll_effect)(node_t *node);
 typedef void * (*allocator)(size_t size);
+typedef void (*deallocator)(void *data);
 
 node_t *ll_alloc_a(allocator alloc);
 node_t *ll_next_rr(node_t *ll, node_t *node);
@@ -28,6 +29,7 @@ int ll_size(node_t *ll);
 void ll_foreach(node_t *ll, ll_effect effect);
 node_t *ll_find_p(node_t *ll, ll_predicate p);
 bool ll_all(node_t *ll, ll_predicate p);
+void ll_delete_a(deallocator dealloc, node_t *ll, node_t *node);
 
 #define ll_any ll_find_p
 #define ll_none(ll, p) (!ll_find_p(ll, p))

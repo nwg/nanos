@@ -87,6 +87,11 @@ void ll_append_data_a(allocator alloc, node_t *ll, void *data) {
     ll_append(ll, node);
 }
 
+void ll_delete_a(deallocator dealloc, node_t *ll, node_t *node) {
+    ll_remove(ll, node);
+    dealloc(node);
+}
+
 node_t *ll_find(node_t *ll, void *data) {
     for (node_t *node = ll->next; node != ll; node = node->next) {
         if (node->data == data) return node;

@@ -64,12 +64,22 @@ void process_dealloc(process_t *this) {
     kfree(this);
 }
 
-void process_add_child(process_t *this, process_t *child) {
+process_status_t *process_status_alloc(process_t *this, process_t *child) {
     process_status_t *status = kalloc(sizeof(process_status_t));
     memset(status, 0, sizeof(process_status_t));
     status->pid = child->pid;
     status->has_waiter = false;
     status->is_finished = false;
+
+    return status;
+}
+
+void destroy_status(process_t *this, process_t *child) {
+
+}
+
+void process_add_child(process_t *this, process_t *child) {
+    process_status_t *status = process_status_alloc(this, child);
     ll_append_data_a(kalloc, this->child_statuses, status);
     this->num_waitable++;
 
@@ -302,9 +312,8 @@ pid_t process_wait(process_t *this) {
 
     if (found) {
         result = S(found)->pid;
-        ll_remove(this->child_statuses, found);
         kfree(S(found));
-        kfree(found);
+        ll_delete_a(kfree, this->child_statuses, found);
         this->num_waitable--;
     }
 
