@@ -1,11 +1,11 @@
-KERNEL_C = kmem.o ll.o process.o schedule.o pages.o memory.o kernel.o \
+KERNEL_C = kmem.o ll.o process.o schedule.o pages.o kernel.o \
 		   syscall.o user_vga.o stack.o ptr.o stdio.o timer.o intel_8254.o \
 		   asm.o intel_8042.o intel_8042_nanos.o keyboard.o interrupt.o \
 		   intel_8254_nanos.o term.o ring.o unistd.o intel_8259.o intel_8259_nanos.o \
 		   vga.o file.o inbuf.o termbuf.o
 
-USER_SH_OBJ = sh.o unistd.o stdio.o memory.o wait.o
-USER1_OBJ = user1.o user_vga.o stdio.o memory.o unistd.o
+USER_SH_OBJ = sh.o unistd.o stdio.o wait.o
+USER1_OBJ = user1.o user_vga.o stdio.o unistd.o
 
 NEWLIB = /opt/local/x86_64-elf/lib/libc.a
 KERNEL_LIB = $(NEWLIB)
