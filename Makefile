@@ -6,6 +6,11 @@ KERNEL_C = kmem.o ll.o process.o schedule.o pages.o memory.o kernel.o \
 
 USER_SH_OBJ = sh.o unistd.o stdio.o string.o memory.o wait.o
 USER1_OBJ = user1.o user_vga.o string.o stdio.o memory.o unistd.o
+
+NEWLIB = /opt/local/x86_64-elf/lib/libc.a
+KERNEL_LIB = $(NEWLIB)
+USER_LIB = $(NEWLIB)
+
 SRC = src/
 KERNEL_HEADERS = $(wildcard src/*.h)
 KERNEL_ASM = kernel_init.o
@@ -14,6 +19,7 @@ OBJ = $(KERNEL_OBJ)
 FLAT_BINS = boot.bin kernel.bin sh.bin user1.bin
 CC = /opt/local/bin/x86_64-elf-gcc
 CFLAGS = -fno-builtin -Wall -Werror -std=c99 -g
+LDFLAGS = 
 LD = /opt/local/bin/x86_64-elf-ld
 PAD = ./util/pad.sh
 ELF = kernel.elf
@@ -37,7 +43,7 @@ kernel.bin: $(KERNEL_ASM) $(KERNEL_C) kernel.elf custom.lnk
 	$(PAD) 65536 $@
 
 kernel.elf: $(KERNEL_ASM) $(KERNEL_C) custom.lnk
-	$(LD) -o $@ -T custom.lnk --oformat elf64-x86-64 $(KERNEL_OBJ)
+	$(LD) -o $@ -T custom.lnk --oformat elf64-x86-64 $(LDFLAGS) $(KERNEL_OBJ) $(KERNEL_LIB)
 
 kernel.sym: kernel.elf
 	$(OBJCOPY) --only-keep-debug kernel.elf kernel.sym
@@ -46,11 +52,11 @@ kernel.ldsym: kernel.elf
 	$(MKLDSYM) kernel.elf kernel.ldsym
 
 sh.bin: $(USER_SH_OBJ) user.lnk
-	$(LD) -T user.lnk -o $@ $(USER_SH_OBJ)
+	$(LD) -T user.lnk -o $@ $(LDFLAGS) $(USER_SH_OBJ) $(USER_LIB)
 	$(PAD) 16384 $@
 
 user1.bin: $(USER1_OBJ) user.lnk
-	$(LD) -T user.lnk -o $@ $(USER1_OBJ)
+	$(LD) -T user.lnk -o $@ $(LDFLAGS) $(USER1_OBJ) $(USER_LIB)
 	$(PAD) 16384 $@
 
 $(BOCHS_IMG): bigboot
