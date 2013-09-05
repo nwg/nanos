@@ -17,7 +17,7 @@ typedef enum {
 
 #define syscall0(code) \
     __asm__ __volatile__ ( \
-        "movq %0, %%rax\n\t" \
+        "movq %0, %%rdi\n\t" \
         "int $48\n\t" \
         :  \
         : "i" (code) \
@@ -26,8 +26,8 @@ typedef enum {
 
 #define syscall1i(code, arg1) \
     __asm__ __volatile__ ( \
-        "movq %0, %%rax\n\t" \
-        "movq %1, %%rbx\n\t" \
+        "movq %0, %%rdi\n\t" \
+        "movq %1, %%rsi\n\t" \
         "int $48\n\t" \
         :  \
         : "i" (code), "i" (arg1) \
@@ -36,10 +36,10 @@ typedef enum {
 
 #define syscall1o(code, arg1, out) \
     __asm__ __volatile__ ( \
-        "movq %1, %%rax\n\t" \
-        "movq %2, %%rbx\n\t" \
+        "movq %1, %%rdi\n\t" \
+        "movq %2, %%rsi\n\t" \
         "int $48\n\t" \
-        "mov %%rdi, %0\n\t" \
+        "mov %%rax, %0\n\t" \
         :  "=m" (out) \
         : "i" (code), "m" (arg1) \
         : "rax", "rbx", "rdi" \
@@ -47,8 +47,8 @@ typedef enum {
 
 #define syscall1m(code, arg1) \
     __asm__ __volatile__ ( \
-        "movq %0, %%rax\n\t" \
-        "movq %1, %%rbx\n\t" \
+        "movq %0, %%rdi\n\t" \
+        "movq %1, %%rsi\n\t" \
         "int $48\n\t" \
         :  \
         : "i" (code), "m" (arg1) \
@@ -57,9 +57,9 @@ typedef enum {
 
 #define syscall2m(code, arg1, arg2, arg3) \
     __asm__ __volatile__ ( \
-        "movq %0, %%rax\n\t" \
-        "movq %1, %%rbx\n\t" \
-        "movq %2, %%rcx\n\t" \
+        "movq %0, %%rdi\n\t" \
+        "movq %1, %%rsi\n\t" \
+        "movq %2, %%rdx\n\t" \
         "int $48\n\t" \
         :  \
         : "i" (code), "m" (arg1), "m" (arg2) \
@@ -68,12 +68,12 @@ typedef enum {
 
 #define syscall3mo(code, arg1, arg2, arg3, r) \
     __asm__ __volatile__ ( \
-        "movq %1, %%rax\n\t" \
-        "movq %2, %%rbx\n\t" \
-        "movq %3, %%rcx\n\t" \
-        "movq %4, %%rdx\n\t" \
+        "movq %1, %%rdi\n\t" \
+        "movq %2, %%rsi\n\t" \
+        "movq %3, %%rdx\n\t" \
+        "movq %4, %%rcx\n\t" \
         "int $48\n\t" \
-        "movq %%rdi, %0\n\t" \
+        "movq %%rax, %0\n\t" \
         :  "=m" (r) \
         : "i" (code), "m" (arg1), "m" (arg2), "m" (arg3) \
         : "rax", "rbx", "rcx", "rdx", "rdi" \
@@ -90,6 +90,14 @@ typedef enum {
 #define sys_wait(stat_loc, ret) syscall1o(SYSCALL_WAIT, stat_loc, ret)
 
 #define YIELD() sys_yield()
+
+#define SYS_CALLNUM(r) r.rdi
+#define SYS_P1(r) r.rsi
+#define SYS_P2(r) r.rdx
+#define SYS_P3(r) r.rcx
+#define SYS_P4(r) r.r8
+#define SYS_P5(r) r.r9
+#define SYS_RET(r) r.rax
 
 void handle_syscall(system_state_t *state);
 

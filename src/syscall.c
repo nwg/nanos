@@ -11,7 +11,7 @@ void handle_syscall(system_state_t *state) {
 
 	process_t *process = current_process();
 
-	switch (state->registers.rax) {
+	switch (SYS_CALLNUM(state->registers)) {
 
 		case SYSCALL_TEST:
 			kprintf("Syscall 0 Received!!\n");
@@ -31,48 +31,48 @@ void handle_syscall(system_state_t *state) {
 			break;
 
 		case SYSCALL_ADD_PAGES:
-			process_add_pages(process, state->registers.rbx);
+			process_add_pages(process, SYS_P1(state->registers));
 			break;
 
 		case SYSCALL_SLEEP:
-			process_sleep(process, state->registers.rbx);
+			process_sleep(process, SYS_P1(state->registers));
 			break;
 
 		case SYSCALL_READ: {
-			int filedes = state->registers.rbx;
-			char *buf = (char*)state->registers.rcx;
-			size_t len = state->registers.rdx;
+			int filedes = SYS_P1(state->registers);
+			char *buf = (char*)SYS_P2(state->registers);
+			size_t len = SYS_P3(state->registers);
 
 			if (filedes != 0) PANIC("read from bad filedes");
 
-			state->registers.rdi = process_read_file(process, filedes, buf, len);
+			SYS_RET(state->registers) = process_read_file(process, filedes, buf, len);
 
 			break;
 		}
 
 		case SYSCALL_WRITE: {
-			int filedes = state->registers.rbx;
-			const char *buf = (const char*)state->registers.rcx;
-			size_t len = state->registers.rdx;
+			int filedes = SYS_P1(state->registers);
+			const char *buf = (const char*)SYS_P2(state->registers);
+			size_t len = SYS_P3(state->registers);
 
-			state->registers.rdi = process_write_file(process, filedes, buf, len);
+			SYS_RET(state->registers) = process_write_file(process, filedes, buf, len);
 
 			break;
 		}
 
 		case SYSCALL_WAIT:
-			state->registers.rdi = process_wait(process);
+			SYS_RET(state->registers) = process_wait(process);
 			break;
 
 		case SYSCALL_SPAWN: {
-			void *text = (void*)state->registers.rbx;
-			int argc = state->registers.rcx;
-			char **argv = (char**)state->registers.rdx;
+			void *text = (void*)SYS_P1(state->registers);
+			int argc = SYS_P2(state->registers);
+			char **argv = (char**)SYS_P3(state->registers);
 
 			process_t *spawned = spawn(text, argc, argv);
 			process_add_child(process, spawned);
 
-			state->registers.rdi = spawned->pid;
+			SYS_RET(state->registers) = spawned->pid;
 
 			break;
 		}
