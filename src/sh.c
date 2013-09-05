@@ -7,8 +7,30 @@
 #include "user.h"
 #include "sizes.h"
 #include <sys/wait.h>
+#include <stdlib.h>
+
+#define MAX_ARGS 16
+static char *DELIM = " \t";
+
+typedef int (*cmdfunc)(int argc, char **argv);
+
+typedef struct {
+	char *name;
+	cmdfunc f;
+} cmd_t;
 
 int spawn(void *text, int argc, char **argv);
+char * strsep (char ** sp, const char * delim);
+cmd_t *find_command(char *name);
+int run(void *text, int argc, char **argv);
+int run_test(int argc, char **argv);
+
+cmd_t commands[] = {
+	{ "test", run_test },
+};
+
+int num_commands = sizeof(commands) / sizeof(cmd_t);
+static char *cmd_argv[MAX_ARGS];
 
 int main(int argc, char **argv) {
 
@@ -23,20 +45,49 @@ int main(int argc, char **argv) {
 		}
 
 		buf[len - 1] = '\0';
-		printf("Got line %s\n", buf);
 
-		static char *argv2[] = {
-			"user2", "1", "12",
-		};
-		static int argc2 = sizeof(argv2) / sizeof(char*);
+		char *s = buf;
+		char *tok = strtok(s, DELIM);
+		cmd_t *cmd = find_command(tok);
+		if (!cmd) {
+			printf("Command %s not found.\n", tok);
+			continue;
+		}
 
-		spawn((void*)TEST_PROG_PMA + 16*K, argc2, argv2);
+		cmd_argv[0] = tok;
+		int cmd_argc = 1;
+		for (tok = strtok(NULL, DELIM); tok; tok = strtok(NULL, DELIM)) {
+			cmd_argv[cmd_argc++] = tok;
+		}
 
-		pid_t pid = wait(NULL);
-		printf("Finished running pid=%d\n", pid);
+		cmd->f(cmd_argc, cmd_argv);
 	}
 
 	sys_exit();
+}
+
+cmd_t *find_command(char *name) {
+	for (int i = 0; i < num_commands; i++) {
+		cmd_t *cmd = &commands[i];
+		if (strcmp(name, cmd->name) == 0) {
+			return cmd;
+		}
+	}
+
+	return NULL;
+}
+
+int run(void *text, int argc, char **argv) {
+		spawn(text, argc, argv);
+
+		pid_t pid = wait(NULL);
+		printf("Finished running pid=%d\n", pid);
+
+		return 0;
+}
+
+int run_test(int argc, char **argv) {
+	return run((void*)TEST_PROG_PMA + 16*K, argc, argv);
 }
 
 int spawn(void *text, int argc, char **argv) {

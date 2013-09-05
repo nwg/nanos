@@ -10,8 +10,20 @@ int atoi(const char *a);
 
 int main(int argc, char **argv) {
 
+	if (argc != 3) {
+		printf("Usage: %s [color_decimal] [row]\n", argv[0]);
+		sys_exit();
+		return 1;
+	}
+
 	int color = atoi(argv[1]) << 8;
 	int row = atoi(argv[2]);
+
+	if (row < 0 || row > 25) {
+		printf("Bad row, 0 <= row <= 25\n");
+		sys_exit();
+		return 1;
+	}
 
 	sys_add_pages(1);
 	*(uint64_t*)USER_HEAP = 50;
