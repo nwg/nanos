@@ -12,7 +12,6 @@ int main(int argc, char **argv) {
 
 	if (argc != 3) {
 		printf("Usage: %s [color_decimal] [row]\n", argv[0]);
-		sys_exit();
 		return 1;
 	}
 
@@ -21,7 +20,6 @@ int main(int argc, char **argv) {
 
 	if (row < 0 || row > 25) {
 		printf("Bad row, 0 <= row <= 25\n");
-		sys_exit();
 		return 1;
 	}
 
@@ -32,14 +30,11 @@ int main(int argc, char **argv) {
 
 		if (i == 20 && row == 12) {
 			print(row, i, color, "*");
-			sys_exit();
 		}
 
 		print(row, i, color, "\07");
 		usleep(100000);
 	}
-
-	sys_exit();
 }
 
 int atoi(const char *a) {

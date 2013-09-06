@@ -95,10 +95,11 @@ node_t *find_status(process_t *this, process_t *child) {
     return NULL;
 }
 
-void process_child_finished(process_t *this, process_t *child) {
+void process_child_finished(process_t *this, process_t *child, int exit_status) {
     node_t *status = find_status(this, child);
     if (!status) PANIC("child_finished for unknown child");
 
+    S(status)->exit_status = exit_status;
     S(status)->is_finished = true;
 }
 
@@ -290,7 +291,7 @@ bool waitable_status(node_t *node) {
     return S(node)->is_finished && !S(node)->has_waiter;
 }
 
-pid_t process_wait(process_t *this) {
+pid_t process_wait(process_t *this, int *stat_loc) {
     if (this->num_waitable == 0)
         return -1;
 
@@ -304,6 +305,7 @@ pid_t process_wait(process_t *this) {
 
     if (found) {
         result = S(found)->pid;
+        if (stat_loc) *stat_loc = S(found)->exit_status;
         kfree(S(found));
         ll_delete_a(kfree, this->child_statuses, found);
         this->num_waitable--;

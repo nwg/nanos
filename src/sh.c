@@ -46,8 +46,9 @@ cmd_t *find_command(char *name) {
 int run(void *text, int argc, char **argv) {
 		spawn(text, argc, argv);
 
-		pid_t pid = wait(NULL);
-		printf("Finished running pid=%d\n", pid);
+		int status;
+		pid_t pid = wait(&status);
+		printf("Finished running pid=%d, status=%d\n", pid, status);
 
 		return 0;
 }
@@ -91,6 +92,6 @@ int main(int argc, char **argv) {
 		cmd->f(cmd_argc, cmd_argv);
 	}
 
-	sys_exit();
+	return 1;
 }
 

@@ -21,14 +21,17 @@ void handle_syscall(system_state_t *state) {
 			schedule();
 			break;
 
-		case SYSCALL_EXIT:
+		case SYSCALL_EXIT: {
+			int exit_status = SYS_P1(state->registers);
+
 			if (process->parent) {
-				process_child_finished(process->parent, process);
+				process_child_finished(process->parent, process, exit_status);
 			}
 
 			remove_process(process);
 			schedule();
 			break;
+		}
 
 		case SYSCALL_ADD_PAGES:
 			process_add_pages(process, SYS_P1(state->registers));
@@ -60,9 +63,12 @@ void handle_syscall(system_state_t *state) {
 			break;
 		}
 
-		case SYSCALL_WAIT:
-			SYS_RET(state->registers) = process_wait(process);
+		case SYSCALL_WAIT: {
+			int *stat_loc = (int*)SYS_P1(state->registers);
+
+			SYS_RET(state->registers) = process_wait(process, stat_loc);
 			break;
+		}
 
 		case SYSCALL_SPAWN: {
 			void *text = (void*)SYS_P1(state->registers);

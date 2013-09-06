@@ -82,8 +82,8 @@ ssize_t process_read_file(process_t *process, int filedes, char *buf, size_t len
 ssize_t process_write_file(process_t *this, int fileno, const char *buf, size_t len);
 bool process_runnable(process_t *this);
 void process_dealloc(process_t *this);
-pid_t process_wait(process_t *this);
-void process_child_finished(process_t *this, process_t *child);
+pid_t process_wait(process_t *this, int *stat_loc);
+void process_child_finished(process_t *this, process_t *child, int exit_status);
 void process_add_child(process_t *this, process_t *child);
 
 #endif
