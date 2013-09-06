@@ -32,6 +32,34 @@ cmd_t commands[] = {
 int num_commands = sizeof(commands) / sizeof(cmd_t);
 static char *cmd_argv[MAX_ARGS];
 
+cmd_t *find_command(char *name) {
+	for (int i = 0; i < num_commands; i++) {
+		cmd_t *cmd = &commands[i];
+		if (strcmp(name, cmd->name) == 0) {
+			return cmd;
+		}
+	}
+
+	return NULL;
+}
+
+int run(void *text, int argc, char **argv) {
+		spawn(text, argc, argv);
+
+		pid_t pid = wait(NULL);
+		printf("Finished running pid=%d\n", pid);
+
+		return 0;
+}
+
+int run_test(int argc, char **argv) {
+	return run((void*)TEST_PROG_PMA + 16*K, argc, argv);
+}
+
+int spawn(void *text, int argc, char **argv) {
+	return sys_spawn(text, argc, argv);
+}
+
 int main(int argc, char **argv) {
 
 	char buf[256];
@@ -66,30 +94,3 @@ int main(int argc, char **argv) {
 	sys_exit();
 }
 
-cmd_t *find_command(char *name) {
-	for (int i = 0; i < num_commands; i++) {
-		cmd_t *cmd = &commands[i];
-		if (strcmp(name, cmd->name) == 0) {
-			return cmd;
-		}
-	}
-
-	return NULL;
-}
-
-int run(void *text, int argc, char **argv) {
-		spawn(text, argc, argv);
-
-		pid_t pid = wait(NULL);
-		printf("Finished running pid=%d\n", pid);
-
-		return 0;
-}
-
-int run_test(int argc, char **argv) {
-	return run((void*)TEST_PROG_PMA + 16*K, argc, argv);
-}
-
-int spawn(void *text, int argc, char **argv) {
-	return sys_spawn(text, argc, argv);
-}
