@@ -54,7 +54,7 @@ int run(void *text, int argc, char **argv) {
 }
 
 int run_test(int argc, char **argv) {
-	return run((void*)TEST_PROG_PMA + 16*K, argc, argv);
+	return run((void*)TEST_PROG_PMA + 1*USER_TEXT_SIZE, argc, argv);
 }
 
 int spawn(void *text, int argc, char **argv) {

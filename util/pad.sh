@@ -13,6 +13,8 @@ size() {
 cursize=$(size $FILE)
 newsize=$(( ($b - 1) / $PAD * $PAD + $PAD))
 
+if [ "$newsize" -eq "$cursize" ]; then exit 0; fi
+
 if [ "$newsize" -gt "$cursize" ]; then
     head -c $((newsize - cursize)) /dev/zero >> $FILE
     exit 0

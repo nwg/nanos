@@ -118,7 +118,7 @@ void *process_page_table_alloc(uintptr_t stack_u, uintptr_t text) {
     page_flag_e uf = PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
     pt_map(pages, 0, 0, 16*M, uf, uf, uf, kf);
     pt_map(pages, USER_STACK_VMA, stack_u, U_STACK_SIZE, uf, uf, uf, uf);
-    pt_map(pages, USER_TEXT_VMA, text, 16*K, uf, uf, uf, uf);
+    pt_map(pages, USER_TEXT_VMA, text, USER_TEXT_SIZE, uf, uf, uf, uf);
     pt_map(pages, USER_VIDEO, 0xb8000, 8*K, uf, uf, uf, uf);
 
     return pages;
@@ -147,7 +147,7 @@ stackptr_t push_system_state(stackptr_t k, void *stack_u, int argc, char **argv)
 
 void process_description(char *buf, int n, process_t *p) {
     char *name = (char*)GET_USER_STACK_PMA(p->stack_u, p->argv[0]);
-    snprintf(buf, n, "%s @ %d", name, (int)(uintptr_t)p->text);
+    snprintf(buf, n, "%s @ %x", name, (int)(uintptr_t)p->text);
 }
 
 void dump_process(process_t *p) {

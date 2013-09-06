@@ -32,6 +32,7 @@ MKLDSYM = ./util/mkldsym
 OBJCOPY = /opt/local/bin/x86_64-elf-objcopy
 NASM = nasm
 AFLAGS = -w+error
+USER_TEXT_SIZE = 32768
 
 .PHONY: all run run-qemu clean bochs-gdb bochs-native
 
@@ -53,13 +54,19 @@ kernel.sym: kernel.elf
 kernel.ldsym: kernel.elf
 	$(MKLDSYM) kernel.elf kernel.ldsym
 
-sh.bin: $(USER_SH_OBJ) user.lnk
-	$(LD) -T user.lnk -o $@ $(LDFLAGS) $(USER_SH_OBJ) $(USER_LIB)
-	$(PAD) 16384 $@
+sh.elf: $(USER_SH_OBJ) user.lnk
+	$(LD) -T user.lnk --oformat elf64-x86-64 -o $@ $(LDFLAGS) $(USER_SH_OBJ) $(USER_LIB)
 
-user1.bin: $(USER1_OBJ) user.lnk
-	$(LD) -T user.lnk -o $@ $(LDFLAGS) $(USER1_OBJ) $(USER_LIB)
-	$(PAD) 16384 $@
+sh.bin: sh.elf
+	$(OBJCOPY) -O binary --set-section-flags .bss=alloc,load,contents $< $@
+	$(PAD) $(USER_TEXT_SIZE) $@
+
+user1.elf: $(USER1_OBJ) user.lnk
+	$(LD) -T user.lnk --oformat elf64-x86-64 -o $@ $(LDFLAGS) $(USER1_OBJ) $(USER_LIB)
+
+user1.bin: user1.elf
+	$(OBJCOPY) -O binary --set-section-flags .bss=alloc,load,contents $< $@
+	$(PAD) $(USER_TEXT_SIZE) $@
 
 $(BOCHS_IMG): bigboot
 	cp $< $@
