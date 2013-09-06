@@ -267,7 +267,7 @@ ssize_t process_read_file(process_t *this, int fileno, char *buf, size_t len) {
     this->runinfo.fileinfo.file = file;
 
     ssize_t result;
-    while ( (result = file_read(file, buf, len)) < 0) {
+    while ( (result = file_read(file, buf, len)) == FILE_ERROR_EAGAIN ) {
         YIELD();
     }
 
@@ -285,7 +285,7 @@ ssize_t process_write_file(process_t *this, int fileno, const char *buf, size_t 
     this->runinfo.fileinfo.file = file;
 
     ssize_t result;
-    while ( (result = file_write(file, buf, len)) < 0) {
+    while ( (result = file_write(file, buf, len)) == FILE_ERROR_EAGAIN ) {
         YIELD();
     }
 
