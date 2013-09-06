@@ -32,6 +32,7 @@ int main(int argc, char **argv) {
 
 		if (i == 20 && row == 12) {
 			print(row, i, color, "*");
+			return 0;
 		}
 
 		print(row, i, color, "\07");
