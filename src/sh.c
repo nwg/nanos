@@ -91,7 +91,5 @@ int run_test(int argc, char **argv) {
 }
 
 int spawn(void *text, int argc, char **argv) {
-	int result;
-	sys_spawn(text, argc, argv, result);
-	return result;
+	return sys_spawn(text, argc, argv);
 }

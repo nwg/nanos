@@ -3,6 +3,8 @@
 
 #include "kernel.h"
 
+#define SYSCALL_ID 0x30
+
 typedef enum {
 	SYSCALL_TEST,
     SYSCALL_EXIT,
@@ -13,81 +15,88 @@ typedef enum {
     SYSCALL_YIELD,
     SYSCALL_SPAWN,
     SYSCALL_WAIT,
-} syscall_code_t;
+} syscall_code_e;
 
-#define syscall0(code) \
-    __asm__ __volatile__ ( \
-        "movq %0, %%rdi\n\t" \
-        "int $48\n\t" \
-        :  \
-        : "i" (code) \
-        : "rax" \
-    )
+static inline uint64_t _syscall0(uint64_t code) {
+    uint64_t ret;
 
-#define syscall1i(code, arg1) \
-    __asm__ __volatile__ ( \
-        "movq %0, %%rdi\n\t" \
-        "movq %1, %%rsi\n\t" \
-        "int $48\n\t" \
-        :  \
-        : "i" (code), "i" (arg1) \
-        : "rax", "rbx" \
-    )
+    __asm__ __volatile__ (
+        "movq %1, %%rdi\n\t"
+        "int %2\n\t"
+        "movq %%rax, %0\n\t"
+        :  "=m" (ret)
+        : "m" (code), "i" (SYSCALL_ID)
+        : "rdi", "rax"
+    );
 
-#define syscall1o(code, arg1, out) \
-    __asm__ __volatile__ ( \
-        "movq %1, %%rdi\n\t" \
-        "movq %2, %%rsi\n\t" \
-        "int $48\n\t" \
-        "mov %%rax, %0\n\t" \
-        :  "=m" (out) \
-        : "i" (code), "m" (arg1) \
-        : "rax", "rbx", "rdi" \
-    )
+    return ret;
+}
 
-#define syscall1m(code, arg1) \
-    __asm__ __volatile__ ( \
-        "movq %0, %%rdi\n\t" \
-        "movq %1, %%rsi\n\t" \
-        "int $48\n\t" \
-        :  \
-        : "i" (code), "m" (arg1) \
-        : "rax", "rbx" \
-    )
+static inline uint64_t _syscall1(uint64_t code, uint64_t arg1) {
+    uint64_t ret;
 
-#define syscall2m(code, arg1, arg2, arg3) \
-    __asm__ __volatile__ ( \
-        "movq %0, %%rdi\n\t" \
-        "movq %1, %%rsi\n\t" \
-        "movq %2, %%rdx\n\t" \
-        "int $48\n\t" \
-        :  \
-        : "i" (code), "m" (arg1), "m" (arg2) \
-        : "rax", "rbx", "rcx" \
-    )
+    __asm__ __volatile__ (
+        "movq %1, %%rdi\n\t"
+        "movq %2, %%rsi\n\t"
+        "int %3\n\t"
+        "movq %%rax, %0\n\t"
+        :  "=m" (ret)
+        : "m" (code), "m" (arg1), "i" (SYSCALL_ID)
+        : "rdi", "rsi", "rax"
+    );
 
-#define syscall3mo(code, arg1, arg2, arg3, r) \
-    __asm__ __volatile__ ( \
-        "movq %1, %%rdi\n\t" \
-        "movq %2, %%rsi\n\t" \
-        "movq %3, %%rdx\n\t" \
-        "movq %4, %%rcx\n\t" \
-        "int $48\n\t" \
-        "movq %%rax, %0\n\t" \
-        :  "=m" (r) \
-        : "i" (code), "m" (arg1), "m" (arg2), "m" (arg3) \
-        : "rax", "rbx", "rcx", "rdx", "rdi" \
-    )
+    return ret;
+}
+
+static inline uint64_t _syscall2(uint64_t code, uint64_t arg1, uint64_t arg2) {
+    uint64_t ret;
+
+    __asm__ __volatile__ (
+        "movq %1, %%rdi\n\t"
+        "movq %2, %%rsi\n\t"
+        "movq %3, %%rdx\n\t"
+        "int %4\n\t"
+        "movq %%rax, %0\n\t"
+        :  "=m" (ret)
+        : "m" (code), "m" (arg1), "m" (arg2), "i" (SYSCALL_ID)
+        : "rdi", "rsi", "rdx", "rax"
+    );
+
+    return ret;
+}
+
+static inline uint64_t _syscall3(uint64_t code, uint64_t arg1, uint64_t arg2, uint64_t arg3) {
+    uint64_t ret;
+
+    __asm__ __volatile__ (
+        "movq %1, %%rdi\n\t"
+        "movq %2, %%rsi\n\t"
+        "movq %3, %%rdx\n\t"
+        "movq %4, %%rcx\n\t"
+        "int %5\n\t"
+        "movq %%rax, %0\n\t"
+        :  "=m" (ret)
+        : "m" (code), "m" (arg1), "m" (arg2), "m" (arg3), "i" (SYSCALL_ID)
+        : "rdi", "rsi", "rdx", "rcx", "rax"
+    );
+
+    return ret;
+}
+
+#define syscall0 _syscall0
+#define syscall1(code, arg1) _syscall1(code, (uint64_t)arg1)
+#define syscall2(code, arg1, arg2) _syscall2(code, (uint64_t)arg1, (uint64_t)arg2)
+#define syscall3(code, arg1, arg2, arg3) _syscall3(code, (uint64_t)arg1, (uint64_t)arg2, (uint64_t)arg3)
 
 #define sys_test() syscall0(SYSCALL_TEST)
 #define sys_yield() syscall0(SYSCALL_YIELD)
 #define sys_exit() syscall0(SYSCALL_EXIT)
-#define sys_add_pages(count) syscall1i(SYSCALL_ADD_PAGES, count)
-#define sys_sleep(useconds) syscall1m(SYSCALL_SLEEP, useconds)
-#define sys_read(filedes, buf, nbyte, ret) syscall3mo(SYSCALL_READ, filedes, buf, nbyte, ret)
-#define sys_write(filedes, buf, nbyte, ret) syscall3mo(SYSCALL_WRITE, fildes, buf, nbyte, ret)
-#define sys_spawn(text, argc, argv, ret) syscall3mo(SYSCALL_SPAWN, text, argc, argv, ret)
-#define sys_wait(stat_loc, ret) syscall1o(SYSCALL_WAIT, stat_loc, ret)
+#define sys_add_pages(count) syscall1(SYSCALL_ADD_PAGES, count)
+#define sys_sleep(useconds) syscall1(SYSCALL_SLEEP, useconds)
+#define sys_read(filedes, buf, nbyte) syscall3(SYSCALL_READ, filedes, buf, nbyte)
+#define sys_write(filedes, buf, nbyte) syscall3(SYSCALL_WRITE, fildes, buf, nbyte)
+#define sys_spawn(text, argc, argv) syscall3(SYSCALL_SPAWN, text, argc, argv)
+#define sys_wait(stat_loc) syscall1(SYSCALL_WAIT, stat_loc)
 
 #define YIELD() sys_yield()
 
