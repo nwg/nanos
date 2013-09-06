@@ -24,10 +24,11 @@ process_t *process_alloc(void *text, int argc, char **argv) {
     process_t *process = (process_t*)kalloc(sizeof(process_t));
     memset(process, 0, sizeof(process_t));
 
-    process->text = text;
+    process->text = kalloc_aligned(USER_TEXT_SIZE, 4096);
+    memcpy(process->text, text, USER_TEXT_SIZE);
     process->stack_k = kalloc(K_STACK_SIZE);
     process->stack_u = kalloc_aligned(U_STACK_SIZE, 4096);
-    process->pages = process_page_table_alloc((uintptr_t)process->stack_u, (uintptr_t)text);
+    process->pages = process_page_table_alloc((uintptr_t)process->stack_u, (uintptr_t)process->text);
     process->num_pages = 0;
     process->argc = argc;
     process->runstate = PROCESS_RUNNABLE;
@@ -55,6 +56,7 @@ process_t *process_alloc(void *text, int argc, char **argv) {
 }
 
 void process_dealloc(process_t *this) {
+    kfree(this->text);
     kfree(this->stack_k);
     kfree(this->stack_u);
     pt_dealloc(this->pages);
