@@ -4,8 +4,10 @@ KERNEL_C = kmem.o ll.o process.o schedule.o pages.o kernel.o \
 		   intel_8254_nanos.o term.o ring.o unistd.o intel_8259.o intel_8259_nanos.o \
 		   vga.o file.o inbuf.o termbuf.o
 
-USER_SH_OBJ = sh.o unistd.o stdio.o wait.o
-USER1_OBJ = user1.o user_vga.o stdio.o unistd.o
+USER_OBJ = crt0.o unistd.o stdio.o wait.o user_vga.o
+
+USER_SH_OBJ = $(USER_OBJ) sh.o
+USER1_OBJ = $(USER_OBJ) user1.o
 
 NEWLIB = /opt/local/x86_64-elf/lib/libc.a
 KERNEL_LIB = $(NEWLIB)
