@@ -102,12 +102,12 @@ void process_child_finished(process_t *this, process_t *child) {
     S(status)->is_finished = true;
 }
 
-void process_add_pages(process_t *process, uint64_t num) {
+void process_add_pages(process_t *this, uint64_t num) {
     uintptr_t added_pages = (uintptr_t)kalloc_aligned(num * 4096, 4096);
     page_flag_e uf = PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
-    pt_map(process->pages, USER_HEAP + 4096*process->num_pages, added_pages, 4096*num, uf, uf, uf, uf);
+    pt_map(this->pages, USER_HEAP + 4096*this->num_pages, added_pages, 4096*num, uf, uf, uf, uf);
 
-    process->num_pages += num;
+    this->num_pages += num;
 }
 
 void *process_page_table_alloc(uintptr_t stack_u, uintptr_t text) {
@@ -185,39 +185,39 @@ void process_set_file(process_t *this, int fileno, file_t *file) {
     this->files[fileno] = file;
 }
 
-void switch_to_process(process_t *process) {
-    SET_CR3(process->pages);
+void switch_to_process(process_t *this) {
+    SET_CR3(this->pages);
 
     // Kernel stack base address (for interrupts)
-    stackptr_t k = STACK(process->stack_k, K_STACK_SIZE);
+    stackptr_t k = STACK(this->stack_k, K_STACK_SIZE);
     k_tss64_sp = k;
 
     // Flag process as running
-    process->current = true;
+    this->current = true;
 
     // Set rsp kernel will use when switching back to user process
-    if (process->next_switch_is_kernel) {
-        k_replace_system_state = process->kstate;
-        process->next_switch_is_kernel = false;
+    if (this->next_switch_is_kernel) {
+        k_replace_system_state = this->kstate;
+        this->next_switch_is_kernel = false;
     } else {
-        k_replace_system_state = process->state;
+        k_replace_system_state = this->state;
     }
 }
 
-void switch_from_process(process_t *process) {
-    process->current = false;
+void switch_from_process(process_t *this) {
+    this->current = false;
 }
 
-void process_stash_state(process_t *process, system_state_t *state) {
-    if (!process->current) {
+void process_stash_state(process_t *this, system_state_t *state) {
+    if (!this->current) {
         PANIC("return_from_process on noncurrent process");
     }
 
     if (IS_USER_STATE(state)) {
-        process->state = state;
+        this->state = state;
     } else {
-        process->next_switch_is_kernel = true;
-        process->kstate = state;
+        this->next_switch_is_kernel = true;
+        this->kstate = state;
     }
 }
 
