@@ -159,7 +159,6 @@ void dump_process(process_t *p) {
  * Copy argv and its contents to stack at s
  * Returns new pointer to argv
  *
- * This will only work for backwards-growing stacks
  */
 stackptr_t push_argv(void *vstart, void *pstart, stackptr_t s, int argc, char **argv) {
 
@@ -186,7 +185,6 @@ void process_set_file(process_t *this, int fileno, file_t *file) {
     this->files[fileno] = file;
 }
 
-/* Perform context switch and enter user mode to run given process */
 void switch_to_process(process_t *process) {
     SET_CR3(process->pages);
 
@@ -204,17 +202,12 @@ void switch_to_process(process_t *process) {
     } else {
         k_replace_system_state = process->state;
     }
-
-    // dump_process(process);
 }
 
 void switch_from_process(process_t *process) {
     process->current = false;
 }
 
-/*
- * All interrupt events should stash state using this function
- */
 void process_stash_state(process_t *process, system_state_t *state) {
     if (!process->current) {
         PANIC("return_from_process on noncurrent process");
