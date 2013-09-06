@@ -22,3 +22,7 @@ ssize_t read(int filedes, void *buf, size_t nbyte) {
 ssize_t write(int fildes, const void *buf, size_t nbyte) {
     return sys_write(filedes, buf, nbyte);
 }
+
+void *sbrk(ptrdiff_t incr) {
+    return (void*)sys_sbrk(incr);
+}

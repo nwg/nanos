@@ -8,7 +8,7 @@
 typedef enum {
 	SYSCALL_TEST,
     SYSCALL_EXIT,
-    SYSCALL_ADD_PAGES,
+    SYSCALL_SBRK,
     SYSCALL_SLEEP,
     SYSCALL_READ,
     SYSCALL_WRITE,
@@ -91,7 +91,7 @@ static inline uint64_t _syscall3(uint64_t code, uint64_t arg1, uint64_t arg2, ui
 #define sys_test() syscall0(SYSCALL_TEST)
 #define sys_yield() syscall0(SYSCALL_YIELD)
 #define sys_exit() syscall0(SYSCALL_EXIT)
-#define sys_add_pages(count) syscall1(SYSCALL_ADD_PAGES, count)
+#define sys_sbrk(incr) syscall1(SYSCALL_SBRK, incr)
 #define sys_sleep(useconds) syscall1(SYSCALL_SLEEP, useconds)
 #define sys_read(filedes, buf, nbyte) syscall3(SYSCALL_READ, filedes, buf, nbyte)
 #define sys_write(filedes, buf, nbyte) syscall3(SYSCALL_WRITE, fildes, buf, nbyte)

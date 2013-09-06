@@ -9,6 +9,7 @@
 #include <string.h>
 #include "user_vga.h"
 #include "syscall.h"
+#include "ptr.h"
 
 #define S(node) (node ? (process_status_t*)node->data : NULL)
 
@@ -35,6 +36,8 @@ process_t *process_alloc(void *text, int argc, char **argv) {
     process->current = false;
     process->next_switch_is_kernel = false;
     process->num_waitable = 0;
+
+    process->brk = USER_HEAP;
 
     process->files = kalloc(sizeof(file_t) * PROCESS_MAX_FILES);
     process->files[0] = g_termbuf->file;
@@ -105,12 +108,37 @@ void process_child_finished(process_t *this, process_t *child, int exit_status) 
     S(status)->is_finished = true;
 }
 
+void *process_heap_end(process_t *this) {
+    return (void*)(USER_HEAP + 4096*this->num_pages);
+}
+
 void process_add_pages(process_t *this, uint64_t num) {
+    if (num == 0) return;
+
     uintptr_t added_pages = (uintptr_t)kalloc_aligned(num * 4096, 4096);
     page_flag_e uf = PAGE_PRESENT | PAGE_WRITEABLE | PAGE_USER;
     pt_map(this->pages, USER_HEAP + 4096*this->num_pages, added_pages, 4096*num, uf, uf, uf, uf);
 
     this->num_pages += num;
+}
+
+void *process_sbrk(process_t *this, int incr) {
+    if (incr == 0) return (void*)this->brk;
+
+    uintptr_t oldbrk = this->brk;
+    uintptr_t newbrk = this->brk + incr;
+
+    ptrdiff_t diff = align(newbrk, 4096) - align(oldbrk, 4096);
+
+    if (diff > 0) {
+        process_add_pages(this, diff / 4096);
+        kprintf("Added %d pages\n", diff / 4096);
+    }
+
+    this->brk = newbrk;
+    kprintf("Break from %x to %x\n", oldbrk, newbrk);
+
+    return (void*)oldbrk;
 }
 
 void *process_page_table_alloc(uintptr_t stack_u, uintptr_t text) {

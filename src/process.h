@@ -55,6 +55,7 @@ typedef struct process_s {
   node_t *child_statuses;
   struct process_s *parent;
   uint64_t num_pages;
+  uintptr_t brk;
   uint64_t num_waitable;
   void *pt;
   pid_t pid;
@@ -72,6 +73,7 @@ process_t *process_alloc(void *text, int argc, char **argv);
 void switch_to_process(process_t *process);
 void process_stash_state(process_t *process, system_state_t *state);
 void process_add_pages(process_t *process, uint64_t num);
+void *process_sbrk(process_t *this, int incr);
 
 void dump_process(process_t *p);
 void process_description(char *buf, int n, process_t *p);

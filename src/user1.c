@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "user.h"
+#include <stdlib.h>
 
 int atoi(const char *a);
 
@@ -23,8 +24,9 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	sys_add_pages(1);
+	void *blah = malloc(8);
 	*(uint64_t*)USER_HEAP = 50;
+	free(blah);
 
 	for (int i = 0; i < 80; i++) {
 

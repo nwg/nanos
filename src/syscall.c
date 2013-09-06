@@ -33,8 +33,8 @@ void handle_syscall(system_state_t *state) {
 			break;
 		}
 
-		case SYSCALL_ADD_PAGES:
-			process_add_pages(process, SYS_P1(state->registers));
+		case SYSCALL_SBRK:
+			SYS_RET(state->registers) = (uint64_t)process_sbrk(process, SYS_P1(state->registers));
 			break;
 
 		case SYSCALL_SLEEP:
