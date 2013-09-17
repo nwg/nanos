@@ -1,6 +1,6 @@
 
 %define IMAGE_DEST 0x10000
-%define IMAGE_SIZE 0x30000
+%define IMAGE_SIZE 0x20000
 %define ENTRY_POINT IMAGE_DEST
 %define INIT_PAGES_ADDR 0x8000
 %define INIT_STACK 0x8000
@@ -22,35 +22,16 @@
 
 [BITS 16]
 [ORG 0x7C00]
+  mov eax, 1
+  mov ebx, IMAGE_DEST
+  mov ecx, (IMAGE_SIZE / 512) ; Num sectors
 
-  mov ax, (IMAGE_DEST >> 4)
-  mov bx, 0
-  mov ch, 0 ; start track
-  mov dh, 0 ; start head
-
+  xchg bx, bx
 read:
-  mov es, ax
-
-  ; read #sectors
-  mov al, 63
-
-  ; start sector
-  mov cl, 2
-
-  call ReadDisk
-
-  add dh, 1 ; next cylinder
-
-  cmp dh, 4
-  jl next_read
-  mov dh, 0
-  add ch, 1
-
-next_read:
-  mov ax, es
-  add ax, (512*63) >> 4
-  cmp ax, (IMAGE_DEST + IMAGE_SIZE) >> 4
-  jl read
+  call readsector
+  dec ecx
+  cmp ecx, 0
+  jnz read
 
   mov ax, 0
   mov es, ax
@@ -95,28 +76,42 @@ gdt:
   GDT 0, 0xfffff, 10010010b, 1100b
 end_gdt:
 
-; al: sector count
-; ch: cylinder 9:2
-; cl: cylinder 1:0 and sector 5:0 (1-indexed)
-; dh: head (0-indexed)
-; es:bx: dest buffer
-ReadDisk:
+; eax: sector number
+; ebx: memory dest
+; http://en.wikipedia.org/wiki/INT_13H#INT_13h_AH.3D42h:_Extended_Read_Sectors_From_Drive
+readsector:
+  push eax
+  push ebx
+  push ecx
 
-  ; This is a disk read
-  mov ah, 0x02
-
-  ; This is a hard disk (0x80), and it's the first one (0x00)
+  push 0
+  push 0
+  push eax
+  mov ecx, ebx
+  shr ecx, 4
+  and cx, 0xF000
+  push cx
+  push bx
+  push 1
+  push 16
+  mov si, sp
+  mov ah, 0x42
   mov dl, 0x80
+  int 0x13
+  add sp, 16
 
-  ; Disk interrupt
-  int 13h
+  pop ecx
+  pop ebx
+  pop eax
+  inc eax
+  add ebx, 512
   ret
 
 [BITS 32]
 
 protmode:
-
   mov ecx, 0
+
 fill:
 
   ; Top level structures point at each other and single dirent
