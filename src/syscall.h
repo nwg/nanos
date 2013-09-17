@@ -6,8 +6,9 @@
 #define SYSCALL_ID 0x30
 
 typedef enum {
-	SYSCALL_TEST,
-    SYSCALL_EXIT,
+    SYSCALL_EXIT = 0, // SYSCALL_EXIT must be 0 (crt0.asm)
+    SYSCALL_TEST,
+    SYSCALL_GET_TICKS,
     SYSCALL_SBRK,
     SYSCALL_SLEEP,
     SYSCALL_READ,
@@ -15,6 +16,7 @@ typedef enum {
     SYSCALL_YIELD,
     SYSCALL_SPAWN,
     SYSCALL_WAIT,
+    SYSCALL_GETPID,
 } syscall_code_e;
 
 static inline uint64_t _syscall0(uint64_t code) {
@@ -84,11 +86,13 @@ static inline uint64_t _syscall3(uint64_t code, uint64_t arg1, uint64_t arg2, ui
 }
 
 #define syscall0 _syscall0
-#define syscall1(code, arg1) _syscall1(code, (uint64_t)arg1)
-#define syscall2(code, arg1, arg2) _syscall2(code, (uint64_t)arg1, (uint64_t)arg2)
-#define syscall3(code, arg1, arg2, arg3) _syscall3(code, (uint64_t)arg1, (uint64_t)arg2, (uint64_t)arg3)
+#define syscall1(code, arg1) _syscall1((uint64_t)code, (uint64_t)arg1)
+#define syscall2(code, arg1, arg2) _syscall2((uint64_t)code, (uint64_t)arg1, (uint64_t)arg2)
+#define syscall3(code, arg1, arg2, arg3) _syscall3((uint64_t)code, (uint64_t)arg1, (uint64_t)arg2, (uint64_t)arg3)
 
 #define sys_test() syscall0(SYSCALL_TEST)
+#define sys_getpid() syscall0(SYSCALL_GETPID)
+#define sys_get_ticks() syscall0(SYSCALL_GET_TICKS)
 #define sys_yield() syscall0(SYSCALL_YIELD)
 #define sys_exit() syscall0(SYSCALL_EXIT)
 #define sys_sbrk(incr) syscall1(SYSCALL_SBRK, incr)

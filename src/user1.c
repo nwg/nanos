@@ -6,37 +6,55 @@
 #include <stdbool.h>
 #include "user.h"
 #include <stdlib.h>
+#include "nanos_user.h"
+#include <sys/wait.h>
 
 int atoi(const char *a);
 
+static char* colors[] = {
+	"grey",
+	"blue",
+	"green",
+	"cyan",
+	"red",
+	"purple",
+	"yellow",
+	"white"
+};
+
+#include "asm.h"
 int main(int argc, char **argv) {
-
-	if (argc != 3) {
-		printf("Usage: %s [color_decimal] [row]\n", argv[0]);
+	if (argc != 2) {
+		printf("Usage: %s [num_racers]\n", argv[0]);
+		BOCHS_BRK();
 		return 1;
 	}
 
-	int color = atoi(argv[1]) << 8;
-	int row = atoi(argv[2]);
+	int nracers = atoi(argv[1]);
 
-	if (row < 0 || row > 25) {
-		printf("Bad row, 0 <= row <= 25\n");
+	if (nracers < 0 || nracers > 8) {
+		printf("%s: 0 <= num_racers <= 8\n", argv[0]);
 		return 1;
 	}
 
-	void *blah = malloc(8);
-	*(uint64_t*)USER_HEAP = 50;
-	free(blah);
 
-	for (int i = 0; i < 80; i++) {
+	pid_t pids[nracers];
+	for (int i = 0; i < nracers; i++) {
+		char color[3];
+		char line[3];
+		snprintf(color, sizeof(color), "%d", 8+i);
+		snprintf(line, sizeof(color), "%d", 10+i);
+		char *argv[] = { "racer", color, line };
+		int argc = sizeof(argv) / sizeof(char*);
+		pids[i] = spawn(LINE_TEXT, argc, argv);
+	}
 
-		if (i == 20 && row == 12) {
-			print(row, i, color, "*");
-			return 0;
+	pid_t winner = wait(NULL);
+	for (int i = 0; i < nracers; i++) {
+		if (winner == pids[i]) {
+			char *color_name = colors[i];
+			printf("%s wins!\n", color_name);
 		}
-
-		print(row, i, color, "\07");
-		usleep(100000);
 	}
 }
 

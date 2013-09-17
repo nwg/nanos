@@ -4,6 +4,7 @@
 #include "schedule.h"
 #include "asm.h"
 #include "term.h"
+#include "timer.h"
 
 void handle_syscall(system_state_t *state) {
 
@@ -15,6 +16,14 @@ void handle_syscall(system_state_t *state) {
 
 		case SYSCALL_TEST:
 			kprintf("Syscall 0 Received!!\n");
+			break;
+
+		case SYSCALL_GET_TICKS:
+			SYS_RET(state->registers) = g_timer_ticks;
+			break;
+
+		case SYSCALL_GETPID:
+			SYS_RET(state->registers) = process->pid;
 			break;
 
 		case SYSCALL_YIELD:

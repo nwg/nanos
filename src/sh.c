@@ -8,6 +8,7 @@
 #include "sizes.h"
 #include <sys/wait.h>
 #include <stdlib.h>
+#include "nanos_user.h"
 
 #define MAX_ARGS 16
 static char *DELIM = " \t";
@@ -15,18 +16,20 @@ static char *DELIM = " \t";
 typedef int (*cmdfunc)(int argc, char **argv);
 
 typedef struct {
-	char *name;
+	const char *name;
+	const char *help;
 	cmdfunc f;
 } cmd_t;
 
-int spawn(void *text, int argc, char **argv);
 char * strsep (char ** sp, const char * delim);
 cmd_t *find_command(char *name);
 int run(void *text, int argc, char **argv);
-int run_test(int argc, char **argv);
+int run_race(int argc, char **argv);
+int run_help(int argc, char **argv);
 
 cmd_t commands[] = {
-	{ "test", run_test },
+	{ "race", "a test program", run_race },
+	{ "help", "list commands", run_help },
 };
 
 int num_commands = sizeof(commands) / sizeof(cmd_t);
@@ -42,7 +45,6 @@ cmd_t *find_command(char *name) {
 
 	return NULL;
 }
-
 int run(void *text, int argc, char **argv) {
 		spawn(text, argc, argv);
 
@@ -53,12 +55,23 @@ int run(void *text, int argc, char **argv) {
 		return 0;
 }
 
-int run_test(int argc, char **argv) {
-	return run((void*)TEST_PROG_PMA + 1*USER_TEXT_SIZE, argc, argv);
+int run_race(int argc, char **argv) {
+	return run(RACE_TEXT, argc, argv);
 }
 
-int spawn(void *text, int argc, char **argv) {
-	return sys_spawn(text, argc, argv);
+int quick_help() {
+	printf("\n");
+	printf("Commands\n");
+	printf("--------\n");
+	for (int i = 0; i < num_commands; i++) {
+		cmd_t *cmd = &commands[i];
+		printf("%s: %s\n", cmd->name, cmd->help);
+	}
+	return 0;
+}
+
+int run_help(int argc, char **argv) {
+	return quick_help();
 }
 
 int main(int argc, char **argv) {
@@ -77,9 +90,13 @@ int main(int argc, char **argv) {
 
 		char *s = buf;
 		char *tok = strtok(s, DELIM);
+		if (!tok || tok[0] == '\0')
+			continue;
+
 		cmd_t *cmd = find_command(tok);
 		if (!cmd) {
 			printf("Command %s not found.\n", tok);
+			quick_help();
 			continue;
 		}
 

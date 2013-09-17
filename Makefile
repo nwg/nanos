@@ -4,10 +4,11 @@ KERNEL_C = kmem.o ll.o process.o schedule.o pages.o kernel.o \
 		   intel_8254_nanos.o term.o ring.o unistd.o intel_8259.o intel_8259_nanos.o \
 		   vga.o file.o inbuf.o termbuf.o
 
-USER_OBJ = crt0.o unistd.o stdio.o wait.o user_vga.o
+USER_OBJ = crt0.o unistd.o stdio.o wait.o user_vga.o nanos_user.o
 
 USER_SH_OBJ = $(USER_OBJ) sh.o
 USER1_OBJ = $(USER_OBJ) user1.o
+USER2_OBJ = $(USER_OBJ) user2.o
 
 NEWLIB = /opt/local/x86_64-elf/lib/libc.a
 KERNEL_LIB = $(NEWLIB)
@@ -18,7 +19,7 @@ KERNEL_HEADERS = $(wildcard src/*.h)
 KERNEL_ASM = kernel_init.o
 KERNEL_OBJ = $(KERNEL_ASM) $(KERNEL_C)
 OBJ = $(KERNEL_OBJ)
-FLAT_BINS = boot.bin kernel.bin sh.bin user1.bin
+FLAT_BINS = boot.bin kernel.bin sh.bin user1.bin user2.bin
 CC = /opt/local/bin/x86_64-elf-gcc
 CFLAGS = -fno-builtin -Wall -Werror -std=c99 -g
 LDFLAGS = 
@@ -65,6 +66,13 @@ user1.elf: $(USER1_OBJ) user.lnk
 	$(LD) -T user.lnk --oformat elf64-x86-64 -o $@ $(LDFLAGS) $(USER1_OBJ) $(USER_LIB)
 
 user1.bin: user1.elf
+	$(OBJCOPY) -O binary --set-section-flags .bss=alloc,load,contents $< $@
+	$(PAD) $(USER_TEXT_SIZE) $@
+	
+user2.elf: $(USER2_OBJ) user.lnk
+	$(LD) -T user.lnk --oformat elf64-x86-64 -o $@ $(LDFLAGS) $(USER2_OBJ) $(USER_LIB)
+
+user2.bin: user2.elf
 	$(OBJCOPY) -O binary --set-section-flags .bss=alloc,load,contents $< $@
 	$(PAD) $(USER_TEXT_SIZE) $@
 

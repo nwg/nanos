@@ -26,3 +26,7 @@ ssize_t write(int fildes, const void *buf, size_t nbyte) {
 void *sbrk(ptrdiff_t incr) {
     return (void*)sys_sbrk(incr);
 }
+
+pid_t getpid() {
+    return sys_getpid();
+}
