@@ -1,13 +1,26 @@
 Overview
 ========
 
-This is a toy x86 OS. It consists of a boot loader, a 64-bit long-mode kernel,
-and two statically located user programs. The kernel runs the two programs
-simultaneously, switching between them using the PIT. A software interrupt is
-provided for user programs at 30h, which currently just prints a simple message to
-the screen.
+This is an x86 operating system written from scratch in C and assembler.  It
+consists of a boot loader, a 64-bit long-mode kernel, and a round-robin
+scheduler. The userspace programs are loaded directly from disk as there is no
+filesystem. The kernel includes a vga 80x25 terminal. User progs take
+argc/argv. There is a basic userspace shell. Newlib is used as a C library for
+userspace.
 
-![Sample screenshot](https://github.com/nwg/simpleos/raw/master/img/sample1.png)
+Syscall interface includes:
+
+- sbrk
+- exit
+- sleep
+- read (stdin only)
+- write (stdout only)
+- spawn (run static user prog from startup image)
+- wait
+- getpid
+
+![Sample screenshot 1](https://github.com/nwg/simpleos/raw/master/img/sample2.png)
+![Sample screenshot 2](https://github.com/nwg/simpleos/raw/master/img/sample3.png)
 
 Instructions (Mac OS X)
 ========================
@@ -66,4 +79,5 @@ sudo make install
 Once everything is set up, you should be able to issue a "make bochs-native" in
 the source directory and see the bochs debugger console. If you compiled gdb
 support above, you can issue "make bochs-gdb" and connect by running the newly
-installed x86_64-elf-gdb from the main os source checkout directory.
+installed x86_64-elf-gdb from the main os source checkout directory (using
+provided .gdbinit).
