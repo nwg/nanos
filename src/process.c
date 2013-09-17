@@ -132,11 +132,9 @@ void *process_sbrk(process_t *this, int incr) {
 
     if (diff > 0) {
         process_add_pages(this, diff / 4096);
-        kprintf("Added %d pages\n", diff / 4096);
     }
 
     this->brk = newbrk;
-    kprintf("Break from %x to %x\n", oldbrk, newbrk);
 
     return (void*)oldbrk;
 }

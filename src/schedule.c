@@ -88,7 +88,6 @@ void remove_process_node(node_t *node) {
 
     char buf[256];
     process_description(buf, 256, P(current));
-    kprintf("Removing process %s\n", buf);
 
     if (node == current) {
         current = ll_next_rr(processes, node);
