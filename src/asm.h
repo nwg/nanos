@@ -11,6 +11,9 @@
 void outb(uint16_t port, uint8_t b);
 uint8_t inb(uint16_t port);
 
+void outl(uint16_t port, uint32_t l);
+uint32_t inl(uint16_t port);
+
 #define BOCHS_BRK() __asm__("xchg %bx, %bx\n\t")
 
 // sti lags one instruction, so there is no interrupt race

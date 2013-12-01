@@ -1,8 +1,6 @@
 #include "endian.h"
 #include <stdbool.h>
 
-#define LITTLE_ENDIAN (((union { unsigned x; unsigned char c; }){1}).c)
-
 void swap(void *tgt, size_t count) {
     uint8_t *bytes = (uint8_t*)tgt;
     for (int i = 0; i < count / 2; i++) {
@@ -12,14 +10,36 @@ void swap(void *tgt, size_t count) {
     }
 }
 
+void inplace_swap64(uint64_t *i) {
+    swap(i, sizeof(uint64_t));
+}
+
+void inplace_swap32(uint32_t *i) {
+    swap(i, sizeof(uint32_t));
+}
+
+void inplace_swap16(uint16_t *i) {
+    swap(i, sizeof(uint16_t));
+}
+
 uint64_t swap64(uint64_t i) {
     swap(&i, sizeof(uint64_t));
     return i;
 }
 
-uint64_t big64(uint64_t i) {
-    if (LITTLE_ENDIAN) {
-        return swap64(i);
+uint32_t swap32(uint32_t i) {
+    swap(&i, sizeof(uint32_t));
+    return i;
+}
+
+uint16_t swap16(uint16_t i) {
+    swap(&i, sizeof(uint16_t));
+    return i;
+}
+
+uint32_t tofromlittle32(uint32_t i) {
+    if (BIG_ENDIAN) {
+        return swap32(i);
     }
     return i;
 }

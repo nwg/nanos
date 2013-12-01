@@ -10,6 +10,7 @@
 #include "term.h"
 #include "intel_8259_nanos.h"
 #include "binary.h"
+#include "pci_nanos.h"
 
 termbuf_t *g_termbuf = NULL;
 
@@ -53,10 +54,11 @@ void spawn_test_programs() {
 void kernel_init() {
 	init_kernel_pages();
     g_termbuf = termbuf_alloc();
+    term_init();
+    pci_init();
     intel_8259_nanos_init();
     intel_8042_nanos_init();
     intel_8254_nanos_init();
-	term_init();
 	schedule_init();
 	spawn_test_programs();
 	schedule();
