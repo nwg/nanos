@@ -26,7 +26,6 @@
   mov ebx, IMAGE_DEST
   mov ecx, (IMAGE_SIZE / 512) ; Num sectors
 
-  xchg bx, bx
 read:
   call readsector
   dec ecx
