@@ -25,6 +25,31 @@ uint32_t inl(uint16_t port) {
     return result;
 }
 
+void outw(uint16_t port, uint16_t l) {
+    __asm__ __volatile__ (
+        "movw %0, %%dx\n\t"
+        "movw %1, %%ax\n\t"
+        "outw %%ax, %%dx\n\t"
+        :
+        : "m" (port), "m" (l)
+        : "dx", "ax"
+    );
+}
+
+uint16_t inw(uint16_t port) {
+    int result;
+    __asm__ __volatile__ (
+        "movw %0, %%dx\n\t"
+        "inw %%dx, %%ax\n\t"
+        "movw %%ax, %1\n\t"
+        :
+        : "m" (port), "m" (result)
+        : "dx", "ax"
+    );
+
+    return result;
+}
+
 void outb(uint16_t port, uint8_t b) {
     __asm__ __volatile__ (
         "movw %0, %%dx\n\t"
