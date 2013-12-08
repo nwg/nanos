@@ -11,7 +11,33 @@
 
 #define PCI_VENDOR_INVALID 0xFFFF
 
+typedef enum {
+    PCI_HEADER_TYPE_DEVICE = 0x00,
+    PCI_HEADER_TYPE_BRIDGE_PCI = 0x01,
+    PCI_HEADER_TYPE_BRIDGE_CARDBUS = 0x02,
+} pci_header_type_e;
+
+#define PCI_HEADER_TYPE_DEVICE 0x00
+#define PCI_HEADER_TYPE_BRIDGE_PCI 0x01
+#define PCI_HEADER_TYPE_BRIDGE_CARDBUS 0x02
+
+#define PCI_HEADER_BAR0 0x10
+#define PCI_HEADER_BAR1 0x14
+#define PCI_HEADER_BAR2 0x18
+#define PCI_HEADER_BAR3 0x1C
+#define PCI_HEADER_BAR4 0x20
+#define PCI_HEADER_BAR5 0x24
+
 #define PCI_HEADER_IS_MULTIFUNCTION_BIT ((uint8_t)0x80)
+
+void pci_config_write(uint8_t bus, uint8_t device, uint8_t function, uint8_t offset, uint32_t data);
+uint32_t pci_config_read(uint8_t bus, uint8_t device, uint8_t function, uint8_t offset);
+#define pci_config_read_bar0(bus, device, function) pci_config_read(bus, device, function, PCI_HEADER_BAR0)
+#define pci_config_read_bar1(bus, device, function) pci_config_read(bus, device, function, PCI_HEADER_BAR1)
+#define pci_config_read_bar2(bus, device, function) pci_config_read(bus, device, function, PCI_HEADER_BAR2)
+#define pci_config_read_bar3(bus, device, function) pci_config_read(bus, device, function, PCI_HEADER_BAR3)
+#define pci_config_read_bar4(bus, device, function) pci_config_read(bus, device, function, PCI_HEADER_BAR4)
+#define pci_config_read_bar5(bus, device, function) pci_config_read(bus, device, function, PCI_HEADER_BAR5)
 
 typedef struct {
     uint16_t vendor_id;
@@ -24,7 +50,7 @@ typedef struct {
     uint8_t class_code;
     uint8_t cache_line_size;
     uint8_t latency_timer;
-    uint8_t header_type;
+    pci_header_type_e header_type;
     uint8_t BIST;
 } pci_config_header_t;
 

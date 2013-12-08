@@ -2,6 +2,16 @@
 #include "asm.h"
 #include "endian.h"
 
+void pci_config_write_noswap(uint8_t bus, uint8_t device, uint8_t function, uint8_t offset, uint32_t data) {
+    uint32_t address = PCI_CONFIG_ADDRESS_REG(bus, device, function, offset);
+    outl(PCI_CONFIG_ADDRESS, tofromlittle32(address));
+    outl(PCI_CONFIG_DATA, data);
+}
+
+void pci_config_write(uint8_t bus, uint8_t device, uint8_t function, uint8_t offset, uint32_t data) {
+    pci_config_write_noswap(bus, device, function, offset, data);
+}
+
 uint32_t pci_config_read_noswap(uint8_t bus, uint8_t device, uint8_t function, uint8_t offset) {
     uint32_t address = PCI_CONFIG_ADDRESS_REG(bus, device, function, offset);
     outl(PCI_CONFIG_ADDRESS, tofromlittle32(address));

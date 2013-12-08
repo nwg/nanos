@@ -2,7 +2,6 @@
 #include "kmem.h"
 #include <string.h>
 #include "kernel.h"
-#include "pci.h"
 
 void add_devices();
 
@@ -32,4 +31,8 @@ void print_device(node_t *node) {
 
 void pci_print_bus() {
     ll_foreach(g_pci_devices, print_device);
+}
+
+pci_device_t *pci_find_device(pci_device_predicate p) {
+    return ll_find_data_p(g_pci_devices, (ll_data_predicate)p);
 }

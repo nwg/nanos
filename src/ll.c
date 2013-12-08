@@ -130,6 +130,14 @@ node_t *ll_find_p(node_t *ll, ll_predicate p) {
     return NULL;
 }
 
+void *ll_find_data_p(node_t *ll, ll_data_predicate p) {
+    for (node_t *node = ll->next; node != ll; node = node->next) {
+        if (p(node->data)) return node->data;
+    }
+
+    return NULL;
+}
+
 bool ll_all(node_t *ll, ll_predicate p) {
     for (node_t *node = ll->next; node != ll; node = node->next) {
         if (!p(node)) return false;
