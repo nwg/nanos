@@ -4,18 +4,18 @@
 
 void intel_8259_set_irq_mask(uint16_t mask) {
     outb(I8259_PORT_MASTER_DATA, mask & 0xFF);
-    outb(I8259_PORT_SLAVE_DATA, (mask >> 16) & 0xFF);
+    outb(I8259_PORT_SLAVE_DATA, (mask >> 8) & 0xFF);
 }
 
 uint16_t intel_8259_get_irq_mask() {
     uint8_t mask_lo = inb(I8259_PORT_MASTER_DATA);
     uint8_t mask_hi = inb(I8259_PORT_SLAVE_DATA);
-    return (mask_hi << 16) | mask_lo;
+    return (mask_hi << 8) | mask_lo;
 }
 
 void intel_8259_enable_irq(int irqno) {
     uint16_t mask = intel_8259_get_irq_mask();
-    mask &= ~(1 << irqno);
+    mask &= ~(uint16_t)(1 << irqno);
     intel_8259_set_irq_mask(mask);
 }
 
