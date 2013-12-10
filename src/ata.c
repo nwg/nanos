@@ -31,7 +31,7 @@
 // by any program using the MINDRVR code/functions.
 //********************************************************************
 
-#include "mindrvr.h"
+#include "ata.h"
 
 //**************************************************************
 //
@@ -51,20 +51,30 @@
 // can use it.
 //
 //**************************************************************
+#include <stdlib.h>
 
-unsigned char int_ata_status;    // ATA status read by interrupt handler
+uintmax_t MINDRVR_SYSTEM_TIMER_TICKS_PER_SECOND = 1000000;
 
-unsigned char int_bmide_status;  // BMIDE status read by interrupt handler
+void (*MINDRVR_OUTBYTE)(uintptr_t addr, uint8_t data) = NULL;
+void (*MINDRVR_OUTWORD)(uintptr_t addr, uint16_t data) = NULL;
+void (*MINDRVR_OUTDWORD)(uintptr_t addr, uint32_t data) = NULL;
+uint8_t (*MINDRVR_INBYTE)(uintptr_t addr) = NULL;
+uint16_t (*MINDRVR_INWORD)(uintptr_t addr) = NULL;
+uint32_t (*MINDRVR_INDWORD)(uintptr_t addr) = NULL;
 
-unsigned char int_use_intr_flag = INT_DEFAULT_INTERRUPT_MODE;
+uint8_t int_ata_status;    // ATA status read by interrupt handler
+
+uint8_t int_bmide_status;  // BMIDE status read by interrupt handler
+
+uint8_t int_use_intr_flag = INT_DEFAULT_INTERRUPT_MODE;
 
 struct REG_CMD_INFO reg_cmd_info;
 
 int reg_config_info[2];
 
-unsigned char * pio_bmide_base_addr;
+uintptr_t pio_bmide_base_addr;
 
-unsigned char * pio_reg_addrs[9] =
+uintptr_t pio_reg_addrs[9] =
 {
    PIO_BASE_ADDR1 + 0,  // [0] CB_DATA
    PIO_BASE_ADDR1 + 1,  // [1] CB_FR & CB_ER
@@ -77,7 +87,20 @@ unsigned char * pio_reg_addrs[9] =
    PIO_BASE_ADDR2 + 0   // [8] CB_DC & CB_ASTAT
 } ;
 
-unsigned char pio_xfer_width = PIO_DEFAULT_XFER_WIDTH;
+uint8_t pio_xfer_width = PIO_DEFAULT_XFER_WIDTH;
+
+void MINDRVR_init(uintptr_t command_base, uintptr_t control_base, uintptr_t bmi_base) {
+   for (int i = 0; i < 8; i++) {
+      pio_reg_addrs[i] = command_base + i;
+   }
+
+   pio_reg_addrs[8] = control_base;
+
+   pio_bmide_base_addr = bmi_base;
+
+   reg_config();
+   dma_pci_config();
+}
 
 //**************************************************************
 //
@@ -87,48 +110,106 @@ unsigned char pio_xfer_width = PIO_DEFAULT_XFER_WIDTH;
 
 static void sub_setup_command( void );
 static void sub_trace_command( void );
-static int sub_select( unsigned char dev );
-static void sub_wait_poll( unsigned char we, unsigned char pe );
+static int sub_select( uint8_t dev );
+static void sub_wait_poll( uint8_t we, uint8_t pe );
 
-static unsigned char pio_inbyte( unsigned char addr );
-static void pio_outbyte( int addr, unsigned char data );
-static unsigned int pio_inword( unsigned char addr );
-static void pio_outword( int addr, unsigned int data );
-static unsigned long pio_indword( unsigned char addr );
-static void pio_outdword( int addr, unsigned long data );
-static void pio_drq_block_in( unsigned char addrDataReg,
-                              unsigned char * bufAddr,
-                              long wordCnt );
-static void pio_drq_block_out( unsigned char addrDataReg,
-                               unsigned char * bufAddr,
-                               long wordCnt );
-static void pio_rep_inbyte( unsigned char addrDataReg,
-                            unsigned char * bufAddr,
-                            long byteCnt );
-static void pio_rep_outbyte( unsigned char addrDataReg,
-                             unsigned char * bufAddr,
-                             long byteCnt );
-static void pio_rep_inword( unsigned char addrDataReg,
-                            unsigned char * bufAddr,
-                            long wordCnt );
-static void pio_rep_outword( unsigned char addrDataReg,
-                             unsigned char * bufAddr,
-                             long wordCnt );
-static void pio_rep_indword( unsigned char addrDataReg,
-                             unsigned char * bufAddr,
-                             long dwordCnt );
-static void pio_rep_outdword( unsigned char addrDataReg,
-                              unsigned char * bufAddr,
-                              long dwordCnt );
+static uint8_t pio_inbyte( uint8_t addr );
+static void pio_outbyte( int addr, uint8_t data );
+static uint32_t pio_inword( uint8_t addr );
+static void pio_outword( int addr, uint32_t data );
+static uint32_t pio_indword( uint8_t addr );
+static void pio_outdword( int addr, uint32_t data );
+static void pio_drq_block_in( uint8_t addrDataReg,
+                              uint8_t * bufAddr,
+                              int wordCnt );
+static void pio_drq_block_out( uint8_t addrDataReg,
+                               uint8_t * bufAddr,
+                               int wordCnt );
+static void pio_rep_inbyte( uint8_t addrDataReg,
+                            uint8_t * bufAddr,
+                            int byteCnt );
+static void pio_rep_outbyte( uint8_t addrDataReg,
+                             uint8_t * bufAddr,
+                             int byteCnt );
+static void pio_rep_inword( uint8_t addrDataReg,
+                            uint8_t * bufAddr,
+                            int wordCnt );
+static void pio_rep_outword( uint8_t addrDataReg,
+                             uint8_t * bufAddr,
+                             int wordCnt );
+static void pio_rep_indword( uint8_t addrDataReg,
+                             uint8_t * bufAddr,
+                             int dwordCnt );
+static void pio_rep_outdword( uint8_t addrDataReg,
+                              uint8_t * bufAddr,
+                              int dwordCnt );
 
-static unsigned char pio_readBusMstrCmd( void );
-static unsigned char pio_readBusMstrStatus( void );
-static void pio_writeBusMstrCmd( unsigned char x );
-static void pio_writeBusMstrStatus( unsigned char x );
+static uint8_t pio_readBusMstrCmd( void );
+static uint8_t pio_readBusMstrStatus( void );
+static void pio_writeBusMstrCmd( uint8_t x );
+static void pio_writeBusMstrStatus( uint8_t x );
 
-static long tmr_cmd_start_time;     // command start time
+static int tmr_cmd_start_time;     // command start time
 static void tmr_set_timeout( void );
 static int tmr_chk_timeout( void );
+
+
+static void outbyte(uintptr_t addr, uint8_t data) {
+   if (MINDRVR_OUTBYTE) {
+      MINDRVR_OUTBYTE(addr, data);
+   } else {
+      *(uint8_t*)addr = data;
+   }
+}
+
+static void outword(uintptr_t addr, uint16_t data) {
+   if (MINDRVR_OUTWORD) {
+      MINDRVR_OUTWORD(addr, data);
+   } else {
+      *(uint16_t*)addr = data;
+   }
+}
+
+static void outdword(uintptr_t addr, uint32_t data) {
+   if (MINDRVR_OUTDWORD) {
+      MINDRVR_OUTDWORD(addr, data);
+   } else {
+      *(uint32_t*)addr = data;
+   }
+}
+
+static uint8_t inbyte(uintptr_t addr) {
+   if (MINDRVR_INBYTE) {
+      return MINDRVR_INBYTE(addr);
+   } else {
+      return *(uint8_t*)addr;
+   }
+}
+
+static uint16_t inword(uintptr_t addr) {
+   if (MINDRVR_INWORD) {
+      return MINDRVR_INWORD(addr);
+   } else {
+      return *(uint16_t*)addr;
+   }
+}
+
+static uint16_t indword(uintptr_t addr) {
+   if (MINDRVR_INDWORD) {
+      return MINDRVR_INDWORD(addr);
+   } else {
+      return *(uint32_t*)addr;
+   }
+}
+
+static int interrupt_or_timeout(){
+   int status = MINDRVR_SYSTEM_WAIT_INTR_OR_TIMEOUT();
+   int_ata_status = pio_inbyte( CB_STAT );
+   int_bmide_status = pio_readBusMstrStatus();
+
+   return status;
+}
+
 
 // This macro provides a small delay that is used in several
 // places in the ATA command protocols:
@@ -152,16 +233,16 @@ int reg_config( void )
 
 {
    int numDev = 0;
-   unsigned char sc;
-   unsigned char sn;
-   unsigned char cl;
-   unsigned char ch;
-   unsigned char st;
-   unsigned char dc;
+   uint8_t sc;
+   uint8_t sn;
+   uint8_t cl;
+   uint8_t ch;
+   uint8_t st;
+   uint8_t dc;
 
    // setup register values
 
-   dc = (unsigned char) ( int_use_intr_flag ? 0 : CB_DC_NIEN );
+   dc = (uint8_t) ( int_use_intr_flag ? 0 : CB_DC_NIEN );
 
    // reset Bus Master Error bit
 
@@ -312,17 +393,17 @@ int reg_config( void )
 //
 //*************************************************************
 
-int reg_reset( unsigned char devRtrn )
+int reg_reset( uint8_t devRtrn )
 
 {
-   unsigned char sc;
-   unsigned char sn;
-   unsigned char status;
-   unsigned char dc;
+   uint8_t sc;
+   uint8_t sn;
+   uint8_t status;
+   uint8_t dc;
 
    // setup register values
 
-   dc = (unsigned char) ( int_use_intr_flag ? 0 : CB_DC_NIEN );
+   dc = (uint8_t) ( int_use_intr_flag ? 0 : CB_DC_NIEN );
 
    // reset Bus Master Error bit
 
@@ -335,7 +416,7 @@ int reg_reset( unsigned char devRtrn )
    // Set and then reset the soft reset bit in the Device Control
    // register.  This causes device 0 be selected.
 
-   pio_outbyte( CB_DC, (unsigned char) ( dc | CB_DC_SRST ) );
+   pio_outbyte( CB_DC, (uint8_t) ( dc | CB_DC_SRST ) );
    DELAY400NS;
    pio_outbyte( CB_DC, dc );
    DELAY400NS;
@@ -396,7 +477,7 @@ int reg_reset( unsigned char devRtrn )
    // requested. This will cause
    // the correct data to be returned in reg_cmd_info.
 
-   pio_outbyte( CB_DH, (unsigned char) ( devRtrn ? CB_DH_DEV1 : CB_DH_DEV0 ) );
+   pio_outbyte( CB_DH, (uint8_t) ( devRtrn ? CB_DH_DEV1 : CB_DH_DEV0 ) );
    DELAY400NS;
 
    // If possible, select a device that exists,
@@ -444,14 +525,14 @@ int reg_reset( unsigned char devRtrn )
 //
 //*************************************************************
 
-static int exec_non_data_cmd( unsigned char dev );
+static int exec_non_data_cmd( uint8_t dev );
 
-static int exec_non_data_cmd( unsigned char dev )
+static int exec_non_data_cmd( uint8_t dev )
 
 {
-   unsigned char secCnt;
-   unsigned char secNum;
-   unsigned char status;
+   uint8_t secCnt;
+   uint8_t secNum;
+   uint8_t status;
    int polled = 0;
 
    // reset Bus Master Error bit
@@ -600,9 +681,9 @@ static int exec_non_data_cmd( unsigned char dev )
 //
 //*************************************************************
 
-int reg_non_data_lba28( unsigned char dev, unsigned char cmd,
-                        unsigned int fr, unsigned int sc,
-                        unsigned long lba )
+int reg_non_data_lba28( uint8_t dev, uint8_t cmd,
+                        uint32_t fr, uint32_t sc,
+                        uint32_t lba )
 
 {
 
@@ -611,8 +692,8 @@ int reg_non_data_lba28( unsigned char dev, unsigned char cmd,
    reg_cmd_info.cmd = cmd;
    reg_cmd_info.fr = fr;
    reg_cmd_info.sc = sc;
-   reg_cmd_info.dh = (unsigned char) ( CB_DH_LBA | ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
-   reg_cmd_info.dc = (unsigned char) ( int_use_intr_flag ? 0 : CB_DC_NIEN );
+   reg_cmd_info.dh = (uint8_t) ( CB_DH_LBA | ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
+   reg_cmd_info.dc = (uint8_t) ( int_use_intr_flag ? 0 : CB_DC_NIEN );
    reg_cmd_info.ns  = sc;
    reg_cmd_info.lbaSize = LBA28;
    reg_cmd_info.lbaHigh = 0L;
@@ -630,9 +711,9 @@ int reg_non_data_lba28( unsigned char dev, unsigned char cmd,
 //
 //*************************************************************
 
-int reg_non_data_lba48( unsigned char dev, unsigned char cmd,
-                        unsigned int fr, unsigned int sc,
-                        unsigned long lbahi, unsigned long lbalo )
+int reg_non_data_lba48( uint8_t dev, uint8_t cmd,
+                        uint32_t fr, uint32_t sc,
+                        uint32_t lbahi, uint32_t lbalo )
 
 {
 
@@ -641,8 +722,8 @@ int reg_non_data_lba48( unsigned char dev, unsigned char cmd,
    reg_cmd_info.cmd = cmd;
    reg_cmd_info.fr = fr;
    reg_cmd_info.sc = sc;
-   reg_cmd_info.dh = (unsigned char) ( CB_DH_LBA | ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
-   reg_cmd_info.dc = (unsigned char) ( int_use_intr_flag ? 0 : CB_DC_NIEN );
+   reg_cmd_info.dh = (uint8_t) ( CB_DH_LBA | ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
+   reg_cmd_info.dc = (uint8_t) ( int_use_intr_flag ? 0 : CB_DC_NIEN );
    reg_cmd_info.ns  = sc;
    reg_cmd_info.lbaSize = LBA48;
    reg_cmd_info.lbaHigh = lbahi;
@@ -662,18 +743,18 @@ int reg_non_data_lba48( unsigned char dev, unsigned char cmd,
 //
 //*************************************************************
 
-static int exec_pio_data_in_cmd( unsigned char dev,
-                            unsigned char * bufAddr,
-                            long numSect, int multiCnt );
+static int exec_pio_data_in_cmd( uint8_t dev,
+                            uint8_t * bufAddr,
+                            int numSect, int multiCnt );
 
 
-static int exec_pio_data_in_cmd( unsigned char dev,
-                            unsigned char * bufAddr,
-                            long numSect, int multiCnt )
+static int exec_pio_data_in_cmd( uint8_t dev,
+                            uint8_t * bufAddr,
+                            int numSect, int multiCnt )
 
 {
-   unsigned char status;
-   long wordCnt;
+   uint8_t status;
+   int wordCnt;
 
    // reset Bus Master Error bit
 
@@ -848,19 +929,19 @@ static int exec_pio_data_in_cmd( unsigned char dev,
 //
 //*************************************************************
 
-int reg_pio_data_in_lba28( unsigned char dev, unsigned char cmd,
-                           unsigned int fr, unsigned int sc,
-                           unsigned long lba,
-                           unsigned char * bufAddr,
-                           long numSect, int multiCnt )
+int reg_pio_data_in_lba28( uint8_t dev, uint8_t cmd,
+                           uint32_t fr, uint32_t sc,
+                           uint32_t lba,
+                           uint8_t * bufAddr,
+                           int numSect, int multiCnt )
 
 {
 
    reg_cmd_info.cmd = cmd;
    reg_cmd_info.fr = fr;
    reg_cmd_info.sc = sc;
-   reg_cmd_info.dh = (unsigned char) ( CB_DH_LBA | ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
-   reg_cmd_info.dc = (unsigned char) ( int_use_intr_flag ? 0 : CB_DC_NIEN );
+   reg_cmd_info.dh = (uint8_t) ( CB_DH_LBA | ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
+   reg_cmd_info.dc = (uint8_t) ( int_use_intr_flag ? 0 : CB_DC_NIEN );
    reg_cmd_info.lbaSize = LBA28;
    reg_cmd_info.lbaHigh = 0L;
    reg_cmd_info.lbaLow = lba;
@@ -897,19 +978,19 @@ int reg_pio_data_in_lba28( unsigned char dev, unsigned char cmd,
 //
 //*************************************************************
 
-int reg_pio_data_in_lba48( unsigned char dev, unsigned char cmd,
-                           unsigned int fr, unsigned int sc,
-                           unsigned long lbahi, unsigned long lbalo,
-                           unsigned char * bufAddr,
-                           long numSect, int multiCnt )
+int reg_pio_data_in_lba48( uint8_t dev, uint8_t cmd,
+                           uint32_t fr, uint32_t sc,
+                           uint32_t lbahi, uint32_t lbalo,
+                           uint8_t * bufAddr,
+                           int numSect, int multiCnt )
 
 {
 
    reg_cmd_info.cmd = cmd;
    reg_cmd_info.fr = fr;
    reg_cmd_info.sc = sc;
-   reg_cmd_info.dh = (unsigned char) ( CB_DH_LBA | ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
-   reg_cmd_info.dc = (unsigned char) ( int_use_intr_flag ? 0 : CB_DC_NIEN );
+   reg_cmd_info.dh = (uint8_t) ( CB_DH_LBA | ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
+   reg_cmd_info.dc = (uint8_t) ( int_use_intr_flag ? 0 : CB_DC_NIEN );
    reg_cmd_info.lbaSize = LBA48;
    reg_cmd_info.lbaHigh = lbahi;
    reg_cmd_info.lbaLow = lbalo;
@@ -942,18 +1023,18 @@ int reg_pio_data_in_lba48( unsigned char dev, unsigned char cmd,
 //
 //*************************************************************
 
-static int exec_pio_data_out_cmd( unsigned char dev,
-                             unsigned char * bufAddr,
-                             long numSect, int multiCnt );
+static int exec_pio_data_out_cmd( uint8_t dev,
+                             uint8_t * bufAddr,
+                             int numSect, int multiCnt );
 
-static int exec_pio_data_out_cmd( unsigned char dev,
-                             unsigned char * bufAddr,
-                             long numSect, int multiCnt )
+static int exec_pio_data_out_cmd( uint8_t dev,
+                             uint8_t * bufAddr,
+                             int numSect, int multiCnt )
 
 {
-   unsigned char status;
+   uint8_t status;
    int loopFlag = 1;
-   long wordCnt;
+   int wordCnt;
 
    // reset Bus Master Error bit
 
@@ -1145,19 +1226,19 @@ static int exec_pio_data_out_cmd( unsigned char dev,
 //
 //*************************************************************
 
-int reg_pio_data_out_lba28( unsigned char dev, unsigned char cmd,
-                            unsigned int fr, unsigned int sc,
-                            unsigned long lba,
-                            unsigned char * bufAddr,
-                            long numSect, int multiCnt )
+int reg_pio_data_out_lba28( uint8_t dev, uint8_t cmd,
+                            uint32_t fr, uint32_t sc,
+                            uint32_t lba,
+                            uint8_t * bufAddr,
+                            int numSect, int multiCnt )
 
 {
 
    reg_cmd_info.cmd = cmd;
    reg_cmd_info.fr = fr;
    reg_cmd_info.sc = sc;
-   reg_cmd_info.dh = (unsigned char) ( CB_DH_LBA | ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
-   reg_cmd_info.dc = (unsigned char) ( int_use_intr_flag ? 0 : CB_DC_NIEN );
+   reg_cmd_info.dh = (uint8_t) ( CB_DH_LBA | ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
+   reg_cmd_info.dc = (uint8_t) ( int_use_intr_flag ? 0 : CB_DC_NIEN );
    reg_cmd_info.lbaSize = LBA28;
    reg_cmd_info.lbaHigh = 0;
    reg_cmd_info.lbaLow = lba;
@@ -1190,19 +1271,19 @@ int reg_pio_data_out_lba28( unsigned char dev, unsigned char cmd,
 //
 //*************************************************************
 
-int reg_pio_data_out_lba48( unsigned char dev, unsigned char cmd,
-                            unsigned int fr, unsigned int sc,
-                            unsigned long lbahi, unsigned long lbalo,
-                            unsigned char * bufAddr,
-                            long numSect, int multiCnt )
+int reg_pio_data_out_lba48( uint8_t dev, uint8_t cmd,
+                            uint32_t fr, uint32_t sc,
+                            uint32_t lbahi, uint32_t lbalo,
+                            uint8_t * bufAddr,
+                            int numSect, int multiCnt )
 
 {
 
    reg_cmd_info.cmd = cmd;
    reg_cmd_info.fr = fr;
    reg_cmd_info.sc = sc;
-   reg_cmd_info.dh = (unsigned char) ( CB_DH_LBA | ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
-   reg_cmd_info.dc = (unsigned char) ( int_use_intr_flag ? 0 : CB_DC_NIEN );
+   reg_cmd_info.dh = (uint8_t) ( CB_DH_LBA | ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
+   reg_cmd_info.dc = (uint8_t) ( int_use_intr_flag ? 0 : CB_DC_NIEN );
    reg_cmd_info.lbaSize = LBA48;
    reg_cmd_info.lbaHigh = lbahi;
    reg_cmd_info.lbaLow = lbalo;
@@ -1236,17 +1317,17 @@ int reg_pio_data_out_lba48( unsigned char dev, unsigned char cmd,
 //
 //*************************************************************
 
-int reg_packet( unsigned char dev,
-                unsigned int cpbc,
-                unsigned char * cdbBufAddr,
+int reg_packet( uint8_t dev,
+                uint32_t cpbc,
+                uint8_t * cdbBufAddr,
                 int dir,
-                long dpbc,
-                unsigned char * dataBufAddr )
+                int dpbc,
+                uint8_t * dataBufAddr )
 
 {
-   unsigned char status;
-   unsigned int byteCnt;
-   long wordCnt;
+   uint8_t status;
+   uint32_t byteCnt;
+   int wordCnt;
 
    // reset Bus Master Error bit
 
@@ -1264,10 +1345,10 @@ int reg_packet( unsigned char dev,
    reg_cmd_info.fr = 0;
    reg_cmd_info.sc = 0;
    reg_cmd_info.sn = 0;
-   reg_cmd_info.cl = (unsigned char) ( dpbc & 0x00ff );
-   reg_cmd_info.ch = ( unsigned char) ( ( dpbc & 0xff00 ) >> 8 );
-   reg_cmd_info.dh = (unsigned char) ( dev ? CB_DH_DEV1 : CB_DH_DEV0 );
-   reg_cmd_info.dc = (unsigned char) ( int_use_intr_flag ? 0 : CB_DC_NIEN );
+   reg_cmd_info.cl = (uint8_t) ( dpbc & 0x00ff );
+   reg_cmd_info.ch = ( uint8_t) ( ( dpbc & 0xff00 ) >> 8 );
+   reg_cmd_info.dh = (uint8_t) ( dev ? CB_DH_DEV1 : CB_DH_DEV0 );
+   reg_cmd_info.dc = (uint8_t) ( int_use_intr_flag ? 0 : CB_DC_NIEN );
 
    // Set command time out.
 
@@ -1526,11 +1607,11 @@ int reg_packet( unsigned char dev,
 //
 //***********************************************************
 
-static unsigned long * dma_pci_prd_ptr;   // current PRD buffer address
+static uint32_t * dma_pci_prd_ptr;   // current PRD buffer address
 static int dma_pci_num_prd;               // current number of PRD entries
 
-static unsigned char statReg;             // save BM status reg bits
-static unsigned char rwControl;           // read/write control bit setting
+static uint8_t statReg;             // save BM status reg bits
+static uint8_t rwControl;           // read/write control bit setting
 
 #define MAX_TRANSFER_SIZE  262144L        // max transfer size (in bytes,
                                           // should be multiple of 65536)
@@ -1540,8 +1621,8 @@ static unsigned char rwControl;           // read/write control bit setting
 
 #define PRD_BUF_SIZE (48+(2*MAX_PRD*8))         // size of PRD list buffer
 
-static unsigned char prdBuf[PRD_BUF_SIZE];      // PRD buffer
-static unsigned long * prdBufPtr;               // first PRD addr
+static uint8_t prdBuf[PRD_BUF_SIZE];      // PRD buffer
+static uint32_t * prdBufPtr;               // first PRD addr
 
 //***********************************************************
 //
@@ -1565,14 +1646,14 @@ static unsigned long * prdBufPtr;               // first PRD addr
 int dma_pci_config( void )
 
 {
-   unsigned long lw;
+   uintptr_t lw;
 
    // Set up the PRD entry list buffer address - the PRD entry list
    // may not span a 64KB boundary in physical memory. Space is
    // allocated (above) for this buffer such that it will be
    // aligned on a seqment boundary
    // and such that the PRD list will not span a 64KB boundary...
-   lw = (unsigned long) prdBuf;
+   lw = (uintptr_t) prdBuf;
    // ...move up to an 8 byte boundary.
    lw = lw + 15;
    lw = lw & 0xfffffff8L;
@@ -1584,12 +1665,12 @@ int dma_pci_config( void )
       )
       lw = ( lw + ( MAX_PRD * 8L ) ) & 0xffff0000L;
    // ... return the address of the first PRD
-   dma_pci_prd_ptr = prdBufPtr = (unsigned long *) lw;
+   dma_pci_prd_ptr = prdBufPtr = (uint32_t *) lw;
    // ... return the current number of PRD entries
    dma_pci_num_prd = 0;
 
    // read the BM status reg and save the upper 3 bits.
-   statReg = (unsigned char) ( pio_readBusMstrStatus() & 0x60 );
+   statReg = (uint8_t) ( pio_readBusMstrStatus() & 0x60 );
 
    return 0;
 }
@@ -1608,20 +1689,20 @@ int dma_pci_config( void )
 //
 //***********************************************************
 
-static int set_up_xfer( int dir, long bc, unsigned char * bufAddr );
+static int set_up_xfer( int dir, int bc, uint8_t * bufAddr );
 
-static int set_up_xfer( int dir, long bc, unsigned char * bufAddr )
+static int set_up_xfer( int dir, int bc, uint8_t * bufAddr )
 
 {
    int numPrd;                      // number of PRD required
    int maxPrd;                      // max number of PRD allowed
-   unsigned long temp;
-   unsigned long phyAddr;           // physical memory address
-   unsigned long * prdPtr;      // pointer to PRD entry list
+   uint32_t temp;
+   uint32_t phyAddr;           // physical memory address
+   uint32_t * prdPtr;      // pointer to PRD entry list
 
    // disable/stop the dma channel, clear interrupt and error bits
    pio_writeBusMstrCmd( BM_CR_MASK_STOP );
-   pio_writeBusMstrStatus( (unsigned char) ( statReg | BM_SR_MASK_INT | BM_SR_MASK_ERR ) );
+   pio_writeBusMstrStatus( (uint8_t) ( statReg | BM_SR_MASK_INT | BM_SR_MASK_ERR ) );
 
    // setup to build the PRD list...
    // ...max PRDs allowed
@@ -1630,7 +1711,7 @@ static int set_up_xfer( int dir, long bc, unsigned char * bufAddr )
    prdPtr = prdBufPtr;
    dma_pci_prd_ptr = prdPtr;
    // ... convert I/O buffer address to an physical memory address
-   phyAddr = (unsigned long) bufAddr;
+   phyAddr = (uintptr_t) bufAddr;
 
    // build the PRD list...
    // ...PRD entry format:
@@ -1673,8 +1754,8 @@ static int set_up_xfer( int dir, long bc, unsigned char * bufAddr )
    // write into BMIDE PRD address registers.
 
    dma_pci_num_prd = numPrd;
-   * (unsigned long *) (pio_bmide_base_addr + BM_PRD_ADDR_LOW )
-      = (unsigned long) prdBufPtr;
+
+   outdword(pio_bmide_base_addr + BM_PRD_ADDR_LOW, (uint32_t)(uintptr_t)prdBufPtr);
 
    // set the read/write control:
    // PCI reads for ATA Write DMA commands,
@@ -1694,16 +1775,16 @@ static int set_up_xfer( int dir, long bc, unsigned char * bufAddr )
 //
 //***********************************************************
 
-static int exec_pci_ata_cmd( unsigned char dev,
-                             unsigned char * bufAddr,
-                             long numSect );
+static int exec_pci_ata_cmd( uint8_t dev,
+                             uint8_t * bufAddr,
+                             int numSect );
 
-static int exec_pci_ata_cmd( unsigned char dev,
-                             unsigned char * bufAddr,
-                             long numSect )
+static int exec_pci_ata_cmd( uint8_t dev,
+                             uint8_t * bufAddr,
+                             int numSect )
 
 {
-   unsigned char status;
+   uint8_t status;
 
    // Quit now if the command is incorrect.
 
@@ -1758,7 +1839,7 @@ static int exec_pci_ata_cmd( unsigned char dev,
 
    pio_readBusMstrCmd();
    pio_readBusMstrStatus();
-   pio_writeBusMstrCmd( (unsigned char) ( rwControl | BM_CR_MASK_START ) );
+   pio_writeBusMstrCmd( (uint8_t) ( rwControl | BM_CR_MASK_START ) );
    pio_readBusMstrCmd();
    pio_readBusMstrStatus();
 
@@ -1767,7 +1848,7 @@ static int exec_pci_ata_cmd( unsigned char dev,
    // checking for command completion...
    // wait for the PCI BM Interrupt=1 (see ATAIOINT.C)...
 
-   if ( SYSTEM_WAIT_INTR_OR_TIMEOUT() )       // time out ?
+   if ( interrupt_or_timeout() )       // time out ?
    {
       reg_cmd_info.to = 1;
       reg_cmd_info.ec = 73;
@@ -1842,11 +1923,11 @@ static int exec_pci_ata_cmd( unsigned char dev,
 //
 //***********************************************************
 
-int dma_pci_lba28( unsigned char dev, unsigned char cmd,
-                   unsigned int fr, unsigned int sc,
-                   unsigned long lba,
-                   unsigned char * bufAddr,
-                   long numSect )
+int dma_pci_lba28( uint8_t dev, uint8_t cmd,
+                   uint32_t fr, uint32_t sc,
+                   uint32_t lba,
+                   uint8_t * bufAddr,
+                   int numSect )
 
 {
 
@@ -1855,7 +1936,7 @@ int dma_pci_lba28( unsigned char dev, unsigned char cmd,
    reg_cmd_info.cmd = cmd;
    reg_cmd_info.fr = fr;
    reg_cmd_info.sc = sc;
-   reg_cmd_info.dh = (unsigned char) ( CB_DH_LBA | ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
+   reg_cmd_info.dh = (uint8_t) ( CB_DH_LBA | ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
    reg_cmd_info.dc = 0x00;      // nIEN=0 required on PCI !
    reg_cmd_info.ns  = numSect;
    reg_cmd_info.lbaSize = LBA28;
@@ -1873,11 +1954,11 @@ int dma_pci_lba28( unsigned char dev, unsigned char cmd,
 //
 //***********************************************************
 
-int dma_pci_lba48( unsigned char dev, unsigned char cmd,
-                   unsigned int fr, unsigned int sc,
-                   unsigned long lbahi, unsigned long lbalo,
-                   unsigned char * bufAddr,
-                   long numSect )
+int dma_pci_lba48( uint8_t dev, uint8_t cmd,
+                   uint32_t fr, uint32_t sc,
+                   uint32_t lbahi, uint32_t lbalo,
+                   uint8_t * bufAddr,
+                   int numSect )
 
 {
 
@@ -1886,7 +1967,7 @@ int dma_pci_lba48( unsigned char dev, unsigned char cmd,
    reg_cmd_info.cmd = cmd;
    reg_cmd_info.fr = fr;
    reg_cmd_info.sc = sc;
-   reg_cmd_info.dh = (unsigned char) ( CB_DH_LBA | ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
+   reg_cmd_info.dh = (uint8_t) ( CB_DH_LBA | ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
    reg_cmd_info.dc = 0x00;      // nIEN=0 required on PCI !
    reg_cmd_info.ns  = numSect;
    reg_cmd_info.lbaSize = LBA48;
@@ -1908,15 +1989,15 @@ int dma_pci_lba48( unsigned char dev, unsigned char cmd,
 //
 //***********************************************************
 
-int dma_pci_packet( unsigned char dev,
-                    unsigned int cpbc,
-                    unsigned char * cdbBufAddr,
+int dma_pci_packet( uint8_t dev,
+                    uint32_t cpbc,
+                    uint8_t * cdbBufAddr,
                     int dir,
-                    long dpbc,
-                    unsigned char * dataBufAddr )
+                    int dpbc,
+                    uint8_t * dataBufAddr )
 
 {
-   unsigned char status;
+   uint8_t status;
 
    // Make sure the command packet size is either 12 or 16
    // and save the command packet size and data.
@@ -1932,7 +2013,7 @@ int dma_pci_packet( unsigned char dev,
    reg_cmd_info.sn = 0;
    reg_cmd_info.cl = 0;         // no Byte Count Limit in DMA !
    reg_cmd_info.ch = 0;         // no Byte Count Limit in DMA !
-   reg_cmd_info.dh = (unsigned char) ( dev ? CB_DH_DEV1 : CB_DH_DEV0 );
+   reg_cmd_info.dh = (uint8_t) ( dev ? CB_DH_DEV1 : CB_DH_DEV0 );
    reg_cmd_info.dc = 0x00;      // nIEN=0 required on PCI !
 
    // the data packet byte count must be even
@@ -2046,7 +2127,7 @@ int dma_pci_packet( unsigned char dev,
 
       pio_readBusMstrCmd();
       pio_readBusMstrStatus();
-      pio_writeBusMstrCmd( (unsigned char) ( rwControl | BM_CR_MASK_START ) );
+      pio_writeBusMstrCmd( (uint8_t) ( rwControl | BM_CR_MASK_START ) );
       pio_readBusMstrCmd();
       pio_readBusMstrStatus();
 
@@ -2055,7 +2136,7 @@ int dma_pci_packet( unsigned char dev,
       // checking for command completion...
       // wait for the PCI BM Active=0 and Interrupt=1 or PCI BM Error=1...
 
-      if ( SYSTEM_WAIT_INTR_OR_TIMEOUT() )    // time out ?
+      if ( interrupt_or_timeout() )    // time out ?
       {
          reg_cmd_info.to = 1;
          reg_cmd_info.ec = 73;
@@ -2143,38 +2224,38 @@ static void sub_setup_command( void )
    if ( reg_cmd_info.lbaSize == LBA28 )
    {
       // in ATA LBA28 mode
-      pio_outbyte( CB_FR, (unsigned char) reg_cmd_info.fr );
-      pio_outbyte( CB_SC, (unsigned char) reg_cmd_info.sc );
-      pio_outbyte( CB_SN, (unsigned char) reg_cmd_info.lbaLow );
-      pio_outbyte( CB_CL, (unsigned char) ( reg_cmd_info.lbaLow >> 8 ) );
-      pio_outbyte( CB_CH, (unsigned char) ( reg_cmd_info.lbaLow >> 16 ) );
-      pio_outbyte( CB_DH, (unsigned char) ( ( reg_cmd_info.dh & 0xf0 )
+      pio_outbyte( CB_FR, (uint8_t) reg_cmd_info.fr );
+      pio_outbyte( CB_SC, (uint8_t) reg_cmd_info.sc );
+      pio_outbyte( CB_SN, (uint8_t) reg_cmd_info.lbaLow );
+      pio_outbyte( CB_CL, (uint8_t) ( reg_cmd_info.lbaLow >> 8 ) );
+      pio_outbyte( CB_CH, (uint8_t) ( reg_cmd_info.lbaLow >> 16 ) );
+      pio_outbyte( CB_DH, (uint8_t) ( ( reg_cmd_info.dh & 0xf0 )
                                             | ( ( reg_cmd_info.lbaLow >> 24 ) & 0x0f ) ) );
    }
    else
    if ( reg_cmd_info.lbaSize == LBA48 )
    {
       // in ATA LBA48 mode
-      pio_outbyte( CB_FR, (unsigned char) ( reg_cmd_info.fr >> 8 ) );
-      pio_outbyte( CB_SC, (unsigned char) ( reg_cmd_info.sc >> 8 ) );
-      pio_outbyte( CB_SN, (unsigned char) ( reg_cmd_info.lbaLow >> 24 ) );
-      pio_outbyte( CB_CL, (unsigned char) reg_cmd_info.lbaHigh );
-      pio_outbyte( CB_CH, (unsigned char) ( reg_cmd_info.lbaHigh >> 8 ) );
-      pio_outbyte( CB_FR, (unsigned char) reg_cmd_info.fr );
-      pio_outbyte( CB_SC, (unsigned char) reg_cmd_info.sc );
-      pio_outbyte( CB_SN, (unsigned char) reg_cmd_info.lbaLow );
-      pio_outbyte( CB_CL, (unsigned char) ( reg_cmd_info.lbaLow >> 8 ) );
-      pio_outbyte( CB_CH, (unsigned char) ( reg_cmd_info.lbaLow >> 16 ) );
+      pio_outbyte( CB_FR, (uint8_t) ( reg_cmd_info.fr >> 8 ) );
+      pio_outbyte( CB_SC, (uint8_t) ( reg_cmd_info.sc >> 8 ) );
+      pio_outbyte( CB_SN, (uint8_t) ( reg_cmd_info.lbaLow >> 24 ) );
+      pio_outbyte( CB_CL, (uint8_t) reg_cmd_info.lbaHigh );
+      pio_outbyte( CB_CH, (uint8_t) ( reg_cmd_info.lbaHigh >> 8 ) );
+      pio_outbyte( CB_FR, (uint8_t) reg_cmd_info.fr );
+      pio_outbyte( CB_SC, (uint8_t) reg_cmd_info.sc );
+      pio_outbyte( CB_SN, (uint8_t) reg_cmd_info.lbaLow );
+      pio_outbyte( CB_CL, (uint8_t) ( reg_cmd_info.lbaLow >> 8 ) );
+      pio_outbyte( CB_CH, (uint8_t) ( reg_cmd_info.lbaLow >> 16 ) );
       pio_outbyte( CB_DH, reg_cmd_info.dh  );
    }
    else
    {
       // for ATAPI PACKET command
-      pio_outbyte( CB_FR, (unsigned char) reg_cmd_info.fr  );
-      pio_outbyte( CB_SC, (unsigned char) reg_cmd_info.sc  );
-      pio_outbyte( CB_SN, (unsigned char) reg_cmd_info.sn  );
-      pio_outbyte( CB_CL, (unsigned char) reg_cmd_info.cl  );
-      pio_outbyte( CB_CH, (unsigned char) reg_cmd_info.ch  );
+      pio_outbyte( CB_FR, (uint8_t) reg_cmd_info.fr  );
+      pio_outbyte( CB_SC, (uint8_t) reg_cmd_info.sc  );
+      pio_outbyte( CB_SN, (uint8_t) reg_cmd_info.sn  );
+      pio_outbyte( CB_CL, (uint8_t) reg_cmd_info.cl  );
+      pio_outbyte( CB_CH, (uint8_t) reg_cmd_info.ch  );
       pio_outbyte( CB_DH, reg_cmd_info.dh  );
    }
 }
@@ -2201,10 +2282,10 @@ static void sub_trace_command( void )
 #if 0    // read back other registers
 
    {
-      unsigned long lbaHigh;
-      unsigned long lbaLow;
-      unsigned char sc48[2];
-      unsigned char lba48[8];
+      uint32_t lbaHigh;
+      uint32_t lbaLow;
+      uint8_t sc48[2];
+      uint8_t lba48[8];
 
       lbaHigh = 0;
       lbaLow = 0;
@@ -2222,8 +2303,8 @@ static void sub_trace_command( void )
          lba48[5] = pio_inbyte( CB_CH );
          lba48[6] = 0;
          lba48[7] = 0;
-         lbaHigh = * (unsigned long *) ( lba48 + 4 );
-         lbaLow  = * (unsigned long *) ( lba48 + 0 );
+         lbaHigh = * (uint32_t *) ( lba48 + 4 );
+         lbaLow  = * (uint32_t *) ( lba48 + 0 );
       }
       else
       if ( reg_cmd_info.lbaSize == LBA28 )
@@ -2255,10 +2336,10 @@ static void sub_trace_command( void )
 //
 //**************************************************************
 
-static int sub_select( unsigned char dev )
+static int sub_select( uint8_t dev )
 
 {
-   unsigned char status;
+   uint8_t status;
 
    // PAY ATTENTION HERE
    // The caller may want to issue a command to a device that doesn't
@@ -2270,7 +2351,7 @@ static int sub_select( unsigned char dev )
    {
       // select the device and return
 
-      pio_outbyte( CB_DH, (unsigned char) ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
+      pio_outbyte( CB_DH, (uint8_t) ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
       DELAY400NS;
       return 0;
    }
@@ -2301,7 +2382,7 @@ static int sub_select( unsigned char dev )
    // Here we select the drive we really want to work with by
    // setting the DEV bit in the Drive/Head register.
 
-   pio_outbyte( CB_DH, (unsigned char) ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
+   pio_outbyte( CB_DH, (uint8_t) ( dev ? CB_DH_DEV1 : CB_DH_DEV0 ) );
    DELAY400NS;
 
    // Wait for the selected device to have BSY=0 and DRQ=0.
@@ -2339,16 +2420,16 @@ static int sub_select( unsigned char dev )
 //
 //*************************************************************
 
-static void sub_wait_poll( unsigned char we, unsigned char pe )
+static void sub_wait_poll( uint8_t we, uint8_t pe )
 
 {
-   unsigned char status;
+   uint8_t status;
 
    // Wait for interrupt -or- wait for not BUSY -or- wait for time out.
 
    if ( we && int_use_intr_flag )
    {
-      if ( SYSTEM_WAIT_INTR_OR_TIMEOUT() )    // time out ?
+      if ( interrupt_or_timeout() )    // time out ?
       {
          reg_cmd_info.to = 1;
          reg_cmd_info.ec = we;
@@ -2377,47 +2458,43 @@ static void sub_wait_poll( unsigned char we, unsigned char pe )
 //
 //***********************************************************
 
-static unsigned char pio_readBusMstrCmd( void )
+static uint8_t pio_readBusMstrCmd( void )
 
 {
-   unsigned char x;
-
    if ( ! pio_bmide_base_addr )
       return 0;
-   x = * (pio_bmide_base_addr + BM_COMMAND_REG );
-   return x;
+   return inbyte(pio_bmide_base_addr + BM_COMMAND_REG);
+   // x = * (pio_bmide_base_addr + BM_COMMAND_REG );
+   // return x;
 }
 
 
-static unsigned char pio_readBusMstrStatus( void )
+static uint8_t pio_readBusMstrStatus( void )
 
 {
-   unsigned char x;
-
    if ( ! pio_bmide_base_addr )
       return 0;
-   x = * ( pio_bmide_base_addr + BM_STATUS_REG );
-   return x;
+   return inbyte(pio_bmide_base_addr + BM_STATUS_REG);
 }
 
 
-static void pio_writeBusMstrCmd( unsigned char x )
+static void pio_writeBusMstrCmd( uint8_t x )
 
 {
 
    if ( ! pio_bmide_base_addr )
       return;
-   * ( pio_bmide_base_addr + BM_COMMAND_REG ) = x;
+   outbyte(pio_bmide_base_addr + BM_COMMAND_REG, x);
 }
 
 
-static void pio_writeBusMstrStatus( unsigned char x )
+static void pio_writeBusMstrStatus( uint8_t x )
 
 {
 
    if ( ! pio_bmide_base_addr )
       return;
-   * ( pio_bmide_base_addr + BM_STATUS_REG ) =  x;
+   outbyte(pio_bmide_base_addr + BM_STATUS_REG, x);
 }
 
 //*************************************************************
@@ -2431,68 +2508,65 @@ static void pio_writeBusMstrStatus( unsigned char x )
 //
 //*************************************************************
 
-static unsigned char pio_inbyte( unsigned char addr )
+static uint8_t pio_inbyte( uint8_t addr )
 
 {
 
    //!!! read an 8-bit ATA register
-
-   return * pio_reg_addrs[ addr ];
+   return inbyte(pio_reg_addrs[addr]);
 }
 
 //*************************************************************
 
-static void pio_outbyte( int addr, unsigned char data )
+static void pio_outbyte( int addr, uint8_t data )
 
 {
 
    //!!! write an 8-bit ATA register
 
-   * pio_reg_addrs[ addr ] = data;
+   outbyte(pio_reg_addrs[addr], data);
 }
 
 //*************************************************************
 
-static unsigned int pio_inword( unsigned char addr )
+static uint32_t pio_inword( uint8_t addr )
 
 {
 
    //!!! read an 8-bit ATA register (usually the ATA Data register)
 
-   return * ( (unsigned int *) pio_reg_addrs[ addr ] );
+   return inword(pio_reg_addrs[addr]);
 }
 
 //*************************************************************
 
-static void pio_outword( int addr, unsigned int data )
+static void pio_outword( int addr, uint32_t data )
 
 {
 
    //!!! Write an 8-bit ATA register (usually the ATA Data register)
 
-   * ( (unsigned int *) pio_reg_addrs[ addr ] ) = data;
+   outword(pio_reg_addrs[addr], data);
 }
 
 //*************************************************************
 
-static unsigned long pio_indword( unsigned char addr )
+static uint32_t pio_indword( uint8_t addr )
 
 {
 
    //!!! read an 8-bit ATA register (usually the ATA Data register)
 
-   return * ( (unsigned long *) pio_reg_addrs[ addr ] );
+   return indword(pio_reg_addrs[addr]);
 }
 
 //*************************************************************
 
-static void pio_outdword( int addr, unsigned long data )
+static void pio_outdword( int addr, uint32_t data )
 
 {
-
    //!!! Write an 8-bit ATA register (usually the ATA Data register)
-
-   * ( (unsigned long *) pio_reg_addrs[ addr ] ) = data;
+   outdword(pio_reg_addrs[addr], data);
 }
 
 //*************************************************************
@@ -2508,9 +2582,9 @@ static void pio_outdword( int addr, unsigned long data )
 // Data In transfers. It will handle 8-bit, 16-bit and 32-bit
 // I/O based data transfers.
 
-static void pio_drq_block_in( unsigned char addrDataReg,
-                       unsigned char * bufAddr,
-                       long wordCnt )
+static void pio_drq_block_in( uint8_t addrDataReg,
+                       uint8_t * bufAddr,
+                       int wordCnt )
 
 {
 
@@ -2523,7 +2597,7 @@ static void pio_drq_block_in( unsigned char addrDataReg,
 
    {
       int pxw;
-      long wc;
+      int wc;
 
       // adjust pio_xfer_width - don't use DWORD if wordCnt is odd.
 
@@ -2570,9 +2644,9 @@ static void pio_drq_block_in( unsigned char addrDataReg,
 // Data Out transfers. It will handle 8-bit, 16-bit and 32-bit
 // I/O based data transfers.
 
-static void pio_drq_block_out( unsigned char addrDataReg,
-                        unsigned char * bufAddr,
-                        long wordCnt )
+static void pio_drq_block_out( uint8_t addrDataReg,
+                        uint8_t * bufAddr,
+                        int wordCnt )
 
 {
 
@@ -2585,7 +2659,7 @@ static void pio_drq_block_out( unsigned char addrDataReg,
 
    {
       int pxw;
-      long wc;
+      int wc;
 
       // adjust pio_xfer_width - don't use DWORD if wordCnt is odd.
 
@@ -2646,9 +2720,9 @@ static void pio_drq_block_out( unsigned char addrDataReg,
 //
 //*************************************************************
 
-static void pio_rep_inbyte( unsigned char addrDataReg,
-                     unsigned char * bufAddr,
-                     long byteCnt )
+static void pio_rep_inbyte( uint8_t addrDataReg,
+                     uint8_t * bufAddr,
+                     int byteCnt )
 
 {
 
@@ -2669,9 +2743,9 @@ static void pio_rep_inbyte( unsigned char addrDataReg,
 
 //*************************************************************
 
-static void pio_rep_outbyte( unsigned char addrDataReg,
-                      unsigned char * bufAddr,
-                      long byteCnt )
+static void pio_rep_outbyte( uint8_t addrDataReg,
+                      uint8_t * bufAddr,
+                      int byteCnt )
 
 {
 
@@ -2692,9 +2766,9 @@ static void pio_rep_outbyte( unsigned char addrDataReg,
 
 //*************************************************************
 
-static void pio_rep_inword( unsigned char addrDataReg,
-                     unsigned char * bufAddr,
-                     long wordCnt )
+static void pio_rep_inword( uint8_t addrDataReg,
+                     uint8_t * bufAddr,
+                     int wordCnt )
 
 {
 
@@ -2706,7 +2780,7 @@ static void pio_rep_inword( unsigned char addrDataReg,
 
    while ( wordCnt > 0 )
    {
-      * (unsigned int *) bufAddr = pio_inword( addrDataReg );
+      * (uint32_t *) bufAddr = pio_inword( addrDataReg );
       bufAddr += 2;
       wordCnt -- ;
    }
@@ -2714,9 +2788,9 @@ static void pio_rep_inword( unsigned char addrDataReg,
 
 //*************************************************************
 
-static void pio_rep_outword( unsigned char addrDataReg,
-                      unsigned char * bufAddr,
-                      long wordCnt )
+static void pio_rep_outword( uint8_t addrDataReg,
+                      uint8_t * bufAddr,
+                      int wordCnt )
 
 {
 
@@ -2728,7 +2802,7 @@ static void pio_rep_outword( unsigned char addrDataReg,
 
    while ( wordCnt > 0 )
    {
-      pio_outword( addrDataReg, * (unsigned int *) bufAddr );
+      pio_outword( addrDataReg, * (uint32_t *) bufAddr );
       bufAddr += 2;
       wordCnt -- ;
    }
@@ -2736,9 +2810,9 @@ static void pio_rep_outword( unsigned char addrDataReg,
 
 //*************************************************************
 
-static void pio_rep_indword( unsigned char addrDataReg,
-                      unsigned char * bufAddr,
-                      long dwordCnt )
+static void pio_rep_indword( uint8_t addrDataReg,
+                      uint8_t * bufAddr,
+                      int dwordCnt )
 
 {
 
@@ -2750,7 +2824,7 @@ static void pio_rep_indword( unsigned char addrDataReg,
 
    while ( dwordCnt > 0 )
    {
-      * (unsigned long *) bufAddr = pio_indword( addrDataReg );
+      * (uint32_t *) bufAddr = pio_indword( addrDataReg );
       bufAddr += 4;
       dwordCnt -- ;
    }
@@ -2758,9 +2832,9 @@ static void pio_rep_indword( unsigned char addrDataReg,
 
 //*************************************************************
 
-static void pio_rep_outdword( unsigned char addrDataReg,
-                       unsigned char * bufAddr,
-                       long dwordCnt )
+static void pio_rep_outdword( uint8_t addrDataReg,
+                       uint8_t * bufAddr,
+                       int dwordCnt )
 
 {
 
@@ -2772,7 +2846,7 @@ static void pio_rep_outdword( unsigned char addrDataReg,
 
    while ( dwordCnt > 0 )
    {
-      pio_outdword( addrDataReg, * (unsigned long *) bufAddr );
+      pio_outdword( addrDataReg, * (uint32_t *) bufAddr );
       bufAddr += 4;
       dwordCnt -- ;
    }
@@ -2786,7 +2860,7 @@ static void pio_rep_outdword( unsigned char addrDataReg,
 //**************************************************************
 
 
-static long tmr_cmd_start_time;      // command start time - see the
+static int tmr_cmd_start_time;      // command start time - see the
                               // tmr_set_timeout() and
                               // tmr_chk_timeout() functions.
 
@@ -2801,7 +2875,7 @@ static void tmr_set_timeout( void )
 {
 
    // get the command start time
-   tmr_cmd_start_time = SYSTEM_READ_TIMER();
+   tmr_cmd_start_time = MINDRVR_SYSTEM_READ_TIMER();
 }
 
 //*************************************************************
@@ -2815,14 +2889,14 @@ static void tmr_set_timeout( void )
 static int tmr_chk_timeout( void )
 
 {
-   long curTime;
+   int curTime;
 
    // get current time
-   curTime = SYSTEM_READ_TIMER();
+   curTime = MINDRVR_SYSTEM_READ_TIMER();
 
    // timed out yet ?
    if ( curTime >= ( tmr_cmd_start_time
-                     + ( TMR_TIME_OUT * SYSTEM_TIMER_TICKS_PER_SECOND ) ) )
+                     + ( TMR_TIME_OUT * MINDRVR_SYSTEM_TIMER_TICKS_PER_SECOND ) ) )
       return 1;      // yes
 
    // no timeout yet
