@@ -44,7 +44,7 @@ all: bigboot
 # kernel_init.o must be the first object passed to the linker
 kernel.bin: $(KERNEL_ASM) $(KERNEL_C) kernel.elf custom.lnk
 	$(OBJCOPY) -O binary --set-section-flags .bss=alloc,load,contents kernel.elf kernel.bin
-	$(PAD) 65536 $@
+	$(PAD) 196608 $@
 
 kernel.elf: $(KERNEL_ASM) $(KERNEL_C) custom.lnk
 	$(LD) -o $@ -T custom.lnk --oformat elf64-x86-64 $(LDFLAGS) $(KERNEL_OBJ) $(KERNEL_LIB)
