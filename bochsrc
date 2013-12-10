@@ -2,7 +2,7 @@ megs: 32
 romimage: file=$BXSHARE/BIOS-bochs-latest
 vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
 vga: extension=vbe
-ata0-master: type=disk, path=bochs.img, cylinders=2, heads=4, spt=63
+ata0-master: type=disk, path=bochs.img, cylinders=10, heads=4, spt=63
 boot: c
 log: bochs.log
 mouse: enabled=0

@@ -78,7 +78,7 @@ user2.bin: user2.elf
 
 $(BOCHS_IMG): bigboot
 	cp $< $@
-	$(PAD) 258048 $@
+	$(PAD) 1290240 $@
 
 bochs-native: $(BOCHS_IMG) kernel.ldsym
 	$(BOCHS_NATIVE) -q
