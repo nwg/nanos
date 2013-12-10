@@ -11,11 +11,14 @@
 
 #define PCI_VENDOR_INVALID 0xFFFF
 
-typedef enum {
+enum {
     PCI_HEADER_TYPE_DEVICE = 0x00,
     PCI_HEADER_TYPE_BRIDGE_PCI = 0x01,
     PCI_HEADER_TYPE_BRIDGE_CARDBUS = 0x02,
-} pci_header_type_e;
+
+    PCI_HEADER_IS_MULTIFUNCTION_BIT = 0x80,
+};
+typedef uint8_t pci_header_type_e;
 
 #define PCI_HEADER_TYPE_DEVICE 0x00
 #define PCI_HEADER_TYPE_BRIDGE_PCI 0x01
@@ -28,7 +31,7 @@ typedef enum {
 #define PCI_HEADER_BAR4 0x20
 #define PCI_HEADER_BAR5 0x24
 
-#define PCI_HEADER_IS_MULTIFUNCTION_BIT ((uint8_t)0x80)
+// #define PCI_HEADER_IS_MULTIFUNCTION_BIT ((uint8_t)0x80)
 
 void pci_config_write(uint8_t bus, uint8_t device, uint8_t function, uint8_t offset, uint32_t data);
 uint32_t pci_config_read(uint8_t bus, uint8_t device, uint8_t function, uint8_t offset);
