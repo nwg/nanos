@@ -73,7 +73,7 @@ extern int MINDRVR_SYSTEM_WAIT_INTR_OR_TIMEOUT( void );
 // You must supply a function that returns a system timer value. This
 // should be a value that increments at some constant rate.
 
-extern int MINDRVR_SYSTEM_READ_TIMER( void );
+extern uintmax_t MINDRVR_SYSTEM_READ_TIMER( void );
 
 // This defines the number of system timer ticks per second.
 

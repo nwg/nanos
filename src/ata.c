@@ -149,7 +149,7 @@ static uint8_t pio_readBusMstrStatus( void );
 static void pio_writeBusMstrCmd( uint8_t x );
 static void pio_writeBusMstrStatus( uint8_t x );
 
-static int tmr_cmd_start_time;     // command start time
+static uintmax_t tmr_cmd_start_time;     // command start time
 static void tmr_set_timeout( void );
 static int tmr_chk_timeout( void );
 
@@ -2860,7 +2860,7 @@ static void pio_rep_outdword( uint8_t addrDataReg,
 //**************************************************************
 
 
-static int tmr_cmd_start_time;      // command start time - see the
+static uintmax_t tmr_cmd_start_time;      // command start time - see the
                               // tmr_set_timeout() and
                               // tmr_chk_timeout() functions.
 
@@ -2889,7 +2889,7 @@ static void tmr_set_timeout( void )
 static int tmr_chk_timeout( void )
 
 {
-   int curTime;
+   uintmax_t curTime;
 
    // get current time
    curTime = MINDRVR_SYSTEM_READ_TIMER();
