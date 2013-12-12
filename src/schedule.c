@@ -28,7 +28,7 @@ void schedule_init() {
     processes = ll_alloc();
 }
 
-static bool process_node_runnable(node_t *node) {
+static bool process_node_runnable(node_t *node, void *ctx) {
     process_t *process = P(node);
     return P(node)->runstate == PROCESS_RUNNABLE
         || process_runnable(process);
@@ -39,10 +39,10 @@ node_t *choose_next_process() {
         HALT();
     }
 
-    node_t *next = ll_next_rr_p(processes, current, process_node_runnable);
+    node_t *next = ll_next_rr_p(processes, current, process_node_runnable, NULL);
     while (next == NULL) {
         HALT();
-        next = ll_next_rr_p(processes, current, process_node_runnable);
+        next = ll_next_rr_p(processes, current, process_node_runnable, NULL);
     }
 
     return next;

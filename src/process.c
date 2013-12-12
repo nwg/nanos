@@ -19,7 +19,7 @@ void *process_page_table_alloc(uintptr_t stack_u, uintptr_t text);
 stackptr_t push_argv(void *vstart, void *pstart, stackptr_t s, int argc, char **argv);
 stackptr_t push_system_state(stackptr_t k, void *stack_u, int argc, char **argv);
 bool process_done_sleep(process_t *this);
-bool waitable_status(node_t *node);
+bool waitable_status(node_t *node, void *ctx);
 
 process_t *process_alloc(void *text, int argc, char **argv) {
     process_t *process = (process_t*)kalloc(sizeof(process_t));
@@ -273,7 +273,7 @@ bool process_runnable(process_t *this) {
             return file_can_write(this->runinfo.fileinfo.file);
 
         case PROCESS_WAIT_ANY:
-            return this->num_waitable == 0 || ll_any(this->child_statuses, waitable_status);
+            return this->num_waitable == 0 || ll_any(this->child_statuses, waitable_status, NULL);
 
         default: return false;
     }
@@ -315,7 +315,7 @@ ssize_t process_write_file(process_t *this, int fileno, const char *buf, size_t 
     return result;
 }
 
-bool waitable_status(node_t *node) {
+bool waitable_status(node_t *node, void *ctx) {
     return S(node)->is_finished && !S(node)->has_waiter;
 }
 
@@ -327,7 +327,7 @@ pid_t process_wait(process_t *this, int *stat_loc) {
 
     pid_t result = -1;
     node_t *found = NULL;
-    while (this->num_waitable > 0 && (found = ll_find_p(this->child_statuses, waitable_status)) == NULL ) {
+    while (this->num_waitable > 0 && (found = ll_find_p(this->child_statuses, waitable_status, NULL)) == NULL ) {
         YIELD();
     }
 

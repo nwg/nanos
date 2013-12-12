@@ -23,31 +23,31 @@ node_t *ll_next_rr(node_t *ll, node_t *node) {
     return _ll_next_rr(ll, node);
 }
 
-static inline node_t *_ll_find_rr_p(node_t *ll, node_t *start, ll_predicate p) {
-    if (p(start)) return start;
+static inline node_t *_ll_find_rr_p(node_t *ll, node_t *start, ll_predicate p, void *ctx) {
+    if (p(start, ctx)) return start;
 
     for (node_t *node = _ll_next_rr(ll, start); node != start; node = _ll_next_rr(ll, node)) {
-        if (p(node)) return node;
+        if (p(node, ctx)) return node;
     };
 
     return NULL;
 }
 
-node_t *ll_find_rr_p(node_t *ll, node_t *start, ll_predicate p) {
+node_t *ll_find_rr_p(node_t *ll, node_t *start, ll_predicate p, void *ctx) {
     if (start == NULL) start = ll->next;
-    return _ll_find_rr_p(ll, start, p);
+    return _ll_find_rr_p(ll, start, p, ctx);
 }
 
-static inline node_t *_ll_next_rr_p(node_t *ll, node_t *start, ll_predicate p) {
-    node_t *found = _ll_find_rr_p(ll, _ll_next_rr(ll, start), p);
+static inline node_t *_ll_next_rr_p(node_t *ll, node_t *start, ll_predicate p, void *ctx) {
+    node_t *found = _ll_find_rr_p(ll, _ll_next_rr(ll, start), p, ctx);
     if (found) return found;
-    if (p(start)) return start;
+    if (p(start, ctx)) return start;
     return NULL;
 }
 
-node_t *ll_next_rr_p(node_t *ll, node_t *start, ll_predicate p) {
+node_t *ll_next_rr_p(node_t *ll, node_t *start, ll_predicate p, void *ctx) {
     if (start == NULL) start = ll->next;
-    return _ll_next_rr_p(ll, start, p);
+    return _ll_next_rr_p(ll, start, p, ctx);
 }
 
 node_t *ll_first(node_t *ll) {
@@ -122,25 +122,25 @@ void ll_foreach(node_t *ll, ll_effect effect) {
     }
 }
 
-node_t *ll_find_p(node_t *ll, ll_predicate p) {
+node_t *ll_find_p(node_t *ll, ll_predicate p, void *ctx) {
     for (node_t *node = ll->next; node != ll; node = node->next) {
-        if (p(node)) return node;
+        if (p(node, ctx)) return node;
     }
 
     return NULL;
 }
 
-void *ll_find_data_p(node_t *ll, ll_data_predicate p) {
+void *ll_find_data_p(node_t *ll, ll_data_predicate p, void *ctx) {
     for (node_t *node = ll->next; node != ll; node = node->next) {
-        if (p(node->data)) return node->data;
+        if (p(node->data, ctx)) return node->data;
     }
 
     return NULL;
 }
 
-bool ll_all(node_t *ll, ll_predicate p) {
+bool ll_all(node_t *ll, ll_predicate p, void *ctx) {
     for (node_t *node = ll->next; node != ll; node = node->next) {
-        if (!p(node)) return false;
+        if (!p(node, ctx)) return false;
     }
 
     return true;
