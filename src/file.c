@@ -34,3 +34,27 @@ bool file_can_write(file_t *this) {
     if (!this->can_write_handler) return true;
     return this->can_write_handler(this->ctx);
 }
+
+
+void file_seek(file_t *this, off_t pos, int whence) {
+    switch(whence) {
+
+        case SEEK_SET:
+            this->pos = pos;
+            break;
+
+        case SEEK_CUR:
+            this->pos += pos;
+            break;
+
+        case SEEK_END: {
+            this->pos += file_size(this);
+            break;
+        }
+
+    }
+}
+
+off_t file_size(file_t *this) {
+    return this->size_handler(this->ctx);
+}
