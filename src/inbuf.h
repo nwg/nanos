@@ -23,7 +23,7 @@ typedef struct inbuf_s {
 void *inbuf_alloc(size_t nbytes);
 void inbuf_dealloc(inbuf_t *this);
 size_t inbuf_read(inbuf_t *this, char *str, size_t nbytes);
-bool inbuf_can_read(inbuf_t *this);
+bool inbuf_wake_read(inbuf_t *this);
 ssize_t inbuf_write(inbuf_t *this, const char *str, size_t nbytes);
 
 #endif

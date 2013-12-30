@@ -96,7 +96,7 @@ ssize_t inbuf_write(inbuf_t *this, const char *str, size_t nbytes) {
     return i;
 }
 
-bool inbuf_can_read(inbuf_t *this) {
+bool inbuf_wake_read(inbuf_t *this) {
     return this->last_newline > 0;
 }
 

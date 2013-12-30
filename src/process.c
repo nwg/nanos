@@ -267,10 +267,10 @@ bool process_runnable(process_t *this) {
             return g_timer_ticks >= this->runinfo.sleep_until_tick;
 
         case PROCESS_WAIT_READ:
-            return file_can_read(this->runinfo.fileinfo.file);
+            return file_wake_read(this->runinfo.fileinfo.file);
 
         case PROCESS_WAIT_WRITE:
-            return file_can_write(this->runinfo.fileinfo.file);
+            return file_wake_write(this->runinfo.fileinfo.file);
 
         case PROCESS_WAIT_ANY:
             return this->num_waitable == 0 || ll_any(this->child_statuses, waitable_status, NULL);

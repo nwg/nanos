@@ -25,14 +25,14 @@ ssize_t file_read(file_t *this, char *buf, size_t nbyte) {
     return this->read_handler(this->ctx, buf, nbyte);
 }
 
-bool file_can_read(file_t *this) {
-    if (!this->can_read_handler) return true;
-    return this->can_read_handler(this->ctx);
+bool file_wake_read(file_t *this) {
+    if (!this->wake_read_handler) return true;
+    return this->wake_read_handler(this->ctx);
 }
 
-bool file_can_write(file_t *this) {
-    if (!this->can_write_handler) return true;
-    return this->can_write_handler(this->ctx);
+bool file_wake_write(file_t *this) {
+    if (!this->wake_write_handler) return true;
+    return this->wake_write_handler(this->ctx);
 }
 
 

@@ -3,7 +3,7 @@
 
 ssize_t termbuf_write(termbuf_t *this, const char *str, size_t nbytes);
 ssize_t termbuf_read(termbuf_t *this, char *str, size_t nbytes);
-bool termbuf_can_read(termbuf_t *this);
+bool termbuf_wake_read(termbuf_t *this);
 
 termbuf_t *termbuf_alloc() {
     termbuf_t *termbuf = kalloc(sizeof(termbuf_t));
@@ -14,18 +14,18 @@ termbuf_t *termbuf_alloc() {
     file->ctx = termbuf;
     file->write_handler = (file_write_handler)termbuf_write;
     file->read_handler = (file_read_handler)termbuf_read;
-    file->can_read_handler = (file_can_read_handler)termbuf_can_read;
+    file->wake_read_handler = (file_wake_read_handler)termbuf_wake_read;
     termbuf->file = file;
 
     return termbuf;
 }
 
-bool termbuf_can_read(termbuf_t *this) {
-    return inbuf_can_read(this->inbuf);
+bool termbuf_wake_read(termbuf_t *this) {
+    return inbuf_wake_read(this->inbuf);
 }
 
 ssize_t termbuf_read(termbuf_t *this, char *str, size_t nbytes) {
-    if (!inbuf_can_read(this->inbuf)) {
+    if (!inbuf_wake_read(this->inbuf)) {
         return FILE_ERROR_EAGAIN;
     }
     return inbuf_read(this->inbuf, str, nbytes);
