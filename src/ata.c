@@ -111,7 +111,7 @@ void MINDRVR_init(uintptr_t command_base, uintptr_t control_base, uintptr_t bmi_
 static void sub_setup_command( void );
 static void sub_trace_command( void );
 static int sub_select( uint8_t dev );
-static void sub_wait_poll( uint8_t we, uint8_t pe );
+static void sub_wait_poll( int dev, uint8_t we, uint8_t pe );
 
 static uint8_t pio_inbyte( uint8_t addr );
 static void pio_outbyte( int addr, uint8_t data );
@@ -202,8 +202,8 @@ static uint16_t indword(uintptr_t addr) {
    }
 }
 
-static int interrupt_or_timeout(){
-   int status = MINDRVR_SYSTEM_WAIT_INTR_OR_TIMEOUT();
+static int interrupt_or_timeout(int device) {
+   int status = MINDRVR_SYSTEM_WAIT_INTR_OR_TIMEOUT(device);
    int_ata_status = pio_inbyte( CB_STAT );
    int_bmide_status = pio_readBusMstrStatus();
 
@@ -626,7 +626,7 @@ static int exec_non_data_cmd( uint8_t dev )
          // Wait for not BUSY -or- wait for time out.
 
          polled = 1;
-         sub_wait_poll( 0, 23 );
+         sub_wait_poll( dev, 0, 23 );
       }
       else
       {
@@ -634,7 +634,7 @@ static int exec_non_data_cmd( uint8_t dev )
 
          if ( ! int_use_intr_flag )
             polled = 1;
-         sub_wait_poll( 22, 23 );
+         sub_wait_poll( dev, 22, 23 );
       }
    }
 
@@ -812,7 +812,7 @@ static int exec_pio_data_in_cmd( uint8_t dev,
 
       // Wait for interrupt -or- wait for not BUSY -or- wait for time out.
 
-      sub_wait_poll( 34, 35 );
+      sub_wait_poll( dev, 34, 35 );
 
       // If polling or error read the status, otherwise
       // get the status that was read by the interrupt handler.
@@ -1160,7 +1160,7 @@ static int exec_pio_data_out_cmd( uint8_t dev,
 
       // Wait for interrupt -or- wait for not BUSY -or- wait for time out.
 
-      sub_wait_poll( 44, 45 );
+      sub_wait_poll( dev, 44, 45 );
 
       // If polling or error read the status, otherwise
       // get the status that was read by the interrupt handler.
@@ -1440,7 +1440,7 @@ int reg_packet( uint8_t dev,
       // Data transfer loop...
       // Wait for interrupt -or- wait for not BUSY -or- wait for time out.
 
-      sub_wait_poll( 53, 54 );
+      sub_wait_poll( dev, 53, 54 );
 
       // Data transfer loop...
       // If there was a time out error, exit the data transfer loop.
@@ -1519,7 +1519,7 @@ int reg_packet( uint8_t dev,
 
    if ( ( reg_cmd_info.ec == 0 ) && ( dir >= 0 ) )
    {
-      sub_wait_poll( 56, 57 );
+      sub_wait_poll( dev, 56, 57 );
    }
 
    // Final status check, only if no previous error.
@@ -1848,7 +1848,7 @@ static int exec_pci_ata_cmd( uint8_t dev,
    // checking for command completion...
    // wait for the PCI BM Interrupt=1 (see ATAIOINT.C)...
 
-   if ( interrupt_or_timeout() )       // time out ?
+   if ( interrupt_or_timeout(dev) )       // time out ?
    {
       reg_cmd_info.to = 1;
       reg_cmd_info.ec = 73;
@@ -2136,7 +2136,7 @@ int dma_pci_packet( uint8_t dev,
       // checking for command completion...
       // wait for the PCI BM Active=0 and Interrupt=1 or PCI BM Error=1...
 
-      if ( interrupt_or_timeout() )    // time out ?
+      if ( interrupt_or_timeout(dev) )    // time out ?
       {
          reg_cmd_info.to = 1;
          reg_cmd_info.ec = 73;
@@ -2420,7 +2420,7 @@ static int sub_select( uint8_t dev )
 //
 //*************************************************************
 
-static void sub_wait_poll( uint8_t we, uint8_t pe )
+static void sub_wait_poll( int dev, uint8_t we, uint8_t pe )
 
 {
    uint8_t status;
@@ -2429,7 +2429,7 @@ static void sub_wait_poll( uint8_t we, uint8_t pe )
 
    if ( we && int_use_intr_flag )
    {
-      if ( interrupt_or_timeout() )    // time out ?
+      if ( interrupt_or_timeout(dev) )    // time out ?
       {
          reg_cmd_info.to = 1;
          reg_cmd_info.ec = we;

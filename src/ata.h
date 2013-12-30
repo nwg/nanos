@@ -68,7 +68,7 @@ extern uint8_t (*MINDRVR_INBYTE)(uintptr_t addr);
 extern uint16_t (*MINDRVR_INWORD)(uintptr_t addr);
 extern uint32_t (*MINDRVR_INDWORD)(uintptr_t addr);
 
-extern int MINDRVR_SYSTEM_WAIT_INTR_OR_TIMEOUT( void );
+extern int MINDRVR_SYSTEM_WAIT_INTR_OR_TIMEOUT( int );
 
 // You must supply a function that returns a system timer value. This
 // should be a value that increments at some constant rate.
