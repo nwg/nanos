@@ -31,6 +31,9 @@
 // by any program using the MINDRVR code/functions.
 //********************************************************************
 
+#ifndef __ATA_H__
+#define __ATA_H__
+
 #include <stdint.h>
 
 #define MIN_ATA_DRIVER_VERSION "0H"
@@ -444,4 +447,6 @@ extern int dma_pci_packet( uint8_t dev,
 
 #endif   // INCLUDE_ATAPI_DMA
 
+#endif
 // end mindrvr.h
+
