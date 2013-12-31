@@ -94,17 +94,18 @@ int ata_read(ata_drive_e drive, uint64_t lba, void *buf, size_t nbyte) {
     uint32_t lba_hi = lba >> 32;
     uint32_t lba_lo = lba & 0xFFFFFFFF;
     size_t nsector = nbyte >> 9;
+    bool fits28 = lba + nsector < ATA_LBA28_MAX;
 
     kprintf("ATA: Begin read\n");
 
     if (use_dma) {
-        if (lba + nbyte < ATA_LBA28_MAX) {
+        if (fits28) {
             return dma_pci_lba28(0, CMD_READ_DMA, 0, nsector, lba_lo, buf, nsector);
         } else {
             return dma_pci_lba48(0, CMD_READ_DMA, 0, nsector, lba_hi, lba_lo, buf, nsector);
         }
     } else {
-        if (lba + nbyte < ATA_LBA28_MAX) {
+        if (fits28) {
             return reg_pio_data_in_lba28(0, CMD_READ_SECTORS, 0, nsector, lba_lo, buf, nsector, 0);
         } else {
             return reg_pio_data_in_lba48(0, CMD_READ_SECTORS, 0, nsector, lba_hi, lba_lo, buf, nsector, 0);
