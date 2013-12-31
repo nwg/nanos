@@ -5,6 +5,8 @@
 #include "asm.h"
 #include "term.h"
 #include "timer.h"
+#include "pages.h"
+#include "ata_nanos.h"
 
 void handle_syscall(system_state_t *state) {
 
@@ -55,8 +57,7 @@ void handle_syscall(system_state_t *state) {
 			char *buf = (char*)SYS_P2(state->registers);
 			size_t len = SYS_P3(state->registers);
 
-			if (filedes != 0) PANIC("read from bad filedes");
-
+			buf = pt_walk(process->pages, buf);
 			SYS_RET(state->registers) = process_read_file(process, filedes, buf, len);
 
 			break;
@@ -91,6 +92,7 @@ void handle_syscall(system_state_t *state) {
 
 			break;
 		}
+
 	}
 }
 

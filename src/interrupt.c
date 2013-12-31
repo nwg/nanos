@@ -7,6 +7,7 @@
 #include "syscall.h"
 #include "asm.h"
 #include "intel_8259.h"
+#include "ata_nanos.h"
 
 void enable_irq(int irqno) {
     intel_8259_enable_irq(irqno);
@@ -40,6 +41,13 @@ void handle_irq(system_state_t *state, irq_e code) {
         case IRQ1:
             intel_8042_nanos_handle_irq1();
             break;
+
+        case IRQ14: {
+            kprintf("Got IRQ 14\n");
+
+            ata_nanos_handle_irq_14();
+            break;
+        }
 
         default:
             break;

@@ -38,6 +38,17 @@ uint16_t pci_config_read_vendor(uint8_t bus, uint8_t device, uint8_t function) {
     return reg & 0xFFFF;
 }
 
+uint16_t pci_config_read_command(uint8_t bus, uint8_t device, uint8_t function) {
+    uint32_t reg = pci_config_read(bus, device, function, 0x04);
+    return reg & 0xFFFF;
+}
+
+void pci_config_write_command(uint8_t bus, uint8_t device, uint8_t function, uint16_t value) {
+    uint32_t reg = pci_config_read(bus, device, function, 0x04);
+    reg |= value;
+    pci_config_write(bus, device, function, 0x04, reg);
+}
+
 void pci_scan_device(uint8_t bus, uint8_t device, pci_scan_handler handler) {
     uint16_t vendor;
     pci_device_t dev;

@@ -12,6 +12,7 @@ extern uint64_t g_timer_tps_divisor;    // Integral divisor of timer source. Set
 #define TICK_PERIOD (1.0 / (g_timer_tps / g_timer_tps_divisor))
 #define TIMER_GET_TICKS_S(t) (g_timer_tps * (t) / g_timer_tps_divisor)
 #define TIMER_GET_TICKS_US(t) (g_timer_tps * (t) / 1000000 / g_timer_tps_divisor)
+#define TIMER_TPS (g_timer_tps / g_timer_tps_divisor)
 
 void timer_tick();
 

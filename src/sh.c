@@ -76,6 +76,19 @@ int run_help(int argc, char **argv) {
 
 int main(int argc, char **argv) {
 
+	// Test a disk read
+	uint8_t readbuf[1024];
+	memset(readbuf, 0, sizeof(readbuf));
+	if (read(3, readbuf, 1024) >= 0) {
+		if (readbuf[510] != 0x55 || readbuf[511] != 0xAA) {
+			printf("Read test expected boot sector but found %x\n", readbuf[511]);
+		} else {
+			printf("Read test succeeded\n");
+		}
+	} else {
+		printf("Read test failed\n");
+	}
+
 	char buf[256];
 	memset(buf, 0, sizeof(buf));
 	while (true) {

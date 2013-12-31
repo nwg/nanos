@@ -10,6 +10,7 @@
 #include "user_vga.h"
 #include "syscall.h"
 #include "ptr.h"
+#include "devio.h"
 
 #define S(node) (node ? (process_status_t*)node->data : NULL)
 
@@ -42,6 +43,8 @@ process_t *process_alloc(void *text, int argc, char **argv) {
     process->files = kalloc(sizeof(file_t) * PROCESS_MAX_FILES);
     process->files[0] = g_termbuf->file;
     process->files[1] = g_term->file;
+    process->files[2] = g_term->file;
+    process->files[3] = g_devio->file;
 
     process->child_statuses = ll_alloc_a(kalloc);
 

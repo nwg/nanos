@@ -35,7 +35,6 @@ bool file_wake_write(file_t *this) {
     return this->wake_write_handler(this->ctx);
 }
 
-
 void file_seek(file_t *this, off_t pos, int whence) {
     switch(whence) {
 

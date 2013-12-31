@@ -42,6 +42,9 @@ uint32_t pci_config_read(uint8_t bus, uint8_t device, uint8_t function, uint8_t 
 #define pci_config_read_bar4(bus, device, function) pci_config_read(bus, device, function, PCI_HEADER_BAR4)
 #define pci_config_read_bar5(bus, device, function) pci_config_read(bus, device, function, PCI_HEADER_BAR5)
 
+uint16_t pci_config_read_command(uint8_t bus, uint8_t device, uint8_t function);
+void pci_config_write_command(uint8_t bus, uint8_t device, uint8_t function, uint16_t value);
+
 typedef struct {
     uint16_t vendor_id;
     uint16_t device_id;

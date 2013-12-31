@@ -21,6 +21,7 @@ typedef enum {
 
 typedef enum {
     FILE_ERROR_EAGAIN = -1,
+    FILE_ERROR_FAIL = -2,
 } file_error_e;
 
 typedef struct file_s {

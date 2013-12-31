@@ -11,6 +11,8 @@
 #include "intel_8259_nanos.h"
 #include "binary.h"
 #include "pci_nanos.h"
+#include "devio.h"
+#include "ata_nanos.h"
 
 termbuf_t *g_termbuf = NULL;
 
@@ -59,6 +61,8 @@ void kernel_init() {
     intel_8259_nanos_init();
     intel_8042_nanos_init();
     intel_8254_nanos_init();
+    ata_nanos_init();
+    devio_init();
 	schedule_init();
 	spawn_test_programs();
 	schedule();
