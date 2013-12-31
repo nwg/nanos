@@ -91,10 +91,14 @@ void pt_map(uintptr_t ****pppp, uintptr_t vaddr, uintptr_t paddr, size_t nbytes,
     }
 }
 
-uintptr_t *get_pagedir(uintptr_t *pml4, int ipdpt, int ipdt, int ipt) {
-	uintptr_t *pdpt = (uintptr_t*)(pml4[ipdpt] & PAGE_MASK);
-	uintptr_t *pdt = (uintptr_t*)(pdpt[ipdt] & PAGE_MASK);
-	uintptr_t *pt = (uintptr_t*)(pdt[ipt] & PAGE_MASK);
+void *pt_walk(uintptr_t ****_pppp, void *vaddr) {
+    size_t offset = (uintptr_t)vaddr & ~PAGE_MASK;
 
-	return pt;
+    uintptr_t *pppp = (uintptr_t*)_pppp;
+    uintptr_t *ppp = (uintptr_t*)DROPFLAGS(pppp[PPPP_IDX(vaddr)]);
+    uintptr_t *pp = (uintptr_t*)DROPFLAGS(ppp[PPP_IDX(vaddr)]);
+    uintptr_t *p = (uintptr_t*)DROPFLAGS(pp[PP_IDX(vaddr)]);
+
+    uintptr_t paddr = DROPFLAGS(p[P_IDX(vaddr)]) + offset;
+    return (void*)paddr;
 }

@@ -28,10 +28,10 @@ typedef enum {
   PAGE_SIZEBIT = 1 << 6,
 } page_flag_e;
 
-uintptr_t *get_pagedir(uintptr_t *pml4, int ipdpt, int ipdt, int ipt);
 uintptr_t ****pt_alloc();
 void pt_dealloc(uintptr_t ****pppp);
 void pt_map(uintptr_t ****pppp, uintptr_t vaddr, uintptr_t paddr, size_t nbytes,
  page_flag_e flags4, page_flag_e flags3, page_flag_e flags2, page_flag_e flags1);
+void *pt_walk(uintptr_t ****_pppp, void *vaddr);
 
 #endif
