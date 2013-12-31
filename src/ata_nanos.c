@@ -144,7 +144,7 @@ static bool is_ide_ata_device(pci_device_t *dev, void *ctx) {
 }
 
 void configure_mindrvr_ports(pci_device_t *device) {
-    uint32_t bmiba = pci_config_read_bar4(dev1->bus, dev1->device, dev1->function);
+    uint32_t bmiba = pci_config_read_bar4(device->bus, device->device, device->function);
     bmiba &= PCI_BMIBA_MASK;
     MINDRVR_init(PCI_IDE_COMMAND_1, PCI_IDE_CONTROL_1, bmiba);
 }
