@@ -59,6 +59,7 @@ uint32_t inl(uint16_t port);
     __asm__ __volatile__ ( \
         "movb $0x20, %al\n\t" \
         "outb %al, $0x20\n\t" \
+        "outb %al, $0xA0\n\t" \
     )
 
 #define PUSHA_SIZE (15*8)
