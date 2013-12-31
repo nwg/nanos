@@ -34,7 +34,7 @@ MKLDSYM = ./util/mkldsym
 OBJCOPY = /opt/local/bin/x86_64-elf-objcopy
 NASM = nasm
 AFLAGS = -w+error
-USER_TEXT_SIZE = 32768
+USER_TEXT_SIZE = 65536
 
 .PHONY: all run run-qemu clean bochs-gdb bochs-native
 
