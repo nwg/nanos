@@ -7,7 +7,6 @@
 #include <stdint.h>
 #include "file.h"
 #include "process.h"
-#include "ata.h"
 
 #define PCI_BMIBA_MASK 0xFFF0
 
@@ -19,7 +18,7 @@
 #define PCI_IDE_COMMAND_1 0x1F0
 #define PCI_IDE_CONTROL_1 0x3F6
 
-#define ATA_NANOS_TIMEOUT_US (TMR_TIME_OUT*1000000)
+extern tick_t ATA_NANOS_TIMEOUT_US;
 
 #define ATA_LBA28_MAX (1 << 28)
 
@@ -59,5 +58,6 @@ void ata_nanos_init();
 
 int ata_read(ata_drive_e drive, uint64_t lba, void *buf, size_t nbyte);
 void ata_nanos_handle_irq_14();
+bool ata_drive_did_timeout(ata_drive_e drive);
 
 #endif

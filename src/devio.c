@@ -33,8 +33,7 @@ void devio_free(devio_t *this) {
 
 bool devio_check_timeout(void *ctx) {
     devio_t *this = (devio_t*)ctx;
-    ata_ata_cmd_status_t *status = &cmd_statuses[this->drive];
-    return g_timer_ticks >= status->start_time + TIMER_GET_TICKS_US(ATA_NANOS_TIMEOUT_US) || status->got_irq;
+    return ata_drive_did_timeout(this->drive);
 }
 
 ssize_t devio_read_handler(void *ctx, char *buf, size_t nbyte) {

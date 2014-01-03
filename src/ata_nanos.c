@@ -12,6 +12,8 @@
 #include "schedule.h"
 #include <string.h>
 
+tick_t ATA_NANOS_TIMEOUT_US = (TMR_TIME_OUT*1000000);
+
 ata_ata_cmd_status_t cmd_statuses[NUM_ATA_DRIVES];
 
 static pci_device_t *dev1 = NULL;
@@ -66,6 +68,11 @@ void ata_nanos_init() {
         kprintf("Error resetting reg\n");
     }
 
+}
+
+bool ata_drive_did_timeout(ata_drive_e drive) {
+    ata_ata_cmd_status_t *status = &cmd_statuses[drive];
+    return g_timer_ticks >= status->start_time + TIMER_GET_TICKS_US(ATA_NANOS_TIMEOUT_US) || status->got_irq;
 }
 
 void enable_dma(pci_device_t *device) {
