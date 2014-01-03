@@ -42,7 +42,7 @@ typedef struct {
     process_t *process;
     bool got_irq;
     uint64_t start_time;
-} cmd_status_t;
+} ata_ata_cmd_status_t;
 
 typedef enum {
     ATA_PCICMD_IOSE = 1 << 0,
@@ -53,7 +53,7 @@ typedef enum {
     ATA_PCICMD_FBE = 1 << 9,
 } ata_pcicmd_e;
 
-extern cmd_status_t cmd_statuses[NUM_ATA_DRIVES];
+extern ata_ata_cmd_status_t cmd_statuses[NUM_ATA_DRIVES];
 
 void ata_nanos_init();
 

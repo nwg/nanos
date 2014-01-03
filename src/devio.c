@@ -33,7 +33,7 @@ void devio_free(devio_t *this) {
 
 bool devio_check_timeout(void *ctx) {
     devio_t *this = (devio_t*)ctx;
-    cmd_status_t *status = &cmd_statuses[this->drive];
+    ata_ata_cmd_status_t *status = &cmd_statuses[this->drive];
     return g_timer_ticks >= status->start_time + TIMER_GET_TICKS_US(ATA_NANOS_TIMEOUT_US) || status->got_irq;
 }
 

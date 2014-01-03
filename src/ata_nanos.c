@@ -12,7 +12,7 @@
 #include "schedule.h"
 #include <string.h>
 
-cmd_status_t cmd_statuses[NUM_ATA_DRIVES];
+ata_ata_cmd_status_t cmd_statuses[NUM_ATA_DRIVES];
 
 static pci_device_t *dev1 = NULL;
 static bool use_dma = false;
@@ -82,7 +82,7 @@ bool dma_enabled(pci_device_t *device) {
 }
 
 void ata_nanos_handle_irq_14() {
-    cmd_status_t *status = &cmd_statuses[ATA_DRIVE_PRIMARY_MASTER];
+    ata_ata_cmd_status_t *status = &cmd_statuses[ATA_DRIVE_PRIMARY_MASTER];
     if (!status->process) return;
 
     status->got_irq = true;
@@ -118,7 +118,7 @@ int MINDRVR_SYSTEM_WAIT_INTR_OR_TIMEOUT(int device) {
 
     process_t *process = current_process();
     ata_drive_e drive = (ata_drive_e)device;
-    cmd_status_t *status = &cmd_statuses[drive];
+    ata_ata_cmd_status_t *status = &cmd_statuses[drive];
     status->process = process;
     status->got_irq = false;
     status->start_time = g_timer_ticks;
@@ -126,7 +126,7 @@ int MINDRVR_SYSTEM_WAIT_INTR_OR_TIMEOUT(int device) {
     YIELD();
 
     bool was_timeout = !status->got_irq;
-    memset(status, 0, sizeof(cmd_status_t));
+    memset(status, 0, sizeof(ata_ata_cmd_status_t));
 
     kprintf("Driver done wait\n");
     return was_timeout;
