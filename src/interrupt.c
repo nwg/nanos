@@ -2,12 +2,17 @@
 #include "kernel.h"
 #include "timer.h"
 #include "schedule.h"
-#include "intel_8042_nanos.h"
-#include "intel_8254_nanos.h"
 #include "syscall.h"
 #include "asm.h"
 #include "intel_8259.h"
 #include "ata_nanos.h"
+#include <string.h>
+
+irq_handler irq_handlers[MAX_IRQ];
+
+void interrupt_init() {
+    memset(irq_handlers, 0, sizeof(irq_handlers));
+}
 
 void enable_irq(int irqno) {
     intel_8259_enable_irq(irqno);
@@ -25,32 +30,13 @@ void handle_irq(system_state_t *state, irq_e code) {
     if (!is_halt) {
         // HLT => not in schedule
         return_from_schedule(state);
+
+        if (code == IRQ0) schedule();
     }
 
-    switch (code) {
-        case IRQ0:
-
-            intel_8254_nanos_irq0();
-
-            if (!is_halt) {
-                schedule();
-            }
-
-            break;
-
-        case IRQ1:
-            intel_8042_nanos_handle_irq1();
-            break;
-
-        case IRQ14: {
-            kprintf("Got IRQ 14\n");
-
-            ata_nanos_handle_irq_14();
-            break;
-        }
-
-        default:
-            break;
+    irq_handler handler = irq_handlers[code];
+    if (handler) {
+        handler(state);
     }
 
     EOI();

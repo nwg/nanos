@@ -31,6 +31,7 @@ uint32_t _MINDRVR_INDWORD(uintptr_t addr) { return inl(addr); }
 
 void ata_nanos_init() {
     enable_irq(14);
+    irq_handlers[IRQ14] = ata_nanos_handle_irq_14;
 
     MINDRVR_OUTBYTE = _MINDRVR_OUTBYTE;
     MINDRVR_OUTWORD = _MINDRVR_OUTWORD;

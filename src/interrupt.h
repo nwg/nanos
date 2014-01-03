@@ -55,6 +55,7 @@ typedef enum {
     IRQ13,
     IRQ14,
     IRQ15,
+    MAX_IRQ,
 
 } irq_e;
 
@@ -63,5 +64,10 @@ void handle_cpu_exception(system_state_t *state, cpu_exception_e code);
 
 void enable_irq(int irqno);
 void disable_irq(int irqno);
+
+typedef void (*irq_handler)(system_state_t *state);
+
+void interrupt_init();
+extern irq_handler irq_handlers[MAX_IRQ];
 
 #endif

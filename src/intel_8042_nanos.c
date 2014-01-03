@@ -17,6 +17,7 @@ static void convert_scancode(uint64_t scancode, int length, keycode_e *keycode, 
 
 void intel_8042_nanos_init() {
     enable_irq(1);
+    irq_handlers[IRQ1] = intel_8042_nanos_handle_irq1;
 }
 
 void intel_8042_nanos_handle_irq1() {

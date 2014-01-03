@@ -13,6 +13,7 @@
 #include "pci_nanos.h"
 #include "devio.h"
 #include "ata_nanos.h"
+#include "interrupt.h"
 
 termbuf_t *g_termbuf = NULL;
 
@@ -55,6 +56,7 @@ void spawn_test_programs() {
 
 void kernel_init() {
 	init_kernel_pages();
+    interrupt_init();
     g_termbuf = termbuf_alloc();
     term_init();
     pci_init();

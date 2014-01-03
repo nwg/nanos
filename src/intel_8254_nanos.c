@@ -17,6 +17,8 @@ void intel_8254_nanos_init() {
     g_timer_tps_divisor = INTEL_100HZ_TICK_DIVISOR;
 
     enable_irq(0);
+
+    irq_handlers[IRQ0] = intel_8254_nanos_irq0;
 }
 
 void intel_8254_nanos_irq0(system_state_t *state) {
