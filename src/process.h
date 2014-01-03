@@ -9,6 +9,7 @@
 #include "file.h"
 #include "user.h"
 #include "ll.h"
+#include "timer.h"
 
 #define K_STACK_SIZE (16*K)
 
@@ -28,7 +29,7 @@ typedef struct {
 } fileinfo_t;
 
 typedef union {
-  uint64_t sleep_until_tick;
+  tick_t sleep_until_tick;
   fileinfo_t fileinfo;
 } runstate_u;
 

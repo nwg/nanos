@@ -254,7 +254,7 @@ void process_stash_state(process_t *this, system_state_t *state) {
 }
 
 void process_sleep(process_t *this, useconds_t useconds) {
-    uint64_t sleep_until = g_timer_ticks + TIMER_GET_TICKS_US(useconds);
+    tick_t sleep_until = g_timer_ticks + TIMER_GET_TICKS_US(useconds);
     this->runstate = PROCESS_SLEEPING;
     this->runinfo.sleep_until_tick = sleep_until;
     YIELD();

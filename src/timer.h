@@ -3,11 +3,13 @@
 
 #include <stdint.h>
 
-extern uint64_t g_timer_ticks;
+typedef uintmax_t tick_t;
+
+extern tick_t g_timer_ticks;
 
 // Timer configuration vars
-extern uint64_t g_timer_tps;            // Integral HZ of timer source
-extern uint64_t g_timer_tps_divisor;    // Integral divisor of timer source. Set 1 if unneeded.
+extern tick_t g_timer_tps;            // Integral HZ of timer source
+extern tick_t g_timer_tps_divisor;    // Integral divisor of timer source. Set 1 if unneeded.
 
 #define TICK_PERIOD (1.0 / (g_timer_tps / g_timer_tps_divisor))
 #define TIMER_GET_TICKS_S(t) (g_timer_tps * (t) / g_timer_tps_divisor)
