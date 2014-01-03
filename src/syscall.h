@@ -104,14 +104,6 @@ static inline uint64_t _syscall3(uint64_t code, uint64_t arg1, uint64_t arg2, ui
 
 #define YIELD() sys_yield()
 
-#define SYS_CALLNUM(r) r.rdi
-#define SYS_P1(r) r.rsi
-#define SYS_P2(r) r.rdx
-#define SYS_P3(r) r.rcx
-#define SYS_P4(r) r.r8
-#define SYS_P5(r) r.r9
-#define SYS_RET(r) r.rax
-
 void handle_syscall(system_state_t *state);
 
 

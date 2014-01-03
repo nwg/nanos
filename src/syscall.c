@@ -14,18 +14,27 @@ void handle_syscall(system_state_t *state) {
 
 	process_t *process = current_process();
 
-	switch (SYS_CALLNUM(state->registers)) {
+	syscall_code_e code = (syscall_code_e)state->registers.rdi;
+	uint64_t p1 = state->registers.rsi;
+	uint64_t p2 = state->registers.rdx;
+	uint64_t p3 = state->registers.rcx;
+	// uint64_t p4 = state->registers.r8;
+	// uint64_t p5 = state->registers.r9;
+
+	uint64_t retval = 0;
+
+	switch (code) {
 
 		case SYSCALL_TEST:
 			kprintf("Syscall 0 Received!!\n");
 			break;
 
 		case SYSCALL_GET_TICKS:
-			SYS_RET(state->registers) = g_timer_ticks;
+			retval = g_timer_ticks;
 			break;
 
 		case SYSCALL_GETPID:
-			SYS_RET(state->registers) = process->pid;
+			retval = process->pid;
 			break;
 
 		case SYSCALL_YIELD:
@@ -33,7 +42,7 @@ void handle_syscall(system_state_t *state) {
 			break;
 
 		case SYSCALL_EXIT: {
-			int exit_status = SYS_P1(state->registers);
+			int exit_status = p1;
 
 			if (process->parent) {
 				process_child_finished(process->parent, process, exit_status);
@@ -45,54 +54,56 @@ void handle_syscall(system_state_t *state) {
 		}
 
 		case SYSCALL_SBRK:
-			SYS_RET(state->registers) = (uint64_t)process_sbrk(process, SYS_P1(state->registers));
+			retval = (uint64_t)process_sbrk(process, p1);
 			break;
 
 		case SYSCALL_SLEEP:
-			process_sleep(process, SYS_P1(state->registers));
+			process_sleep(process, p1);
 			break;
 
 		case SYSCALL_READ: {
-			int filedes = SYS_P1(state->registers);
-			char *buf = (char*)SYS_P2(state->registers);
-			size_t len = SYS_P3(state->registers);
+			int filedes = p1;
+			char *buf = (char*)p2;
+			size_t len = p3;
 
 			buf = pt_walk(process->pages, buf);
-			SYS_RET(state->registers) = process_read_file(process, filedes, buf, len);
+			retval = process_read_file(process, filedes, buf, len);
 
 			break;
 		}
 
 		case SYSCALL_WRITE: {
-			int filedes = SYS_P1(state->registers);
-			const char *buf = (const char*)SYS_P2(state->registers);
-			size_t len = SYS_P3(state->registers);
+			int filedes = p1;
+			const char *buf = (const char*)p2;
+			size_t len = p3;
 
-			SYS_RET(state->registers) = process_write_file(process, filedes, buf, len);
+			retval = process_write_file(process, filedes, buf, len);
 
 			break;
 		}
 
 		case SYSCALL_WAIT: {
-			int *stat_loc = (int*)SYS_P1(state->registers);
+			int *stat_loc = (int*)p1;
 
-			SYS_RET(state->registers) = process_wait(process, stat_loc);
+			retval = process_wait(process, stat_loc);
 			break;
 		}
 
 		case SYSCALL_SPAWN: {
-			void *text = (void*)SYS_P1(state->registers);
-			int argc = SYS_P2(state->registers);
-			char **argv = (char**)SYS_P3(state->registers);
+			void *text = (void*)p1;
+			int argc = p2;
+			char **argv = (char**)p3;
 
 			process_t *spawned = spawn(text, argc, argv);
 			process_add_child(process, spawned);
 
-			SYS_RET(state->registers) = spawned->pid;
+			retval = spawned->pid;
 
 			break;
 		}
 
 	}
+
+	state->registers.rax = retval;
 }
 
