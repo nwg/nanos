@@ -23,6 +23,24 @@ uint32_t pci_config_read(uint8_t bus, uint8_t device, uint8_t function, uint8_t 
     return tofromlittle32(pci_config_read_noswap(bus, device, function, offset));
 }
 
+uint32_t pci_config_read_partial(uint8_t bus, uint8_t device, uint8_t function, uint8_t offset, int size) {
+    int remainder = offset & 3;
+    offset &= (~(uint8_t)3);
+    uint32_t value = pci_config_read(bus, device, function, offset);
+    value >>= remainder;
+    value &= ( (1 << size) - 1 );
+    return value;
+}
+
+void pci_config_write_partial(uint8_t bus, uint8_t device, uint8_t function, uint8_t offset, uint32_t value, int size) {
+    int remainder = offset & 3;
+    offset &= (~(uint8_t)3);
+    uint32_t current = pci_config_read(bus, device, function, offset);
+    value <<= remainder;
+    current |= value;
+    pci_config_write(bus, device, function, offset, value);
+}
+
 void pci_config_read_header(uint8_t bus, uint8_t device, uint8_t function, pci_config_header_t *header) {
     uint32_t *header32 = (uint32_t*)header;
 
@@ -31,22 +49,6 @@ void pci_config_read_header(uint8_t bus, uint8_t device, uint8_t function, pci_c
     }
 
     tofromlittle_pci_config_header(header);
-}
-
-uint16_t pci_config_read_vendor(uint8_t bus, uint8_t device, uint8_t function) {
-    uint32_t reg = pci_config_read(bus, device, function, 0x00);
-    return reg & 0xFFFF;
-}
-
-uint16_t pci_config_read_command(uint8_t bus, uint8_t device, uint8_t function) {
-    uint32_t reg = pci_config_read(bus, device, function, 0x04);
-    return reg & 0xFFFF;
-}
-
-void pci_config_write_command(uint8_t bus, uint8_t device, uint8_t function, uint16_t value) {
-    uint32_t reg = pci_config_read(bus, device, function, 0x04);
-    reg |= value;
-    pci_config_write(bus, device, function, 0x04, reg);
 }
 
 void pci_scan_device(uint8_t bus, uint8_t device, pci_scan_handler handler) {

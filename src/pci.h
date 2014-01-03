@@ -42,8 +42,17 @@ uint32_t pci_config_read(uint8_t bus, uint8_t device, uint8_t function, uint8_t 
 #define pci_config_read_bar4(bus, device, function) pci_config_read(bus, device, function, PCI_HEADER_BAR4)
 #define pci_config_read_bar5(bus, device, function) pci_config_read(bus, device, function, PCI_HEADER_BAR5)
 
-uint16_t pci_config_read_command(uint8_t bus, uint8_t device, uint8_t function);
-void pci_config_write_command(uint8_t bus, uint8_t device, uint8_t function, uint16_t value);
+uint32_t pci_config_read_partial(uint8_t bus, uint8_t device, uint8_t function, uint8_t offset, int size);
+void pci_config_write_partial(uint8_t bus, uint8_t device, uint8_t function, uint8_t offset, uint32_t value, int size);
+
+static inline uint16_t pci_config_read_16(uint8_t bus, uint8_t device, uint8_t function, uint8_t offset) { return pci_config_read_partial(bus, device, function, offset, 16); }
+static inline uint8_t pci_config_read_8(uint8_t bus, uint8_t device, uint8_t function, uint8_t offset) { return pci_config_read_partial(bus, device, function, offset, 8); }
+static inline void pci_config_write_16(uint8_t bus, uint8_t device, uint8_t function, uint8_t offset, uint16_t value) { pci_config_write_partial(bus, device, function, offset, value, 16); }
+static inline void pci_config_write_8(uint8_t bus, uint8_t device, uint8_t function, uint8_t offset, uint8_t value) { pci_config_write_partial(bus, device, function, offset, value, 8); }
+
+#define pci_config_read_command(bus, device, function) pci_config_read_16(bus, device, function, 0x04)
+#define pci_config_write_command(bus, device, function, value) pci_config_write_16(bus, device, function, 0x04, value)
+#define pci_config_read_vendor(bus, device, function) pci_config_read_16(bus, device, function, 0x00)
 
 typedef struct {
     uint16_t vendor_id;

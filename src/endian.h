@@ -10,3 +10,4 @@ uint32_t tofromlittle32(uint32_t i);
 void inplace_swap64(uint64_t *i);
 void inplace_swap32(uint32_t *i);
 void inplace_swap16(uint16_t *i);
+uint32_t tofromlittle16(uint16_t i);

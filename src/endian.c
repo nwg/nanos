@@ -43,3 +43,10 @@ uint32_t tofromlittle32(uint32_t i) {
     }
     return i;
 }
+
+uint32_t tofromlittle16(uint16_t i) {
+    if (BIG_ENDIAN) {
+        return swap16(i);
+    }
+    return i;
+}
