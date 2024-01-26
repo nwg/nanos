@@ -11,9 +11,10 @@ MINDRV, it's hardwired to file descriptor three in userspace and supports both D
 and PIO-based disk I/O.
 
 Most tutorials and resources only cover 32-bit intel systems. I took the time
-to build everything with 64-bit support from the ground up. You might check
-this project out if you are looking for a simple functioning example of 64-bit
-intel OS, as i found many resources incomplete or incorrect when i built it.
+to build everything with 64-bit support from the ground up. I relied a lot on
+#osdev, too. You might check this project out if you are looking for a simple
+functioning example of 64-bit intel OS, as i found many resources incomplete or
+incorrect when i built it.
 
 Syscall interface includes:
 
@@ -91,4 +92,5 @@ provided .gdbinit).
 
 ---
 
-<a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.
+Licensed under the Unlicense. You should be able to do whatever you want with
+this without having to give credit.
